@@ -11,19 +11,19 @@ from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
-from math import radians, sin, cos, asin, sqrt
+from math import radians, sin, cos, asin, sqrt, floor
 
 pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
 
 MAX_GHF  = 150   # max limit of ghf considered
-N_ESTIMATORS = 3000 # number of estimators for gradient boosting regressor
+N_ESTIMATORS = 200 # number of estimators for gradient boosting regressor
 
 OUT_DIR = 'global_learning_plots_gb_circles_gaussian/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
 
 GLOBAL_CSV = '1deg_all_resampled_w_missing_from_goutorbe.csv'
-GRIS_CSV = '1deg_greenland_GHF_added.csv'
+GRIS_CSV = '1deg_greenland_GHF_added2.csv' # srb
 IGNORED_COLS = [
     'OBJECTID_1', 'continent', 'lthlgy_all', 'num_in_cel', 'num_in_con',
      'WGM2012_Ai', 'depthmoho', 'moho_Pasya', 'lithk_cona',
@@ -35,11 +35,11 @@ IGNORED_COLS = [
 # cores: data_points[X] contains info for data point at ice core X. 'rad'
 # is the radius used for Gaussian estimates from each point.
 GREENLAND = pd.DataFrame({
-    'lat':  [ 72.58,  72.60,   65.18,  75.10],
-    'lon':  [-37.64, -38.50,  -43.82, -42.32],
-    'ghf':  [ 51.3,   60.,     20.,    135.],
-    'rad':  [ 1000.,  1000.,   1000.,  150.],
-    'core': ['GRIP', 'GISP2', 'DYE3', 'NGRIP'],
+    'lat':  [ 72.58,  72.60,   65.18,  75.10,   77.18,   61.40,   60.98,   60.73,      66.50],
+    'lon':  [-37.64, -38.50,  -43.82, -42.32,  -61.13,  -48.18,  -45.98,  -45.75,     -50.33],
+    'ghf':  [ 51.3,   60.,     20.,    130.,    50.,     43.,     32.,     51.,        31.05],  # NOTE: GHF at NGRIP is questionable
+    'rad':  [ 1000.,  1000.,   1000.,  140.,    1000.,   1000.,   1000.,   1000.,      1000.],
+    'core': ['GRIP', 'GISP2', 'DYE3', 'NGRIP', 'CC',    'SASS1', 'SASS2', 'LANGSETH', 'GAP'],
 })
 GREENLAND.set_index('core')
 
@@ -52,7 +52,7 @@ def read_csv(path):
     data.dropna(inplace=True)
 
     # drop rows with out of range GHF
-    data = data[data['GHF'] < MAX_GHF]
+    #data = data[data['GHF'] < MAX_GHF] # srb
     data = data.drop(IGNORED_COLS, axis=1)
 
     return data
@@ -66,7 +66,7 @@ def load_global_gris_data():
 
     # raw data has rounded integer values for GHF, add a little dispersion
     # HACK turn off for checksum purposes
-    data_global['GHF'] = data_global['GHF'] + abs(np.random.normal(0, 0.25))
+    #data_global['GHF'] = data_global['GHF'] + abs(np.random.normal(0, 0.25)) # srb
 
     data = pd.concat([data_global, data_gris])
     data = pd.get_dummies(data, columns=['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age'])
@@ -114,12 +114,14 @@ def fill_in_greenland_GHF(data):
         data.loc[data[dist_col] > max_ice_core_dist, ghf_col] = np.nan
 
     data['GHF'] = data[ghf_cols + ['GHF']].mean(skipna=True, axis=1)
+    #data['GHF'] = data[ghf_cols].mean(skipna=True, axis=1) # srb
     data = data.drop(dist_cols + ghf_cols, axis=1)
 
     data.loc[data.GHF == 135.0, 'GHF'] = 0 # FIXME artificially forced to 135.0 in source
     # The gris data set has many rows with feature values but no GHF
     # measurements. We want to predict GHF for these.
-    gris_unknown = data[data.GHF == 0]
+    #gris_unknown = data[data.GHF == 0] # srb
+    gris_unknown = data[data.GHF.isnull()] #srb
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
     return data, gris_unknown
@@ -155,9 +157,9 @@ def haversine_distance(data, center):
 # training set is those rows outside C and a randomly chosen subset of those
 # rows within C (proportion of points in C kept for test is given by
 # test_size; float between 0 and 1).
-def split(data, center, test_size=.3, max_dist=3500):
+def split(data, center, test_size=.15, max_dist=3500):
     data_test, data_train = split_by_distance(data, center, max_dist)
-    additional_train, data_test = train_test_split(data_test, random_state=0, test_size=test_size)
+    additional_train, data_test = train_test_split(data_test, random_state=None, test_size=test_size)
     data_train = pd.concat([data_train, additional_train])
 
     X_train, y_train = data_train.drop('GHF', axis=1), data_train['GHF']
@@ -176,8 +178,47 @@ def plot_GHF_on_map(m, lons, lats, values,
     m.drawcoastlines(linewidth=0.5)
 
     x, y = m(lons, lats)
-    # TODO: change this to pcolormesh instead of scatter
+
     cs = m.scatter(x, y, c=values, **scatter_args)
+
+    cbar = m.colorbar(cs, **colorbar_args)
+    cbar.set_label('$mW m^{-2}$')
+    labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
+    cbar.set_ticks(labels)
+    cbar.set_ticklabels(labels)
+    plt.clim(*clim)
+
+# plots a series of GHF values at given latitude and longitude positions in ascii format
+def plot_GHF_on_map_pcolormesh(m, lons, lats, values,
+                    parallel_step=20., meridian_step=60.,
+                    clim=(20., 150.), clim_step=10,
+                    colorbar_args={}, pcolor_args={}):
+    m.drawparallels(np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10)
+    m.drawmeridians(np.arange(-180., 181., meridian_step), labels=[0, 0, 0, 1], fontsize=10)
+    m.drawmapboundary(fill_color='white')
+    m.drawcoastlines(linewidth=0.5)
+
+    lons_min, lons_max = np.min(lons), np.max(lons)
+    lats_min, lats_max = np.min(lats), np.max(lats)
+
+    lons_array = np.linspace(lons_min,lons_max,lons_max-lons_min+1)
+    lats_array = np.linspace(lats_min,lats_max,lats_max-lats_min+1)
+
+    lon, lat = np.meshgrid(lons_array, lats_array)
+
+    x, y = m(lon, lat)
+
+    ascii = np.zeros([len(lats_array),len(lons_array)])
+    ascii = np.where(ascii==0,np.nan,0)
+
+    for item in np.vstack([lons,lats,values]).T:
+        j = np.floor(lons_array).tolist().index(floor(item[0]))
+        i = np.floor(lats_array).tolist().index(floor(item[1]))
+        ascii[i][j] = item[2]
+
+    ascii = np.ma.masked_where(np.isnan(ascii),ascii)
+
+    cs = m.pcolormesh(x,y,ascii,**pcolor_args)
 
     cbar = m.colorbar(cs, **colorbar_args)
     cbar.set_label('$mW m^{-2}$')
@@ -243,6 +284,8 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
     plt.axes().set_aspect('equal')
     plt.xlabel('$GHF$')
     plt.ylabel('$\widehat{GHF}$')
+    plt.xlim([0, MAX_GHF])
+    plt.ylim([0, MAX_GHF])
 
     title = title + '\n$r^2=%.3f, p=%.1e$' % (r_value**2, p_value)
     save_cur_fig(filename, title=title)
@@ -330,13 +373,13 @@ data = load_global_gris_data()
 # Prepare training and test sets for Greenland
 # --------------------------------------------
 gris_known, gris_unknown = fill_in_greenland_GHF(data)
-X_train, y_train, X_test, y_test = split(gris_known, center)
 center = GREENLAND.loc[GREENLAND['core'] == 'GRIP']
 center = (float(center.lon), float(center.lat))
+X_train, y_train, X_test, y_test = split(gris_known, center)
 
 # Plot known GHF values for training and test sets
 # ------------------------------------------------
-m = Basemap()
+m = Basemap(projection='robin',lon_0=0,resolution='c')
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
@@ -344,14 +387,14 @@ colorbar_args = {'location': 'bottom', 'pad': '10%'}
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': spectral_cmap}
 
 plot_GHF_on_map(m,
-                X_train.Longitude_1, X_train.Latitude_1,
+                X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
                 y_train,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 save_cur_fig('GHF_1deg_averaged_map_train.png', title='GHF at train set')
 
 plot_GHF_on_map(m,
-                X_test.Longitude_1, X_test.Latitude_1,
+                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
                 y_test,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
@@ -364,7 +407,7 @@ reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
 y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
-            projection='stere', lat_ts=71, lon_0=center[0], lat_0=center[1])
+            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
 colorbar_args = {'location': 'right', 'pad': '5%', 'extend': 'both'}
 scatter_args = {'marker': 'o', 's': 25, 'lw': 0, 'cmap': spectral_cmap}
 
@@ -381,7 +424,7 @@ save_cur_fig('Greenland_GHF_predicted_1deg.png',
 
 # Plot GHF difference between predictions and known values
 # --------------------------------------------------------
-m = Basemap()
+m = Basemap(projection='robin',lon_0=0,resolution='c')
 seismic_cmap = plt.get_cmap('seismic', 20)
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': seismic_cmap}
 colorbar_args = {'location': 'bottom', 'pad': '10%'}
@@ -396,7 +439,7 @@ save_cur_fig('GHF_1deg_diff_map.png',
              title='GHF error on test set (true - predicted)')
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
-            projection='stere', lat_ts=71, lon_0=center[0], lat_0=center[1])
+            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
 seismic_cmap = plt.get_cmap('seismic', 20)
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': seismic_cmap}
 colorbar_args = {'location': 'right', 'pad': '5%'}
@@ -422,7 +465,7 @@ X_gris = gris_unknown.drop(['GHF'], axis=1)
 y_gris = reg.predict(X_gris.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
-             projection='stere', lat_ts=71, lon_0=center[0], lat_0=center[1])
+            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
 seismic_cmap = plt.get_cmap('seismic', 20)
 scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': spectral_cmap}
 colorbar_args = {'location': 'right', 'pad': '5%'}
@@ -436,7 +479,7 @@ save_cur_fig('predicted_Greenland_GHF_1deg.png',
              title='GHF predicted for Greenland ($mW m^{-2}$)')
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
-             projection='stere', lat_ts=71, lon_0=center[0], lat_0=center[1])
+            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
 scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': spectral_cmap}
 colorbar_args = {'location': 'right', 'pad': '5%'}
 plot_GHF_on_map(m,
@@ -455,13 +498,26 @@ plot_GHF_on_map(m,
 save_cur_fig('TEST.png',
              title='GHF predicted for Greenland ($mW m^{-2}$)')
 
+m = Basemap(projection='robin',lon_0=0,resolution='c')
+spectral_cmap = plt.get_cmap('spectral', 13)
+spectral_cmap.set_under('black')
+spectral_cmap.set_over('grey')
+colorbar_args = {'location': 'bottom', 'pad': '10%'}
+pcolor_args = {'cmap': spectral_cmap}
+plot_GHF_on_map_pcolormesh(m,
+                X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
+                y_train,
+                colorbar_args=colorbar_args,
+                pcolor_args=pcolor_args)
+save_cur_fig('pcolormesh.png', title='GHF at train set')
+
 # Histograms: Greenland (predicted) and global (known)
 # ----------------------------------------------------
 plot_GHF_histogram(y_gris)
 save_cur_fig('hist_greenland.png', title='GHF predicted in Greenland')
 
-plot_GHF_histogram(y_train)
-save_cur_fig('hist_global.png', title='GHF global measurement')
+#plot_GHF_histogram(y_train)
+#save_cur_fig('hist_global.png', title='GHF global measurement')
 
 # Store greenland predictions and known values for ARC GIS
 # --------------------------------------------------------
