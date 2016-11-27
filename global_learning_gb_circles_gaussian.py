@@ -37,7 +37,7 @@ IGNORED_COLS = [
 GREENLAND = pd.DataFrame({
     'lat':  [ 72.58,  72.60,   65.18,  75.10,   77.18,   61.40,   60.98,   60.73,      66.50],
     'lon':  [-37.64, -38.50,  -43.82, -42.32,  -61.13,  -48.18,  -45.98,  -45.75,     -50.33],
-    'ghf':  [ 51.3,   60.,     20.,    130.,    50.,     43.,     32.,     51.,        31.05],  # NOTE: GHF at NGRIP is questionable
+    'ghf':  [ 51.3,   60.,     20.,    135.,    50.,     43.,     32.,     51.,        31.05],  # NOTE: GHF at NGRIP is questionable
     'rad':  [ 1000.,  1000.,   1000.,  140.,    1000.,   1000.,   1000.,   1000.,      1000.],
     'core': ['GRIP', 'GISP2', 'DYE3', 'NGRIP', 'CC',    'SASS1', 'SASS2', 'LANGSETH', 'GAP'],
 })
@@ -511,6 +511,26 @@ plot_GHF_on_map_pcolormesh(m,
                 pcolor_args=pcolor_args)
 save_cur_fig('pcolormesh.png', title='GHF at train set')
 
+m = Basemap(width=1600000, height=2650000, resolution='l',
+            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
+pcolor_args = {'cmap': spectral_cmap}
+colorbar_args = {'location': 'right', 'pad': '5%'}
+plot_GHF_on_map_pcolormesh(m,
+                X_gris.Longitude_1.as_matrix(), X_gris.Latitude_1.as_matrix(),
+                y_gris,
+                parallel_step=5., meridian_step=10.,
+                colorbar_args=colorbar_args,
+                pcolor_args=pcolor_args)
+pcolor_args = {'cmap': spectral_cmap}
+plot_GHF_on_map_pcolormesh(m,
+                gris_known.Longitude_1.as_matrix(), gris_known.Latitude_1.as_matrix(),
+                gris_known.GHF,
+                parallel_step=5., meridian_step=10.,
+                colorbar_args=colorbar_args,
+                pcolor_args=pcolor_args)
+save_cur_fig('TEST_pcolormesh.png',
+             title='GHF predicted for Greenland ($mW m^{-2}$)')
+
 # Histograms: Greenland (predicted) and global (known)
 # ----------------------------------------------------
 plot_GHF_histogram(y_gris)
@@ -522,3 +542,6 @@ save_cur_fig('hist_greenland.png', title='GHF predicted in Greenland')
 # Store greenland predictions and known values for ARC GIS
 # --------------------------------------------------------
 save_gris_prediction_data(X_gris, gris_known, 'lat_lon_ghf.txt')
+
+
+
