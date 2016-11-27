@@ -17,7 +17,7 @@ pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
 
 MAX_GHF  = 150   # max limit of ghf considered
-N_ESTIMATORS = 200 # number of estimators for gradient boosting regressor
+N_ESTIMATORS = 300 # number of estimators for gradient boosting regressor
 
 OUT_DIR = 'global_learning_plots_gb_circles_gaussian/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
@@ -159,7 +159,7 @@ def haversine_distance(data, center):
 # test_size; float between 0 and 1).
 def split(data, center, test_size=.15, max_dist=3500):
     data_test, data_train = split_by_distance(data, center, max_dist)
-    additional_train, data_test = train_test_split(data_test, random_state=None, test_size=test_size)
+    additional_train, data_test = train_test_split(data_test, random_state=0, test_size=test_size)
     data_train = pd.concat([data_train, additional_train])
 
     X_train, y_train = data_train.drop('GHF', axis=1), data_train['GHF']
@@ -227,6 +227,48 @@ def plot_GHF_on_map_pcolormesh(m, lons, lats, values,
     cbar.set_ticklabels(labels)
     plt.clim(*clim)
 
+# plots a series of GHF values at given latitude and longitude positions in ascii format
+# interpolated using basemap transform_scalar functions
+def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
+                    parallel_step=20., meridian_step=60.,
+                    clim=(20., 150.), clim_step=10,
+                    colorbar_args={}, pcolor_args={}):
+    m.drawparallels(np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10)
+    m.drawmeridians(np.arange(-180., 181., meridian_step), labels=[0, 0, 0, 1], fontsize=10)
+    m.drawmapboundary(fill_color='white')
+    m.drawcoastlines(linewidth=0.5)
+
+    lons_min, lons_max = np.min(lons), np.max(lons)
+    lats_min, lats_max = np.min(lats), np.max(lats)
+
+    lons_array = np.linspace(lons_min,lons_max,lons_max-lons_min+1)
+    lats_array = np.linspace(lats_min,lats_max,lats_max-lats_min+1)
+
+    lon, lat = np.meshgrid(lons_array, lats_array)
+
+    x, y = m(lon, lat)
+
+    ascii = np.zeros([len(lats_array),len(lons_array)])
+    ascii = np.where(ascii==0,np.nan,0)
+
+    for item in np.vstack([lons,lats,values]).T:
+        j = np.floor(lons_array).tolist().index(floor(item[0]))
+        i = np.floor(lats_array).tolist().index(floor(item[1]))
+        ascii[i][j] = item[2]
+
+    ascii_interp, x, y = m.transform_scalar(ascii, lons_array, lats_array, 5*len(lons_array), 5*len(lats_array), returnxy=True)
+
+    ascii_interp = np.ma.masked_where(np.isnan(ascii_interp),ascii_interp)
+
+    cs = m.pcolormesh(x,y,ascii_interp,**pcolor_args)
+
+    cbar = m.colorbar(cs, **colorbar_args)
+    cbar.set_label('$mW m^{-2}$')
+    labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
+    cbar.set_ticks(labels)
+    cbar.set_ticklabels(labels)
+    plt.clim(*clim)
+
 # saves current matplotlib plot to given filename in OUT_DIR
 def save_cur_fig(filename, title=None):
     plt.title(title)
@@ -246,11 +288,11 @@ GDR_PARAMS = {
     'max_depth': 4,
     'min_impurity_split': 1e-07,
     'init': None,
-    'random_state': None,
+    'random_state': 0,
     'max_features': 0.3,
     'alpha': 0.9,
-    'verbose': 0,
-    #'verbose': 10,
+    #'verbose': 0,
+    'verbose': 10,
     'max_leaf_nodes': None,
     'warm_start': False,
     'presort': 'auto',
@@ -513,6 +555,9 @@ save_cur_fig('pcolormesh.png', title='GHF at train set')
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
             projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
+spectral_cmap = plt.get_cmap('spectral', 13)
+spectral_cmap.set_under('black')
+spectral_cmap.set_over('grey')
 pcolor_args = {'cmap': spectral_cmap}
 colorbar_args = {'location': 'right', 'pad': '5%'}
 plot_GHF_on_map_pcolormesh(m,
@@ -530,6 +575,27 @@ plot_GHF_on_map_pcolormesh(m,
                 pcolor_args=pcolor_args)
 save_cur_fig('TEST_pcolormesh.png',
              title='GHF predicted for Greenland ($mW m^{-2}$)')
+
+
+frames = [X_gris,gris_known]
+greenland = pd.concat(frames)
+
+m = Basemap(width=1600000, height=2650000, resolution='l',
+            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
+spectral_cmap = plt.get_cmap('spectral', 13)
+spectral_cmap.set_under('black')
+spectral_cmap.set_over('grey')
+pcolor_args = {'cmap': spectral_cmap}
+colorbar_args = {'location': 'right', 'pad': '5%'}
+plot_GHF_on_map_pcolormesh_interp(m,
+                greenland.Longitude_1.as_matrix(), greenland.Latitude_1.as_matrix(),
+                np.hstack([y_gris,gris_known.GHF.as_matrix()]),
+                parallel_step=5., meridian_step=10.,
+                colorbar_args=colorbar_args,
+                pcolor_args=pcolor_args)
+save_cur_fig('TEST_pcolormesh_interpolated.png',
+             title='GHF predicted for Greenland ($mW m^{-2}$)')
+
 
 # Histograms: Greenland (predicted) and global (known)
 # ----------------------------------------------------
