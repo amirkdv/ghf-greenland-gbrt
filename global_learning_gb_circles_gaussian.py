@@ -182,7 +182,7 @@ def plot_GHF_on_map(m, lons, lats, values,
     cs = m.scatter(x, y, c=values, **scatter_args)
 
     cbar = m.colorbar(cs, **colorbar_args)
-    cbar.set_label('$mW m^{-2}$')
+    cbar.set_label('mW m$^{-2}$')
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
@@ -221,7 +221,7 @@ def plot_GHF_on_map_pcolormesh(m, lons, lats, values,
     cs = m.pcolormesh(x,y,ascii,**pcolor_args)
 
     cbar = m.colorbar(cs, **colorbar_args)
-    cbar.set_label('$mW m^{-2}$')
+    cbar.set_label('mW m$^{-2}$')
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
@@ -263,7 +263,7 @@ def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
     cs = m.pcolormesh(x,y,ascii_interp,**pcolor_args)
 
     cbar = m.colorbar(cs, **colorbar_args)
-    cbar.set_label('$mW m^{-2}$')
+    cbar.set_label('mW m$^{-2}$')
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
@@ -335,7 +335,7 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
 # plots the histogram of given GHF values
 def plot_GHF_histogram(values, max_density=.05):
     plt.hist(values, bins=np.linspace(0, 150, 16), linewidth=2, color='blue', normed=True)
-    plt.xlabel('GHF ($mWm^{-2}$)')
+    plt.xlabel('GHF (mW m$^{-2}$)')
     plt.ylabel('Normalized Frequency')
     plt.grid(True)
     plt.xlim([0, MAX_GHF])
@@ -460,7 +460,7 @@ plot_GHF_on_map(m,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 save_cur_fig('Greenland_GHF_predicted_1deg.png',
-             title='GHF predicted for Greenland ($mW m^{-2}$) \n globally trained')
+             title='GHF predicted for Greenland (mW m$^{-2}$) \n globally trained')
 
 # NOTE dropped 'Greenland_GHF_1deg.png': predicted and known GHF are overlayed.
 
@@ -518,7 +518,7 @@ plot_GHF_on_map(m,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 save_cur_fig('predicted_Greenland_GHF_1deg.png',
-             title='GHF predicted for Greenland ($mW m^{-2}$)')
+             title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
             projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
@@ -538,7 +538,7 @@ plot_GHF_on_map(m,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 save_cur_fig('TEST.png',
-             title='GHF predicted for Greenland ($mW m^{-2}$)')
+             title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 m = Basemap(projection='robin',lon_0=0,resolution='c')
 spectral_cmap = plt.get_cmap('spectral', 13)
@@ -574,7 +574,7 @@ plot_GHF_on_map_pcolormesh(m,
                 colorbar_args=colorbar_args,
                 pcolor_args=pcolor_args)
 save_cur_fig('TEST_pcolormesh.png',
-             title='GHF predicted for Greenland ($mW m^{-2}$)')
+             title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 
 frames = [X_gris,gris_known]
@@ -594,7 +594,7 @@ plot_GHF_on_map_pcolormesh_interp(m,
                 colorbar_args=colorbar_args,
                 pcolor_args=pcolor_args)
 save_cur_fig('TEST_pcolormesh_interpolated.png',
-             title='GHF predicted for Greenland ($mW m^{-2}$)')
+             title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 
 # Histograms: Greenland (predicted) and global (known)
