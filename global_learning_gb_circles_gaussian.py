@@ -12,12 +12,13 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
 from math import radians, sin, cos, asin, sqrt, floor
+from circles import equi
 
 pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
 
 MAX_GHF  = 150   # max limit of ghf considered
-N_ESTIMATORS = 300 # number of estimators for gradient boosting regressor
+N_ESTIMATORS = 3000 # number of estimators for gradient boosting regressor
 
 OUT_DIR = 'global_learning_plots_gb_circles_gaussian/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
@@ -86,12 +87,13 @@ def process_greenland_data(data):
 
 # Approximates GHF values at rows with unknown GHF according to a Gaussian
 # decay formula based on known GHF values in GREENLAND.
+max_ice_core_dist = 150.
 def fill_in_greenland_GHF(data):
     def gauss(amp, dist, rad):
         return amp/np.exp(dist**2./rad**2.)
 
     # distance beyond which ice core GHF effect will be ignored
-    max_ice_core_dist = 150.
+    # max_ice_core_dist = max_ice_core_dist
 
     dist_cols = []
     ghf_cols = []
@@ -537,6 +539,15 @@ plot_GHF_on_map(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
+equi(m,GREENLAND[GREENLAND['core']=='GRIP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GRIP'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='GISP2'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GISP2'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='DYE3'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='DYE3'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='NGRIP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='NGRIP'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='CC'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='CC'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='SASS1'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='SASS1'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='SASS2'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='SASS2'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='LANGSETH'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='LANGSETH'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='GAP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GAP'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
 save_cur_fig('TEST.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
