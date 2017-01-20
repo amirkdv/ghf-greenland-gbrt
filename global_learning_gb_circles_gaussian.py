@@ -524,30 +524,37 @@ save_cur_fig('predicted_Greenland_GHF_1deg.png',
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
             projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
-scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': spectral_cmap}
 colorbar_args = {'location': 'right', 'pad': '5%'}
-plot_GHF_on_map(m,
-                X_gris.Longitude_1.as_matrix(), X_gris.Latitude_1.as_matrix(),
-                y_gris,
-                parallel_step=5., meridian_step=10.,
-                colorbar_args=colorbar_args,
-                scatter_args=scatter_args)
-scatter_args = {'marker': 'd', 's': 30, 'lw': 0, 'cmap': spectral_cmap}
+#scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': spectral_cmap}
+#plot_GHF_on_map(m,
+#                X_gris.Longitude_1.as_matrix(), X_gris.Latitude_1.as_matrix(),
+#                y_gris,
+#                parallel_step=5., meridian_step=10.,
+#                colorbar_args=colorbar_args,
+#                scatter_args=scatter_args)
+scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': spectral_cmap}
 plot_GHF_on_map(m,
                 gris_known.Longitude_1.as_matrix(), gris_known.Latitude_1.as_matrix(),
                 gris_known.GHF,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-equi(m,GREENLAND[GREENLAND['core']=='GRIP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GRIP'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
-equi(m,GREENLAND[GREENLAND['core']=='GISP2'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GISP2'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
-equi(m,GREENLAND[GREENLAND['core']=='DYE3'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='DYE3'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
-equi(m,GREENLAND[GREENLAND['core']=='NGRIP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='NGRIP'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
-equi(m,GREENLAND[GREENLAND['core']=='CC'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='CC'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
-equi(m,GREENLAND[GREENLAND['core']=='SASS1'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='SASS1'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
-equi(m,GREENLAND[GREENLAND['core']=='SASS2'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='SASS2'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
-equi(m,GREENLAND[GREENLAND['core']=='LANGSETH'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='LANGSETH'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
-equi(m,GREENLAND[GREENLAND['core']=='GAP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GAP'].lat.as_matrix(),max_ice_core_dist,lw=4,linestyle='-',color='brown',alpha=0.5)
+equi(m,GREENLAND[GREENLAND['core']=='GRIP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GRIP'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+equi(m,GREENLAND[GREENLAND['core']=='GISP2'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GISP2'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+equi(m,GREENLAND[GREENLAND['core']=='DYE3'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='DYE3'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+equi(m,GREENLAND[GREENLAND['core']=='NGRIP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='NGRIP'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+equi(m,GREENLAND[GREENLAND['core']=='CC'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='CC'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+equi(m,GREENLAND[GREENLAND['core']=='SASS1'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='SASS1'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+equi(m,GREENLAND[GREENLAND['core']=='SASS2'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='SASS2'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+equi(m,GREENLAND[GREENLAND['core']=='LANGSETH'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='LANGSETH'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+equi(m,GREENLAND[GREENLAND['core']=='GAP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GAP'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+scatter_args = {'marker': 's', 's': 35, 'lw': 1, 'cmap': spectral_cmap, 'edgecolor':'black'}
+plot_GHF_on_map(m,
+                GREENLAND.lon.as_matrix(), GREENLAND.lat.as_matrix(),
+                GREENLAND.ghf.as_matrix(),
+                parallel_step=5., meridian_step=10.,
+                colorbar_args=colorbar_args,
+                scatter_args=scatter_args)
 save_cur_fig('TEST.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
