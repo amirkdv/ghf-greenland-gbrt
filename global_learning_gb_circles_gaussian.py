@@ -522,8 +522,8 @@ plot_GHF_on_map(m,
 save_cur_fig('predicted_Greenland_GHF_1deg.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
-m = Basemap(width=1600000, height=2650000, resolution='l',
-            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
+m = Basemap(width=1600000, height=2800000, resolution='l',
+            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=71.50)
 colorbar_args = {'location': 'right', 'pad': '5%'}
 #scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': spectral_cmap}
 #plot_GHF_on_map(m,
@@ -555,8 +555,8 @@ plot_GHF_on_map(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-save_cur_fig('TEST.png',
-             title='GHF predicted for Greenland (mW m$^{-2}$)')
+save_cur_fig('greenland_prescribed_GHF.png',
+             title='Points with prescribed GHF \n around GHF measurements (mW m$^{-2}$)')
 
 m = Basemap(projection='robin',lon_0=0,resolution='c')
 spectral_cmap = plt.get_cmap('spectral', 13)
