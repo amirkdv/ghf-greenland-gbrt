@@ -18,7 +18,7 @@ pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
 
 MAX_GHF  = 150   # max limit of ghf considered
-N_ESTIMATORS = 3000 # number of estimators for gradient boosting regressor
+N_ESTIMATORS = 5000 # number of estimators for gradient boosting regressor
 
 OUT_DIR = 'global_learning_plots_gb_circles_gaussian/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
@@ -423,7 +423,13 @@ X_train, y_train, X_test, y_test = split(gris_known, center)
 
 # Plot known GHF values for training and test sets
 # ------------------------------------------------
-m = Basemap(projection='robin',lon_0=0,resolution='c')
+#m = Basemap(projection='robin',lon_0=0,resolution='c')
+m = Basemap(projection='aeqd',
+      lon_0 = -37.64,
+      lat_0 = 72.58,
+      width = 7500000,
+      height = 7500000)
+
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
