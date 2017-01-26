@@ -322,6 +322,7 @@ def train_regressor(X_train, y_train, logfile):
 def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
     plt.clf()
     slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(y_test, y_pred)
+    rmse = mean_squared_error(y_test, y_pred)
 
     plt.scatter(y_test, y_pred, label='tests, r2=%f'%r_value**2)
     plt.grid(True)
@@ -331,7 +332,7 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
     plt.xlim([0, MAX_GHF])
     plt.ylim([0, MAX_GHF])
 
-    title = title + '\n$r^2=%.3f, p=%.1e$' % (r_value**2, p_value)
+    title = title + '\n$r^2=%.3f, RMSE=%.2f$' % (r_value**2, rmse**0.5)
     save_cur_fig(filename, title=title)
 
 # plots the histogram of given GHF values
@@ -626,8 +627,8 @@ save_cur_fig('TEST_pcolormesh_interpolated.png',
 plot_GHF_histogram(y_gris)
 save_cur_fig('hist_greenland.png', title='GHF predicted in Greenland')
 
-#plot_GHF_histogram(y_train)
-#save_cur_fig('hist_global.png', title='GHF global measurement')
+plot_GHF_histogram(y_train)
+save_cur_fig('hist_global.png', title='GHF global measurement')
 
 # Store greenland predictions and known values for ARC GIS
 # --------------------------------------------------------
