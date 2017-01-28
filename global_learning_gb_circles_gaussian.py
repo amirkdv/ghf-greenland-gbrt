@@ -24,7 +24,8 @@ OUT_DIR = 'global_learning_plots_gb_circles_gaussian/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
 
 GLOBAL_CSV = '1deg_all_resampled_w_missing_from_goutorbe.csv'
-GRIS_CSV = '1deg_greenland_GHF_added2.csv' # srb
+# FIXME remove old csv file from repo?
+GRIS_CSV = '1deg_greenland_GHF_added2.csv'
 IGNORED_COLS = [
     'OBJECTID_1', 'continent', 'lthlgy_all', 'num_in_cel', 'num_in_con',
      'WGM2012_Ai', 'depthmoho', 'moho_Pasya', 'lithk_cona',
@@ -76,7 +77,6 @@ def read_csv(path):
     data.dropna(inplace=True)
 
     # drop rows with out of range GHF
-    #data = data[data['GHF'] < MAX_GHF] # srb
     data = data.drop(IGNORED_COLS, axis=1)
 
     return data
@@ -87,10 +87,6 @@ def load_global_gris_data():
     data_global = read_csv(GLOBAL_CSV)
     data_gris = read_csv(GRIS_CSV)
     data_gris = process_greenland_data(data_gris)
-
-    # raw data has rounded integer values for GHF, add a little dispersion
-    # HACK turn off for checksum purposes
-    #data_global['GHF'] = data_global['GHF'] + abs(np.random.normal(0, 0.25)) # srb
 
     data = pd.concat([data_global, data_gris])
     data = pd.get_dummies(data,
@@ -138,15 +134,13 @@ def fill_in_greenland_GHF(data):
         data.loc[data[dist_col] > MAX_ICE_CORE_DIST, ghf_col] = np.nan
 
     data['GHF'] = data[ghf_cols + ['GHF']].mean(skipna=True, axis=1)
-    #data['GHF'] = data[ghf_cols].mean(skipna=True, axis=1) # srb
     data = data.drop(dist_cols + ghf_cols, axis=1)
 
     # FIXME artificially forced to 135.0 in source
     data.loc[data.GHF == 135.0, 'GHF'] = 0
     # The gris data set has many rows with feature values but no GHF
     # measurements. We want to predict GHF for these.
-    #gris_unknown = data[data.GHF == 0] # srb
-    gris_unknown = data[data.GHF.isnull()] #srb
+    gris_unknown = data[data.GHF.isnull()]
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
     return data, gris_unknown
