@@ -31,6 +31,7 @@ IGNORED_COLS = [
     #'G_heat_pro', 'd_2hotspots', 'd_2volcano', 'crusthk_cr', 'litho_asth',
     #'d_2trench', 'G_d_2yng_r', 'd_2ridge', 'd2_transfo'
     ]
+MAX_ICE_CORE_DIST = 150.
 
 # The only existing data points for Greenland are at the following ice
 # cores: data_points[X] contains info for data point at ice core X. 'rad'
@@ -112,13 +113,9 @@ def process_greenland_data(data):
 
 # Approximates GHF values at rows with unknown GHF according to a Gaussian
 # decay formula based on known GHF values in GREENLAND.
-max_ice_core_dist = 150.
 def fill_in_greenland_GHF(data):
     def gauss(amp, dist, rad):
         return amp * np.exp(- dist ** 2. / rad ** 2)
-
-    # distance beyond which ice core GHF effect will be ignored
-    # max_ice_core_dist = max_ice_core_dist
 
     dist_cols = []
     ghf_cols = []
@@ -138,7 +135,7 @@ def fill_in_greenland_GHF(data):
             lambda row: gauss(point.ghf, row[dist_col], point.rad),
             axis=1
         )
-        data.loc[data[dist_col] > max_ice_core_dist, ghf_col] = np.nan
+        data.loc[data[dist_col] > MAX_ICE_CORE_DIST, ghf_col] = np.nan
 
     data['GHF'] = data[ghf_cols + ['GHF']].mean(skipna=True, axis=1)
     #data['GHF'] = data[ghf_cols].mean(skipna=True, axis=1) # srb
@@ -586,7 +583,7 @@ equi_kw = {'lw': 2, 'linestyle': '-', 'color': 'brown', 'alpha': .8}
 for core in GREENLAND.core:
     centerlon = GREENLAND[GREENLAND['core'] == core].lon.as_matrix()
     centerlat = GREENLAND[GREENLAND['core'] == core].lat.as_matrix()
-    equi(m, centerlon, centerlat, max_ice_core_dist,
+    equi(m, centerlon, centerlat, MAX_ICE_CORE_DIST,
          lw=2, linestyle='-', color='brown', alpha=.8)
 
 scatter_args = {'marker': 's', 's': 35, 'lw': 1, 'cmap': spectral_cmap, 'edgecolor':'black'}
