@@ -324,9 +324,9 @@ def save_cur_fig(filename, title=None):
 # OUTDIR/logfile
 def train_regressor(X_train, y_train, logfile=None):
     reg = GradientBoostingRegressor(**GDR_PARAMS)
-    sys.stderr.write('Training Gradient Boosting Regressor ...')
+    sys.stderr.write('Training ...')
     reg.fit(X_train, y_train)
-    sys.stderr.write('\n')
+    sys.stderr.write('\033[F')
 
     importance = reg.feature_importances_
     hdrs = list(X_train.columns.values)
@@ -389,22 +389,20 @@ def average_rmse(data, test_size, max_dist, ncenters):
     rmses = []
     for _ in range(ncenters):
         center = (randint(-180, 180), randint(-90, 90))
-        print 'splitting data set with ' + \
-              'test_size=%.2f, max_dist=%d, center=%s' % \
-              (test_size, max_dist, repr(center))
+        sys.stderr.write('** test_size=%.2f, max_dist=%d, center=%s\n' % \
+              (test_size, max_dist, repr(center)))
         X_train, y_train, X_test, y_test = \
             split(data, center, test_size=test_size, max_dist=max_dist)
         if len(X_test) == 0:
-            print 'no test points left; skipping'
+            sys.stderr.write('-> no test points left; skipping\n')
             continue
         reg = train_regressor(
-            X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-            y_train, 'GHF_1deg_averaged_logfile.txt'
+            X_train.drop(['Latitude_1', 'Longitude_1'], axis=1), y_train
         )
-        y_pred = reg.predict(
-            X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
-        )
-        rmses.append(sqrt(mean_squared_error(y_test, y_pred)))
+        y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+        rmse = sqrt(mean_squared_error(y_test, y_pred))
+        sys.stderr.write('-> RMSE = %.2f\n' % rmse)
+        rmses.append(rmse)
     return sum(rmses) / len(rmses)
 
 def plot_average_rmse_fixed_test_size(data, test_size, max_dists, ncenters):
