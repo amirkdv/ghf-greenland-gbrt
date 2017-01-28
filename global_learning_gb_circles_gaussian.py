@@ -387,7 +387,9 @@ def save_gris_prediction_data(gris_unknown, gris_known, filename):
 # keeping test_size (float between 0 and 1) of the points for testing.
 def average_rmse(data, test_size, max_dist, ncenters):
     rmses = []
-    for _ in range(ncenters):
+    counter = ncenters
+    while counter:
+        # FIXME exclude rocky range
         center = (randint(-180, 180), randint(-90, 90))
         sys.stderr.write('** test_size=%.2f, max_dist=%d, center=%s\n' % \
               (test_size, max_dist, repr(center)))
@@ -396,6 +398,7 @@ def average_rmse(data, test_size, max_dist, ncenters):
         if len(X_test) == 0:
             sys.stderr.write('-> no test points left; skipping\n')
             continue
+        counter -= 1
         reg = train_regressor(
             X_train.drop(['Latitude_1', 'Longitude_1'], axis=1), y_train
         )
