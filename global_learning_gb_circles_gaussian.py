@@ -369,16 +369,16 @@ def plot_GHF_histogram(values, max_density=.05):
 # saves GRIS known and predicted GHF and latitude/longitude and values as a
 # numpy array in OUT_DIR/filename.
 def save_gris_prediction_data(gris_unknown, gris_known, filename):
-    LATS = np.hstack([gris_unknown.Longitude_1.as_matrix(),
+    lats = np.hstack([gris_unknown.Longitude_1.as_matrix(),
                       gris_known.Longitude_1.as_matrix()])
-    LONS = np.hstack([gris_unknown.Latitude_1.as_matrix(),
+    lons = np.hstack([gris_unknown.Latitude_1.as_matrix(),
                       gris_known.Latitude_1.as_matrix()])
-    GHFS = np.hstack([y_gris, gris_known.GHF.as_matrix()])
+    ghfs = np.hstack([y_gris, gris_known.GHF.as_matrix()])
 
-    final = np.zeros([len(LATS), 3])
-    final[:, 0] = LATS
-    final[:, 1] = LONS
-    final[:, 2] = GHFS
+    final = np.zeros([len(lats), 3])
+    final[:, 0] = lats
+    final[:, 1] = lons
+    final[:, 2] = ghfs
 
     path = os.path.join(OUT_DIR, filename)
     np.savetxt(path, final, delimiter=', ',
