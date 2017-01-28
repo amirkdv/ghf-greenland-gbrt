@@ -115,7 +115,7 @@ def process_greenland_data(data):
 max_ice_core_dist = 150.
 def fill_in_greenland_GHF(data):
     def gauss(amp, dist, rad):
-        return amp/np.exp(dist**2./rad**2.)
+        return amp * np.exp(- dist ** 2. / rad ** 2)
 
     # distance beyond which ice core GHF effect will be ignored
     # max_ice_core_dist = max_ice_core_dist
@@ -647,7 +647,8 @@ spectral_cmap.set_over('grey')
 pcolor_args = {'cmap': spectral_cmap}
 colorbar_args = {'location': 'right', 'pad': '5%'}
 plot_GHF_on_map_pcolormesh_interp(m,
-                greenland.Longitude_1.as_matrix(), greenland.Latitude_1.as_matrix(),
+                greenland.Longitude_1.as_matrix(),
+                greenland.Latitude_1.as_matrix(),
                 np.hstack([y_gris,gris_known.GHF.as_matrix()]),
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
