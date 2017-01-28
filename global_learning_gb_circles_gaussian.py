@@ -44,6 +44,28 @@ GREENLAND = pd.DataFrame({
 })
 GREENLAND.set_index('core')
 
+GDR_PARAMS = {
+    'loss': 'ls',
+    'learning_rate': 0.05,
+    'n_estimators': N_ESTIMATORS,
+    'subsample': 1.0,
+    'criterion': 'friedman_mse',
+    'min_samples_split': 2,
+    'min_samples_leaf': 9,
+    'min_weight_fraction_leaf': 0.0,
+    'max_depth': 4,
+    'min_impurity_split': 1e-07,
+    'init': None,
+    'random_state': 0,
+    'max_features': 0.3,
+    'alpha': 0.9,
+    #'verbose': 0,
+    'verbose': 10,
+    'max_leaf_nodes': None,
+    'warm_start': False,
+    'presort': 'auto',
+}
+
 # Reads csv source and applies general filters.
 def read_csv(path):
     data = pd.read_csv(path, index_col=0, na_values=-999999)
@@ -278,28 +300,6 @@ def save_cur_fig(filename, title=None):
     sys.stderr.write('Saved %s to %s.\n' % (repr(title), filename))
     plt.clf()
 
-GDR_PARAMS = {
-    'loss': 'ls',
-    'learning_rate': 0.05,
-    'n_estimators': N_ESTIMATORS,
-    'subsample': 1.0,
-    'criterion': 'friedman_mse',
-    'min_samples_split': 2,
-    'min_samples_leaf': 9,
-    'min_weight_fraction_leaf': 0.0,
-    'max_depth': 4,
-    'min_impurity_split': 1e-07,
-    'init': None,
-    'random_state': 0,
-    'max_features': 0.3,
-    'alpha': 0.9,
-    #'verbose': 0,
-    'verbose': 10,
-    'max_leaf_nodes': None,
-    'warm_start': False,
-    'presort': 'auto',
-}
-
 # Trains and returns a GradientBoostingRegressor over the given training
 # feature and value vectors. Feature importance values are stored in
 # OUTDIR/logfile
@@ -320,7 +320,6 @@ def train_regressor(X_train, y_train, logfile):
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
 def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
-    plt.clf()
     slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(y_test, y_pred)
     rmse = mean_squared_error(y_test, y_pred)
 
