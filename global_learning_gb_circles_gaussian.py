@@ -581,15 +581,14 @@ plot_GHF_on_map(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-equi(m,GREENLAND[GREENLAND['core']=='GRIP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GRIP'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
-equi(m,GREENLAND[GREENLAND['core']=='GISP2'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GISP2'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
-equi(m,GREENLAND[GREENLAND['core']=='DYE3'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='DYE3'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
-equi(m,GREENLAND[GREENLAND['core']=='NGRIP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='NGRIP'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
-equi(m,GREENLAND[GREENLAND['core']=='CC'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='CC'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
-equi(m,GREENLAND[GREENLAND['core']=='SASS1'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='SASS1'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
-equi(m,GREENLAND[GREENLAND['core']=='SASS2'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='SASS2'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
-equi(m,GREENLAND[GREENLAND['core']=='LANGSETH'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='LANGSETH'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
-equi(m,GREENLAND[GREENLAND['core']=='GAP'].lon.as_matrix(),GREENLAND[GREENLAND['core']=='GAP'].lat.as_matrix(),max_ice_core_dist,lw=2,linestyle='-',color='brown',alpha=0.8)
+
+equi_kw = {'lw': 2, 'linestyle': '-', 'color': 'brown', 'alpha': .8}
+for core in GREENLAND.core:
+    centerlon = GREENLAND[GREENLAND['core'] == core].lon.as_matrix()
+    centerlat = GREENLAND[GREENLAND['core'] == core].lat.as_matrix()
+    equi(m, centerlon, centerlat, max_ice_core_dist,
+         lw=2, linestyle='-', color='brown', alpha=.8)
+
 scatter_args = {'marker': 's', 's': 35, 'lw': 1, 'cmap': spectral_cmap, 'edgecolor':'black'}
 plot_GHF_on_map(m,
                 GREENLAND.lon.as_matrix(), GREENLAND.lat.as_matrix(),
