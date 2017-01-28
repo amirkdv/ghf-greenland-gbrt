@@ -92,7 +92,8 @@ def load_global_gris_data():
     #data_global['GHF'] = data_global['GHF'] + abs(np.random.normal(0, 0.25)) # srb
 
     data = pd.concat([data_global, data_gris])
-    data = pd.get_dummies(data, columns=['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age'])
+    data = pd.get_dummies(data,
+                          columns=['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age'])
 
     return data
 
@@ -100,7 +101,9 @@ def load_global_gris_data():
 def process_greenland_data(data):
     # mapping from old to new values of lthlgy_mod
     # Legend: volcanic=1, metamorphic=2, sedimentary=3
-    lthlgy_mod_rewrites = {1: 2, 2: 3, 3: 3, 4: 3, 5: 1, 6: 2, 7: 1, 8: 3, 9: 2, 10: 2}
+    lthlgy_mod_rewrites = {
+        1: 2, 2: 3, 3: 3, 4: 3, 5: 1, 6: 2, 7: 1, 8: 3, 9: 2, 10: 2
+    }
     data['lthlgy_mod'] = data.apply(
         lambda row: lthlgy_mod_rewrites[row['lthlgy_mod']],
         axis=1
@@ -141,7 +144,8 @@ def fill_in_greenland_GHF(data):
     #data['GHF'] = data[ghf_cols].mean(skipna=True, axis=1) # srb
     data = data.drop(dist_cols + ghf_cols, axis=1)
 
-    data.loc[data.GHF == 135.0, 'GHF'] = 0 # FIXME artificially forced to 135.0 in source
+    # FIXME artificially forced to 135.0 in source
+    data.loc[data.GHF == 135.0, 'GHF'] = 0
     # The gris data set has many rows with feature values but no GHF
     # measurements. We want to predict GHF for these.
     #gris_unknown = data[data.GHF == 0] # srb
@@ -183,7 +187,9 @@ def haversine_distance(data, center):
 # test_size; float between 0 and 1).
 def split(data, center, test_size=.15, max_dist=3500):
     data_test, data_train = split_by_distance(data, center, max_dist)
-    additional_train, data_test = train_test_split(data_test, random_state=0, test_size=test_size)
+    additional_train, data_test = train_test_split(
+        data_test, random_state=0, test_size=test_size
+    )
     data_train = pd.concat([data_train, additional_train])
 
     X_train, y_train = data_train.drop('GHF', axis=1), data_train['GHF']
@@ -196,8 +202,12 @@ def plot_GHF_on_map(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, scatter_args={}):
-    m.drawparallels(np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10)
-    m.drawmeridians(np.arange(-180., 181., meridian_step), labels=[0, 0, 0, 1], fontsize=10)
+    m.drawparallels(
+        np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
+    )
+    m.drawmeridians(
+        np.arange(-180., 181., meridian_step), labels=[0, 0, 0, 1], fontsize=10
+    )
     m.drawmapboundary(fill_color='white')
     m.drawcoastlines(linewidth=0.5)
 
@@ -212,13 +222,18 @@ def plot_GHF_on_map(m, lons, lats, values,
     cbar.set_ticklabels(labels)
     plt.clim(*clim)
 
-# plots a series of GHF values at given latitude and longitude positions in ascii format
+# plots a series of GHF values at given latitude and longitude positions in
+# ascii format
 def plot_GHF_on_map_pcolormesh(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, pcolor_args={}):
-    m.drawparallels(np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10)
-    m.drawmeridians(np.arange(-180., 181., meridian_step), labels=[0, 0, 0, 1], fontsize=10)
+    m.drawparallels(
+        np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
+    )
+    m.drawmeridians(
+        np.arange(-180., 181., meridian_step), labels=[0, 0, 0, 1], fontsize=10
+    )
     m.drawmapboundary(fill_color='white')
     m.drawcoastlines(linewidth=0.5)
 
@@ -251,14 +266,18 @@ def plot_GHF_on_map_pcolormesh(m, lons, lats, values,
     cbar.set_ticklabels(labels)
     plt.clim(*clim)
 
-# plots a series of GHF values at given latitude and longitude positions in ascii format
-# interpolated using basemap transform_scalar functions
+# plots a series of GHF values at given latitude and longitude positions in
+# ascii format interpolated using basemap transform_scalar functions
 def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, pcolor_args={}):
-    m.drawparallels(np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10)
-    m.drawmeridians(np.arange(-180., 181., meridian_step), labels=[0, 0, 0, 1], fontsize=10)
+    m.drawparallels(
+        np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
+    )
+    m.drawmeridians(
+        np.arange(-180., 181., meridian_step), labels=[0, 0, 0, 1], fontsize=10
+    )
     m.drawmapboundary(fill_color='white')
     m.drawcoastlines(linewidth=0.5)
 
@@ -280,7 +299,10 @@ def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
         i = np.floor(lats_array).tolist().index(floor(item[1]))
         ascii[i][j] = item[2]
 
-    ascii_interp, x, y = m.transform_scalar(ascii, lons_array, lats_array, 5*len(lons_array), 5*len(lats_array), returnxy=True)
+    ascii_interp, x, y = m.transform_scalar(
+        ascii, lons_array, lats_array,
+        5*len(lons_array), 5*len(lats_array), returnxy=True
+    )
 
     ascii_interp = np.ma.masked_where(np.isnan(ascii_interp),ascii_interp)
 
@@ -320,7 +342,8 @@ def train_regressor(X_train, y_train, logfile):
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
 def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
-    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(y_test, y_pred)
+    slope, intercept, r_value, p_value, std_err = \
+        scipy.stats.linregress(y_test, y_pred)
     rmse = mean_squared_error(y_test, y_pred)
 
     plt.scatter(y_test, y_pred, label='tests, r2=%f'%r_value**2)
@@ -336,7 +359,7 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
 
 # plots the histogram of given GHF values
 def plot_GHF_histogram(values, max_density=.05):
-    plt.hist(values, bins=np.linspace(0, 150, 16), linewidth=2, color='blue', normed=True)
+    plt.hist(values, bins=np.linspace(0, 150, 16), lw=2, c='blue', normed=True)
     plt.xlabel('GHF (mW m$^{-2}$)')
     plt.ylabel('Normalized Frequency')
     plt.grid(True)
@@ -346,8 +369,10 @@ def plot_GHF_histogram(values, max_density=.05):
 # saves GRIS known and predicted GHF and latitude/longitude and values as a
 # numpy array in OUT_DIR/filename.
 def save_gris_prediction_data(gris_unknown, gris_known, filename):
-    LATS = np.hstack([gris_unknown.Longitude_1.as_matrix(), gris_known.Longitude_1.as_matrix()])
-    LONS = np.hstack([gris_unknown.Latitude_1.as_matrix(),  gris_known.Latitude_1.as_matrix()])
+    LATS = np.hstack([gris_unknown.Longitude_1.as_matrix(),
+                      gris_known.Longitude_1.as_matrix()])
+    LONS = np.hstack([gris_unknown.Latitude_1.as_matrix(),
+                      gris_known.Latitude_1.as_matrix()])
     GHFS = np.hstack([y_gris, gris_known.GHF.as_matrix()])
 
     final = np.zeros([len(LATS), 3])
@@ -356,24 +381,31 @@ def save_gris_prediction_data(gris_unknown, gris_known, filename):
     final[:, 2] = GHFS
 
     path = os.path.join(OUT_DIR, filename)
-    np.savetxt(path, final, delimiter=', ', header='lon, lat, ghf', fmt='%10.5f')
+    np.savetxt(path, final, delimiter=', ',
+               header='lon, lat, ghf', fmt='%10.5f')
     sys.stderr.write('Saved gris data to %s\n' % filename)
 
-# Returns the average RMSE over ncenters number of circles with radius
-# max_dist keeping test_size (float between 0 and 1) of the points for testing.
+# Returns the average RMSE over ncenters number of circles with radius max_dist
+# keeping test_size (float between 0 and 1) of the points for testing.
 def average_rmse(data, test_size, max_dist, ncenters):
     rmses = []
     for _ in range(ncenters):
         center = (randint(-180, 180), randint(-90, 90))
-        print 'splitting data set with test_size=%.2f, max_dist=%d, center=%s' % \
+        print 'splitting data set with ' + \
+              'test_size=%.2f, max_dist=%d, center=%s' % \
               (test_size, max_dist, repr(center))
-        X_train, y_train, X_test, y_test = split(data, center, test_size=test_size, max_dist=max_dist)
+        X_train, y_train, X_test, y_test = \
+            split(data, center, test_size=test_size, max_dist=max_dist)
         if len(X_test) == 0:
             print 'no test points left; skipping'
             continue
-        reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                              y_train, 'GHF_1deg_averaged_logfile.txt')
-        y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+        reg = train_regressor(
+            X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+            y_train, 'GHF_1deg_averaged_logfile.txt'
+        )
+        y_pred = reg.predict(
+            X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+        )
         rmses.append(sqrt(mean_squared_error(y_test, y_pred)))
     return sum(rmses) / len(rmses)
 
@@ -397,12 +429,16 @@ def plot_average_rmse_fixed_max_dist(data, test_sizes, max_dist, ncenters):
 
 def plot_average_rmse(data):
     max_dist = 3500
-    plot_average_rmse_fixed_max_dist(data, [.05 * i for i in range(1, 20)], max_dist, 3)
+    plot_average_rmse_fixed_max_dist(
+        data, [.05 * i for i in range(1, 20)], max_dist, 3
+    )
     save_cur_fig('avg_rmse_ratio.png',
                  'Mean RMSEs for different test/training ratios (radius = %d)' % max_dist)
 
     test_size = .9
-    plot_average_rmse_fixed_test_size(data, test_size, range(1000, 5000, 200), 3)
+    plot_average_rmse_fixed_test_size(
+        data, test_size, range(1000, 5000, 200), 3
+    )
     save_cur_fig('avg_rmse_dist.png',
                  'Mean RMSEs for different test set radius (ratio = %.2f)' % test_size)
 
@@ -632,6 +668,3 @@ save_cur_fig('hist_global.png', title='GHF global measurement')
 # Store greenland predictions and known values for ARC GIS
 # --------------------------------------------------------
 save_gris_prediction_data(X_gris, gris_known, 'lat_lon_ghf.txt')
-
-
-
