@@ -322,7 +322,7 @@ def save_cur_fig(filename, title=None):
 # Trains and returns a GradientBoostingRegressor over the given training
 # feature and value vectors. Feature importance values are stored in
 # OUTDIR/logfile
-def train_regressor(X_train, y_train, logfile):
+def train_regressor(X_train, y_train, logfile=None):
     reg = GradientBoostingRegressor(**GDR_PARAMS)
     sys.stderr.write('Training Gradient Boosting Regressor ...')
     reg.fit(X_train, y_train)
@@ -331,8 +331,9 @@ def train_regressor(X_train, y_train, logfile):
     importance = reg.feature_importances_
     hdrs = list(X_train.columns.values)
     logs = np.asarray(sorted(zip(hdrs, importance), key=lambda x: x[1]))
-    np.savetxt(os.path.join(OUT_DIR, logfile), logs, fmt="%s")
-    sys.stderr.write('Saved feature importances to %s.\n' % (logfile))
+    if logfile:
+        np.savetxt(os.path.join(OUT_DIR, logfile), logs, fmt="%s")
+        sys.stderr.write('-> Saved feature importances to %s.\n' % (logfile))
 
     return reg
 
