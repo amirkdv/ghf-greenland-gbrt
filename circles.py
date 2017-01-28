@@ -13,9 +13,9 @@ def shoot(lon, lat, azimuth, maxdist=None):
     s = maxdist / 1.852
     faz = azimuth * np.pi / 180.
 
-    EPS= 0.00000000005
-    if ((np.abs(np.cos(glat1))<EPS) and not (np.abs(np.sin(faz))<EPS)):
-        alert("Only N-S courses are meaningful, starting at a pole!")
+    EPS = 0.00000000005
+    if ((np.abs(np.cos(glat1)) < EPS) and not (np.abs(np.sin(faz)) < EPS)):
+        print "Only N-S courses are meaningful, starting at a pole!"
 
     a = 6378.13 / 1.852
     f = 1 / 298.257223563
