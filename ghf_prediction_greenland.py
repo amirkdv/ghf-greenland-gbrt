@@ -82,10 +82,7 @@ def save_gris_prediction_data(gris_unknown, gris_known, y_gris, filename):
                    header='lon, lat, ghf', fmt='%10.5f')
 
 
-# Create average RMSE plots for different test_size and max_dist values
-# ---------------------------------------------------------------------
 data = load_global_gris_data()
-#plot_average_rmse(data)
 
 # Prepare training and test sets for Greenland
 # --------------------------------------------
@@ -185,6 +182,7 @@ plot_test_pred_linregress(y_test, y_pred, 'GHF_1deg_averaged_plot.png',
 # Predictions for Greenland
 # =========================
 X_gris = gris_unknown.drop(['GHF'], axis=1)
+# FIXME don't use the old regressor here, train a new one with all known GHF?
 y_gris = reg.predict(X_gris.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
