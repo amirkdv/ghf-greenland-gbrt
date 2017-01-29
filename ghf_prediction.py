@@ -305,13 +305,13 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
     save_cur_fig(filename, title=title)
 
 # plots the histogram of given GHF values
-def plot_GHF_histogram(values, max_density=.1):
-    plt.hist(values, 50, lw=2, color='b', edgecolor='b', alpha=.9, normed=True)
+def plot_GHF_histogram(values):
+    hist, _, _ = plt.hist(values, 50, lw=2, color='b', edgecolor='b', normed=True)
     plt.xlabel('GHF (mW m$^{-2}$)')
     plt.ylabel('Normalized Frequency')
     plt.grid(True)
     plt.xlim([0, MAX_GHF])
-    plt.ylim([0, max_density])
+    plt.ylim([0, max(hist) * 1.1])
 
 def eval_prediction_multiple(data, tasks):
     return {task: eval_prediction(data, *task) for task in tasks}

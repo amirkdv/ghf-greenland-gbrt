@@ -1,4 +1,3 @@
-import os.path
 from mpl_toolkits.basemap import Basemap
 from circles import equi
 from ghf_prediction import (
