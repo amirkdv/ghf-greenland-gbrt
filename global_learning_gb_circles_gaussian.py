@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from random import randint
+from time import time
 from mpl_toolkits.basemap import Basemap
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
@@ -317,10 +318,11 @@ def save_cur_fig(filename, title=None):
 # feature and value vectors. Feature importance values are stored in
 # OUTDIR/logfile
 def train_regressor(X_train, y_train, logfile=None):
+    sys.stderr.write('-> Training ...')
+    start = time()
     reg = GradientBoostingRegressor(**GDR_PARAMS)
-    sys.stderr.write('Training ...')
     reg.fit(X_train, y_train)
-    sys.stderr.write('\033[F')
+    sys.stderr.write(' (%.2f secs)\n' % (time() - start))
 
     importance = reg.feature_importances_
     hdrs = list(X_train.columns.values)
