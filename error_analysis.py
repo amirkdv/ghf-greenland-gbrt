@@ -1,7 +1,8 @@
 import sys
 from random import randint
+from math import sqrt, pi
 from ghf_prediction import (
-    plt, np,
+    plt, np, mean_squared_error,
     load_global_gris_data, save_cur_fig, save_np_object,
     split, split_by_distance, train_regressor, error_summary
 )
@@ -64,6 +65,46 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
 
     ax1.legend(loc=6, prop={'size':12.5})
 
+def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
+    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
+
+    fig, ax = plt.subplots()
+    ax.set_xlabel('Relative noise magnitude')
+    ax.set_ylabel('RMSE in predicted GHF')
+    ax.set_xlim(0, max(noise_amps) * 1.1)
+    ax.set_title('GBRT sensitivity to noise in GHF measurements')
+    ax.grid(True)
+
+    def _predict(X_train, y_train, X_test, center, noise_amp):
+        # If noise ~ N(0, s^2), then mean(|noise|) = s * sqrt(2/pi),
+        # cf. https://en.wikipedia.org/wiki/Half-normal_distribution
+        # So to get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
+        # have noise ~ N(0, s*^2) with s* = mean(y) * noise_ampl * sqrt(pi/2).
+        noise = np.mean(y_train) * noise_amp * sqrt(pi / 2) * np.random.randn(len(y_train))
+        reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                              y_train + noise)
+        return reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+
+    y0 = []
+    rmses = np.zeros((ncenters, len(noise_amps)))
+    for idx_ctr, center in enumerate(centers):
+        X_train, y_train, X_test, y_test = \
+            split(data, center, test_size=t, max_dist=radius)
+        sys.stderr.write('** noise_amp = 0, center = %s:\n' % repr(center))
+        y0 = _predict(X_train, y_train, X_test, center, 0)
+        for idx_noise, noise_amp in enumerate(noise_amps):
+            sys.stderr.write('** noise_amp = %.2f, center = %s:\n' % \
+                (noise_amp, repr(center)))
+            y_pred = _predict(X_train, y_train, X_test, center, noise_amp)
+            rmse = sqrt(mean_squared_error(y0, y_pred)) / np.mean(y0)
+            sys.stderr.write('-> RMSE=%.2f\n' % rmse)
+            rmses[idx_ctr][idx_noise] = rmse
+
+    for idx in range(ncenters):
+        ax.plot(noise_amps, rmses[idx], color='k', alpha=.2, lw=1)
+
+    ax.plot(noise_amps, rmses.mean(axis=0), alpha=.9, lw=2.5, marker='o', color='k')
+
 data = load_global_gris_data()
 # FIXME artificially forced to 135.0 in source
 data.loc[data.GHF == 135.0, 'GHF'] = 0
@@ -76,3 +117,10 @@ colors = 'rgkb'
 ncenters = 10
 plot_performance_analysis(data, ts, radii, colors, ncenters)
 save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
+
+noise_amps = np.arange(0.02, .25, .02)
+radius = 1700
+ncenters = 10
+t = .9
+plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters)
+save_cur_fig('GB_sensitivity.png', title='GBRT sensitivity for different noise levels')
