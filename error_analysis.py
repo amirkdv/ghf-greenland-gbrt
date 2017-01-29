@@ -3,7 +3,7 @@ from random import randint
 from ghf_prediction import (
     plt, np,
     load_global_gris_data, save_cur_fig, save_np_object,
-    split, train_regressor, error_summary
+    split, split_by_distance, train_regressor, error_summary
 )
 
 def eval_prediction_multiple(data, tasks):
@@ -19,25 +19,13 @@ def eval_prediction(data, t, r, center):
     y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
     return error_summary(y_test, y_pred)
 
-def random_prediction_ctr():
-    return randint(-100, 50), randint(45, 90)
-
-def pick_centers(ncenters, t, r, min_points=100):
-    centers = []
-    repeat = ncenters
-    sys.stderr.write('Picking %d centers with at least %d ' % (ncenters, min_points) +
-                     'data points for t = %.2f, r = %d\n' % (t, r))
-    while repeat:
-        center = random_prediction_ctr()
-        _, _, X_test, _ = split(data, center, t, r)
-        if len(X_test) > min_points:
-            centers.append(center)
-            repeat -= 1
-        else:
-            sys.stderr.write('-> skip %s with %d points\n' % \
-                             (repr(center), len(X_test)))
-
-    return centers
+def random_prediction_ctr(data, radius, min_points=100):
+    while True:
+        center = data.loc[randint(0, len(data))]
+        center = center.Longitude_1, center.Latitude_1
+        test, train = split_by_distance(data, center, radius)
+        if len(test) >= min_points:
+            return round(center[0], 2), round(center[1], 2)
 
 data = load_global_gris_data()
 # FIXME artificially forced to 135.0 in source
@@ -50,7 +38,7 @@ rs = np.arange(1200, 2701, 500)
 cs = 'rgkb'
 ncenters = 50
 
-centers = pick_centers(ncenters, max(ts), min(rs))
+centers = [random_prediction_ctr(data, min(rs)) for _ in range(ncenters)]
 
 fig, ax1 = plt.subplots()
 ax1.set_xlabel('$t$ (percentage of points in circle to predict)')
@@ -80,8 +68,9 @@ for r, color in zip(rs, cs):
         #ax1.plot(ts * 100, r2s[idx], color=color, alpha=.2, lw=1)
         #ax2.plot(ts * 100, rmses[idx], color=color, alpha=.2, lw=1, ls='--')
 
-    ax1.plot(ts * 100, r2s.mean(axis=0), color=color, alpha=.9, lw=2.5, label='%d km' % r, marker='o')
-    ax2.plot(ts * 100, rmses.mean(axis=0), color=color, alpha=.9, lw=2.5, ls='--', label='%d km' % r, marker='o')
+    kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'color': color}
+    ax1.plot(ts * 100, r2s.mean(axis=0), label='%d km' % r, **kw)
+    ax2.plot(ts * 100, rmses.mean(axis=0), label='%d km' % r, ls='--', **kw)
 
 ax1.legend(loc=6, prop={'size':12.5})
-fig.savefig('GB_performance.png',dpi=400)
+save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
