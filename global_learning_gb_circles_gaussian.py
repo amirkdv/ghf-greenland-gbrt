@@ -333,14 +333,17 @@ def train_regressor(X_train, y_train, logfile=None):
 
     return reg
 
+def error_summary(y_test, y_pred):
+    _, _, r_value, _, _= scipy.stats.linregress(y_test, y_pred)
+    rmse = mean_squared_error(y_test, y_pred)
+    return r_value ** 2, rmse # FIXME divide rmse by sd(y_test)
+
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
 def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
-    slope, intercept, r_value, p_value, std_err = \
-        scipy.stats.linregress(y_test, y_pred)
-    rmse = mean_squared_error(y_test, y_pred)
+    r2, rmse = error_summary(y_test, y_pred)
 
-    plt.scatter(y_test, y_pred, label='tests, r2=%f'%r_value**2)
+    plt.scatter(y_test, y_pred, label='tests, r$^2$=%f' % r2)
     plt.grid(True)
     plt.axes().set_aspect('equal')
     plt.xlabel('$GHF$')
@@ -379,63 +382,23 @@ def save_gris_prediction_data(gris_unknown, gris_known, filename):
                header='lon, lat, ghf', fmt='%10.5f')
     sys.stderr.write('Saved gris data to %s\n' % filename)
 
-# Returns the average RMSE over ncenters number of circles with radius max_dist
-# keeping test_size (float between 0 and 1) of the points for testing.
-def average_rmse(data, test_size, max_dist, ncenters):
-    rmses = []
-    counter = ncenters
-    while counter:
-        # FIXME exclude rocky range
-        center = (randint(-180, 180), randint(-90, 90))
-        sys.stderr.write('** test_size=%.2f, max_dist=%d, center=%s\n' % \
-              (test_size, max_dist, repr(center)))
-        X_train, y_train, X_test, y_test = \
-            split(data, center, test_size=test_size, max_dist=max_dist)
-        if len(X_test) == 0:
-            sys.stderr.write('-> no test points left; skipping\n')
-            continue
-        counter -= 1
-        reg = train_regressor(
-            X_train.drop(['Latitude_1', 'Longitude_1'], axis=1), y_train
-        )
-        y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
-        rmse = sqrt(mean_squared_error(y_test, y_pred))
-        sys.stderr.write('-> RMSE = %.2f\n' % rmse)
-        rmses.append(rmse)
-    return sum(rmses) / len(rmses)
+def eval_prediction_multiple(data, tasks):
+    return {task: eval_prediction(data, *task) for task in tasks}
 
-def plot_average_rmse_fixed_test_size(data, test_size, max_dists, ncenters):
-    avg_rmses = []
-    for max_dist in max_dists:
-        avg_rmses.append(average_rmse(data, test_size, max_dist, ncenters))
-    plt.scatter(max_dists, avg_rmses)
-    plt.grid(True)
-    plt.xlabel('Testing set radius')
-    plt.ylabel('$\mathbb{E}\left[\sqrt{MSE}\\right]$ over random centers')
+def eval_prediction(data, test_size, max_dist, center):
+    X_train, y_train, X_test, y_test = \
+        split(data, center, test_size=test_size, max_dist=max_dist)
+    if X_test.empty:
+        return None, None
 
-def plot_average_rmse_fixed_max_dist(data, test_sizes, max_dist, ncenters):
-    avg_rmses = []
-    for test_size in test_sizes:
-        avg_rmses.append(average_rmse(data, test_size, max_dist, ncenters))
-    plt.scatter(test_sizes, avg_rmses)
-    plt.grid(True)
-    plt.xlabel('portion of points within circle kept for testing')
-    plt.ylabel('$\mathbb{E}\left[\sqrt{MSE}\\right]$ over random centers')
+    reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                          y_train)
+    y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+    return error_summary(y_test, y_pred)
 
-def plot_average_rmse(data):
-    max_dist = 3500
-    plot_average_rmse_fixed_max_dist(
-        data, [.05 * i for i in range(1, 20)], max_dist, 3
-    )
-    save_cur_fig('avg_rmse_ratio.png',
-                 'Mean RMSEs for different test/training ratios (radius = %d)' % max_dist)
+def random_prediction_ctr():
+    return randint(-100, 50), randint(45, 90)
 
-    test_size = .9
-    plot_average_rmse_fixed_test_size(
-        data, test_size, range(1000, 5000, 200), 3
-    )
-    save_cur_fig('avg_rmse_dist.png',
-                 'Mean RMSEs for different test set radius (ratio = %.2f)' % test_size)
 
 # Evaluate Gradient Boosting Regressor
 # ====================================
