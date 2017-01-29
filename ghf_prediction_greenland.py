@@ -217,7 +217,6 @@ plot_GHF_on_map(m,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 
-equi_kw = {'lw': 2, 'linestyle': '-', 'color': 'brown', 'alpha': .8}
 for core in GREENLAND.core:
     centerlon = GREENLAND[GREENLAND['core'] == core].lon.as_matrix()
     centerlat = GREENLAND[GREENLAND['core'] == core].lat.as_matrix()
