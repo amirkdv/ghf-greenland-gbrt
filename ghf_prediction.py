@@ -5,7 +5,6 @@ import os.path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from random import randint
 from time import time
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
@@ -312,21 +311,3 @@ def plot_GHF_histogram(values):
     plt.grid(True)
     plt.xlim([0, MAX_GHF])
     plt.ylim([0, max(hist) * 1.1])
-
-def eval_prediction_multiple(data, tasks):
-    return {task: eval_prediction(data, *task) for task in tasks}
-
-def eval_prediction(data, test_size, max_dist, center):
-    X_train, y_train, X_test, y_test = \
-        split(data, center, test_size=test_size, max_dist=max_dist)
-    if X_test.empty:
-        return None, None
-
-    reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                          y_train)
-    y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
-    return error_summary(y_test, y_pred)
-
-def random_prediction_ctr():
-    return randint(-100, 50), randint(45, 90)
-
