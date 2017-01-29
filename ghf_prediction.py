@@ -282,7 +282,7 @@ def train_regressor(X_train, y_train, logfile=None):
 
 def error_summary(y_test, y_pred):
     _, _, r_value, _, _= scipy.stats.linregress(y_test, y_pred)
-    rmse = mean_squared_error(y_test, y_pred)
+    rmse = sqrt(mean_squared_error(y_test, y_pred))
     return r_value ** 2, rmse # FIXME divide rmse by sd(y_test)
 
 # plots the linear regression of two GHF value series (known test values and
