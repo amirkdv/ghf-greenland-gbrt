@@ -280,10 +280,17 @@ def train_regressor(X_train, y_train, logfile=None):
 
     return reg
 
+# Returns r^2 of y, y^ linear regression and RMSE of y, y^ normalized to the
+# average of y; the latter is a unitless and *scale-invariant* measure of
+# performance.
+# - cf. http://stats.stackexchange.com/a/190948
+#   RMSE normalized to mean of y is scale-invariant.
+# - cf. http://www.stat.columbia.edu/~gelman/research/published/standardizing7.pdf
+#   r^2 is not scale-invariant.
 def error_summary(y_test, y_pred):
     _, _, r_value, _, _= scipy.stats.linregress(y_test, y_pred)
-    rmse = sqrt(mean_squared_error(y_test, y_pred))
-    return r_value ** 2, rmse # FIXME divide rmse by sd(y_test)
+    rmse = sqrt(mean_squared_error(y_test, y_pred)) / np.mean(y_test)
+    return r_value ** 2, rmse
 
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
