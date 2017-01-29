@@ -20,8 +20,9 @@ def eval_prediction(data, t, radius, center):
     return error_summary(y_test, y_pred)
 
 def random_prediction_ctr(data, radius, min_points=100):
+    cands = data.loc[(data.Latitude_1 > 45) & (data.Longitude_1 > -100) & (data.Longitude_1 < 50)]
     while True:
-        center = data.loc[randint(0, len(data))]
+        center = cands.sample(n=1)
         center = center.Longitude_1, center.Latitude_1
         test, train = split_by_distance(data, center, radius)
         if len(test) >= min_points:
