@@ -25,8 +25,7 @@ OUT_DIR = 'global_learning_plots_gb_circles_gaussian/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
 
 GLOBAL_CSV = '1deg_all_resampled_w_missing_from_goutorbe.csv'
-# FIXME remove old csv file from repo?
-GRIS_CSV = '1deg_greenland_GHF_added2.csv'
+GRIS_CSV = '1deg_greenland_GHF_added2.csv' # FIXME remove old csv file from repo?
 IGNORED_COLS = [
     'OBJECTID_1', 'continent', 'lthlgy_all', 'num_in_cel', 'num_in_con',
      'WGM2012_Ai', 'depthmoho', 'moho_Pasya', 'lithk_cona',
@@ -352,10 +351,13 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
     plt.ylim([0, MAX_GHF])
 
     title = title + '\n$r^2=%.3f, RMSE=%.2f$' % (r_value**2, rmse**0.5)
+    # FIXME pull setting title out of function; requires save_cur_fig to not
+    # set title instead let the plot functions do it.
     save_cur_fig(filename, title=title)
 
 # plots the histogram of given GHF values
 def plot_GHF_histogram(values, max_density=.05):
+    # FIXME increase number of bins
     plt.hist(values, bins=np.linspace(0, 150, 16), lw=2, c='blue', normed=True)
     plt.xlabel('GHF (mW m$^{-2}$)')
     plt.ylabel('Normalized Frequency')
@@ -398,7 +400,6 @@ def eval_prediction(data, test_size, max_dist, center):
 
 def random_prediction_ctr():
     return randint(-100, 50), randint(45, 90)
-
 
 # Evaluate Gradient Boosting Regressor
 # ====================================
