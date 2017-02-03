@@ -312,7 +312,7 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
 
 # plots the histogram of given GHF values
 def plot_GHF_histogram(values):
-    hist, _, _ = plt.hist(values, 50, lw=2, color='b', edgecolor='b', normed=True)
+    hist, _, _ = plt.hist(values, np.linspace(0,MAX_GHF,61), lw=1, color='b', edgecolor='k', normed=True)
     plt.xlabel('GHF (mW m$^{-2}$)')
     plt.ylabel('Normalized Frequency')
     plt.grid(True)
