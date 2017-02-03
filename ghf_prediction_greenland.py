@@ -21,7 +21,7 @@ GREENLAND = pd.DataFrame({
     'lat':  [ 72.58,  72.60,   65.18,  75.10,   77.18,   61.40,   60.98,   60.73,      66.50],
     'lon':  [-37.64, -38.50,  -43.82, -42.32,  -61.13,  -48.18,  -45.98,  -45.75,     -50.33],
     'ghf':  [ 51.3,   60.,     20.,    135.,    50.,     43.,     32.,     51.,        31.05],  # NOTE: GHF at NGRIP is questionable
-    'rad':  [ 1000.,  1000.,   1000.,  140.,    1000.,   1000.,   1000.,   1000.,      1000.],
+    'rad':  [ 1000.,  1000.,   1000.,  160.,    1000.,   1000.,   1000.,   1000.,      1000.],
     'core': ['GRIP', 'GISP2', 'DYE3', 'NGRIP', 'CC',    'SASS1', 'SASS2', 'LANGSETH', 'GAP'],
 })
 GREENLAND.set_index('core')
@@ -117,6 +117,13 @@ plot_GHF_on_map(m,
                 y_train,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
+
+for core in GREENLAND.core:
+    centerlon = GREENLAND[GREENLAND['core'] == core].lon.as_matrix()
+    centerlat = GREENLAND[GREENLAND['core'] == core].lat.as_matrix()
+    equi(m, centerlon, centerlat, MAX_ICE_CORE_DIST,
+         lw=2, linestyle='-', color='brown', alpha=.8)
+
 save_cur_fig('GHF_1deg_averaged_map_train.png', title='GHF at train set')
 
 #plot_GHF_on_map(m,
