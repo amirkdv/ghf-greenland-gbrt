@@ -115,6 +115,7 @@ scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': spectral_cmap}
 plot_GHF_on_map(m,
                 X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
                 y_train,
+                parallel_step=5., meridian_step=15.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 
