@@ -21,7 +21,7 @@ GREENLAND = pd.DataFrame({
     'lat':  [ 72.58,  72.60,   65.18,  75.10,   77.18,   61.40,   60.98,   60.73,      66.50],
     'lon':  [-37.64, -38.50,  -43.82, -42.32,  -61.13,  -48.18,  -45.98,  -45.75,     -50.33],
     'ghf':  [ 51.3,   60.,     20.,    135.,    50.,     43.,     32.,     51.,        31.05],  # NOTE: GHF at NGRIP is questionable
-    'rad':  [ 1000.,  1000.,   1000.,  160.,    1000.,   1000.,   1000.,   1000.,      1000.],
+    'rad':  [ 1000.,  1000.,   1000.,  200.,    1000.,   1000.,   1000.,   1000.,      1000.],  # NOTE: rad at NGRIP is subject to change
     'core': ['GRIP', 'GISP2', 'DYE3', 'NGRIP', 'CC',    'SASS1', 'SASS2', 'LANGSETH', 'GAP'],
 })
 GREENLAND.set_index('core')
@@ -305,6 +305,8 @@ save_cur_fig('TEST_pcolormesh_interpolated.png',
 
 
 # Histograms: Greenland (predicted) and global (known)
+# FIXME: plot the histogram for all Greenland not just
+# predicted values
 # ----------------------------------------------------
 plot_GHF_histogram(y_gris)
 save_cur_fig('hist_greenland.png', title='GHF predicted in Greenland')
