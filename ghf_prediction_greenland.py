@@ -85,11 +85,17 @@ def save_gris_prediction_data(gris_unknown, gris_known, y_gris, filename):
 data = load_global_gris_data()
 
 # Prepare training and test sets for Greenland
+# Note that there is no longer a y_test for
+# Greenland predicitons. It is only X_test
 # --------------------------------------------
 gris_known, gris_unknown = fill_in_greenland_GHF(data)
 center = GREENLAND.loc[GREENLAND['core'] == 'GRIP']
 center = (float(center.lon), float(center.lat))
-X_train, y_train, X_test, y_test = split(gris_known, center)
+#X_train, y_train, X_test, y_test = split(gris_known, center)
+X_train = gris_known.drop(['GHF'], axis=1)
+y_train = gris_known.GHF
+
+X_test = gris_unknown.drop(['GHF'], axis=1)
 
 # Plot known GHF values for training and test sets
 # ------------------------------------------------
@@ -113,12 +119,12 @@ plot_GHF_on_map(m,
                 scatter_args=scatter_args)
 save_cur_fig('GHF_1deg_averaged_map_train.png', title='GHF at train set')
 
-plot_GHF_on_map(m,
-                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                y_test,
-                colorbar_args=colorbar_args,
-                scatter_args=scatter_args)
-save_cur_fig('GHF_1deg_averaged_map_test.png', title='GHF at test set')
+#plot_GHF_on_map(m,
+#                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+#                y_test,
+#                colorbar_args=colorbar_args,
+#                scatter_args=scatter_args)
+#save_cur_fig('GHF_1deg_averaged_map_test.png', title='GHF at test set')
 
 # Predict GHF over test set
 # -----------------------------
@@ -144,45 +150,44 @@ save_cur_fig('Greenland_GHF_predicted_1deg.png',
 
 # Plot GHF difference between predictions and known values
 # --------------------------------------------------------
-m = Basemap(projection='robin',lon_0=0,resolution='c')
-seismic_cmap = plt.get_cmap('seismic', 20)
-scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': seismic_cmap}
-colorbar_args = {'location': 'bottom', 'pad': '10%'}
+#m = Basemap(projection='robin',lon_0=0,resolution='c')
+#seismic_cmap = plt.get_cmap('seismic', 20)
+#scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': seismic_cmap}
+#colorbar_args = {'location': 'bottom', 'pad': '10%'}
 
-plot_GHF_on_map(m,
-                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                y_test - y_pred,
-                clim=(-10, 10), clim_step=2,
-                colorbar_args=colorbar_args,
-                scatter_args=scatter_args)
-save_cur_fig('GHF_1deg_diff_map.png',
-             title='GHF error on test set (true - predicted)')
+#plot_GHF_on_map(m,
+#                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+#                y_test - y_pred,
+#                clim=(-10, 10), clim_step=2,
+#                colorbar_args=colorbar_args,
+#                scatter_args=scatter_args)
+#save_cur_fig('GHF_1deg_diff_map.png',
+#             title='GHF error on test set (true - predicted)')
 
-m = Basemap(width=1600000, height=2650000, resolution='l',
-            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
-seismic_cmap = plt.get_cmap('seismic', 20)
-scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': seismic_cmap}
-colorbar_args = {'location': 'right', 'pad': '5%'}
+#m = Basemap(width=1600000, height=2650000, resolution='l',
+#            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
+#seismic_cmap = plt.get_cmap('seismic', 20)
+#scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': seismic_cmap}
+#colorbar_args = {'location': 'right', 'pad': '5%'}
 
-plot_GHF_on_map(m,
-                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                y_test - y_pred,
-                clim=(-10, 10), clim_step=2,
-                parallel_step=5., meridian_step=10.,
-                colorbar_args=colorbar_args,
-                scatter_args=scatter_args)
-save_cur_fig('GHF_1deg_diff_map_Greenland.png',
-             title='GHF error on test set (true - predicted)')
+#plot_GHF_on_map(m,
+#                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+#                y_test - y_pred,
+#                clim=(-10, 10), clim_step=2,
+#                parallel_step=5., meridian_step=10.,
+#                colorbar_args=colorbar_args,
+#                scatter_args=scatter_args)
+#save_cur_fig('GHF_1deg_diff_map_Greenland.png',
+#             title='GHF error on test set (true - predicted)')
 
-# Linear Regression between known and predicted values in test set
-# ----------------------------------------------------------------
-plot_test_pred_linregress(y_test, y_pred, 'GHF_1deg_averaged_plot.png',
-                          title='Linear regression between predicted vs true GHF')
+## Linear Regression between known and predicted values in test set
+## ----------------------------------------------------------------
+#plot_test_pred_linregress(y_test, y_pred, 'GHF_1deg_averaged_plot.png',
+#                          title='Linear regression between predicted vs true GHF')
 
 # Predictions for Greenland
 # =========================
 X_gris = gris_unknown.drop(['GHF'], axis=1)
-# FIXME don't use the old regressor here, train a new one with all known GHF?
 y_gris = reg.predict(X_gris.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
