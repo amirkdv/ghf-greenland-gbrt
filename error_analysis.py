@@ -61,9 +61,6 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
         
         radii_errors = np.vstack([radii_errors,radius_error])
 
-        print test_ratios
-        print r2s.mean(axis=0)
-        print rmses.mean(axis=0)
         #for idx in range(ncenters):
             #ax1.plot(test_ratios * 100, r2s[idx], color=color, alpha=.2, lw=1)
             #ax2.plot(test_ratios * 100, rmses[idx], color=color, alpha=.2, lw=1, ls='--')
