@@ -44,6 +44,7 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
     ax2.set_xlim(0, 100)
 
     assert len(radii) == len(colors)
+    radii_errors = np.zeros([1,3])
     for radius, color in zip(radii, colors):
         shape = (ncenters, len(test_ratios))
         r2s, rmses = np.zeros(shape), np.zeros(shape)
@@ -55,6 +56,14 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
                 rmses[idx_ctr][idx_t] = rmse
                 r2s[idx_ctr][idx_t] = r2
 
+            lngth = len(test_ratios)
+            radius_error = np.hstack([test_ratios.reshape(lngth,1),r2s.mean(axis=0).reshape(lngth,1),rmses.mean(axis=0).reshape(lngth,1)])
+        
+        radii_errors = np.vstack([radii_errors,radius_error])
+
+        print test_ratios
+        print r2s.mean(axis=0)
+        print rmses.mean(axis=0)
         #for idx in range(ncenters):
             #ax1.plot(test_ratios * 100, r2s[idx], color=color, alpha=.2, lw=1)
             #ax2.plot(test_ratios * 100, rmses[idx], color=color, alpha=.2, lw=1, ls='--')
@@ -62,6 +71,9 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
         kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'color': color}
         ax1.plot(test_ratios * 100, r2s.mean(axis=0), label='%d km' % radius, **kw)
         ax2.plot(test_ratios * 100, rmses.mean(axis=0), label='%d km' % radius, ls='--', **kw)
+
+        save_np_object('error_details.txt', 't, r2, and rmse details', radii_errors[1:,:], delimiter=', ',
+                       header='t, r2, rmse', fmt='%10.5f')
 
     ax1.legend(loc=6, prop={'size':12.5})
 
