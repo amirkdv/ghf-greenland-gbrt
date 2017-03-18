@@ -1,3 +1,4 @@
+# this code is copied from http://www.geophysique.be/2011/02/20/matplotlib-basemap-tutorial-09-drawing-circles/
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import numpy as np
