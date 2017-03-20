@@ -162,7 +162,7 @@ data.dropna(inplace=True)
 
 # plot model performance
 ts = np.arange(.1, 1, .05)
-np.arange(1000, 2501, 500)
+radii = np.arange(1000, 2501, 500)
 colors = 'rgkb'
 ncenters = 10
 plot_performance_analysis(data, ts, radii, colors, ncenters)
