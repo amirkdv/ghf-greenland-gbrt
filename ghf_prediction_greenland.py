@@ -89,8 +89,8 @@ data = load_global_gris_data()
 # Greenland predicitons. It is only X_test
 # --------------------------------------------
 gris_known, gris_unknown = fill_in_greenland_GHF(data)
-center = GREENLAND.loc[GREENLAND['core'] == 'GRIP']
-center = (float(center.lon), float(center.lat))
+#center = GREENLAND.loc[GREENLAND['core'] == 'GRIP']
+#center = (float(center.lon), float(center.lat))
 #X_train, y_train, X_test, y_test = split(gris_known, center)
 X_train = gris_known.drop(['GHF'], axis=1)
 y_train = gris_known.GHF
