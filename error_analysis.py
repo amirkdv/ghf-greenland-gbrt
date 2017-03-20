@@ -6,6 +6,8 @@ from ghf_prediction import (
     load_global_gris_data, save_cur_fig, save_np_object,
     split, split_by_distance, train_regressor, error_summary
 )
+from ghf_prediction_greenland import fill_in_greenland_GHF
+
 
 def eval_prediction_multiple(data, tasks):
     return {task: eval_prediction(data, *task) for task in tasks}
@@ -82,6 +84,7 @@ def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
     ax.set_ylabel('RMSE in predicted GHF')
     ax.set_xlim(0, max(noise_amps) * 1.1)
     ax.set_title('GBRT sensitivity to noise in GHF measurements')
+    #ax.set_aspect('equal')
     ax.grid(True)
 
     def _predict(X_train, y_train, X_test, center, noise_amp):
@@ -114,12 +117,50 @@ def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
 
     ax.plot(noise_amps, rmses.mean(axis=0), alpha=.9, lw=2.5, marker='o', color='k')
 
+
+## same as plot_sensitivity_analysis
+## applied only for Greenland. ncenter
+## is removed and hard-coded as 1
+## y_test does not exist
+def plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps):
+
+    fig, ax = plt.subplots()
+    ax.set_xlabel('Relative noise magnitude')
+    ax.set_ylabel('RMSE in predicted GHF')
+    ax.set_xlim(0, max(noise_amps) * 1.1)
+    ax.set_title('GBRT sensitivity to noise in GHF measurements')
+    #ax.set_aspect('equal')
+    ax.grid(True)
+
+    def _predict_greenland(X_train, y_train, X_test, noise_amp):
+        # If noise ~ N(0, s^2), then mean(|noise|) = s * sqrt(2/pi),
+        # cf. https://en.wikipedia.org/wiki/Half-normal_distribution
+        # So to get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
+        # have noise ~ N(0, s*^2) with s* = mean(y) * noise_ampl * sqrt(pi/2).
+        noise = np.mean(y_train) * noise_amp * sqrt(pi / 2) * np.random.randn(len(y_train))
+        reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                              y_train + noise)
+        return reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+
+    rmses = np.zeros((1, len(noise_amps)))
+    y0 = _predict_greenland(X_train, y_train, X_test, 0)
+    for idx_noise, noise_amp in enumerate(noise_amps):
+        sys.stderr.write('** noise_amp = %.2f:' %noise_amp)
+        y_pred = _predict_greenland(X_train, y_train, X_test, noise_amp)
+        rmse = sqrt(mean_squared_error(y0, y_pred)) / np.mean(y0)
+        sys.stderr.write('-> RMSE=%.2f\n' % rmse)
+        rmses[0][idx_noise] = rmse
+
+    ax.plot(noise_amps, rmses[0], color='b', alpha=.9, lw=2.5, marker='o')
+
+
 data = load_global_gris_data()
 # FIXME artificially forced to 135.0 in source
 data.loc[data.GHF == 135.0, 'GHF'] = 0
 data.loc[data.GHF == 0, 'GHF'] = np.nan
 data.dropna(inplace=True)
 
+# plot model performance
 ts = np.arange(.1, 1, .05)
 radii = np.arange(1200, 2701, 500)
 colors = 'rgkb'
@@ -127,9 +168,21 @@ ncenters = 10
 plot_performance_analysis(data, ts, radii, colors, ncenters)
 save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
 
+# plot model sensitivity excluding Greenland
 noise_amps = np.arange(0.02, .25, .02)
 radius = 1700
 ncenters = 10
 t = .9
 plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters)
 save_cur_fig('GB_sensitivity.png', title='GBRT sensitivity for different noise levels')
+
+# plot model sensitivity for Greenland
+data = load_global_gris_data()
+gris_known, gris_unknown = fill_in_greenland_GHF(data)
+X_train = gris_known.drop(['GHF'], axis=1)
+y_train = gris_known.GHF
+X_test = gris_unknown.drop(['GHF'], axis=1)
+noise_amps = np.arange(0.02, .25, .02)
+plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps)
+save_cur_fig('GB_sensitivity_greenland.png', title='GBRT sensitivity for different noise levels for Greenland')
+
