@@ -125,7 +125,7 @@ for core in GREENLAND.core:
     equi(m, centerlon, centerlat, MAX_ICE_CORE_DIST,
          lw=2, linestyle='-', color='brown', alpha=.8)
 
-save_cur_fig('GHF_1deg_averaged_map_train.png', title='GHF at train set')
+save_cur_fig('GHF_1deg_averaged_map_train.png', title='GHF at training set')
 
 #plot_GHF_on_map(m,
 #                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
@@ -140,19 +140,19 @@ reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                       y_train, logfile='GHF_1deg_averaged_logfile.txt')
 y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
-m = Basemap(width=1600000, height=2650000, resolution='l',
-            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
-colorbar_args = {'location': 'right', 'pad': '5%', 'extend': 'both'}
-scatter_args = {'marker': 'o', 's': 25, 'lw': 0, 'cmap': spectral_cmap}
+#m = Basemap(width=1600000, height=2650000, resolution='l',
+#            projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
+#colorbar_args = {'location': 'right', 'pad': '5%', 'extend': 'both'}
+#scatter_args = {'marker': 'o', 's': 25, 'lw': 0, 'cmap': spectral_cmap}
 
-plot_GHF_on_map(m,
-                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                y_pred,
-                parallel_step=5., meridian_step=10.,
-                colorbar_args=colorbar_args,
-                scatter_args=scatter_args)
-save_cur_fig('Greenland_GHF_predicted_1deg.png',
-             title='GHF predicted for Greenland (mW m$^{-2}$) \n globally trained')
+#plot_GHF_on_map(m,
+#                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+#                y_pred,
+#                parallel_step=5., meridian_step=10.,
+#                colorbar_args=colorbar_args,
+#                scatter_args=scatter_args)
+#save_cur_fig('Greenland_GHF_predicted_1deg.png',
+#             title='GHF predicted for Greenland (mW m$^{-2}$) \n globally trained')
 
 # NOTE dropped 'Greenland_GHF_1deg.png': predicted and known GHF are overlayed.
 
@@ -257,7 +257,7 @@ plot_GHF_on_map_pcolormesh(m,
                 y_train,
                 colorbar_args=colorbar_args,
                 pcolor_args=pcolor_args)
-save_cur_fig('pcolormesh.png', title='GHF at train set')
+save_cur_fig('pcolormesh_global.png', title='GHF at training set')
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
             projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
@@ -279,7 +279,7 @@ plot_GHF_on_map_pcolormesh(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 pcolor_args=pcolor_args)
-save_cur_fig('TEST_pcolormesh.png',
+save_cur_fig('pcolormesh.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 
@@ -300,7 +300,7 @@ plot_GHF_on_map_pcolormesh_interp(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 pcolor_args=pcolor_args)
-save_cur_fig('TEST_pcolormesh_interpolated.png',
+save_cur_fig('pcolormesh_interpolated.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 
