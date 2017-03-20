@@ -34,16 +34,16 @@ def random_prediction_ctr(data, radius, min_points=100):
 def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
     centers = [random_prediction_ctr(data, min(radii)) for _ in range(ncenters)]
     fig, ax1 = plt.subplots()
+    ax1.set_ylabel('Normalized RMSE (solid lines)')
+    ax1.set_xlim(0, 100)
     ax1.set_xlabel('$t$ (percentage of points in circle to predict)')
-    ax1.set_ylabel('$r^2$ (solid lines)')
     ax1.set_title('GBRT performance for different radii')
     ax1.set_xlim(0, 100)
-    ax1.set_ylim(0.3, 1)
     ax1.grid(True)
 
     ax2 = ax1.twinx()
-    ax2.set_ylabel('Normalized RMSE (dashed lines)')
-    ax2.set_xlim(0, 100)
+    ax2.set_ylabel('$r^2$ (dashed lines)')
+    ax2.set_ylim(0.3, 1)
 
     assert len(radii) == len(colors)
     radii_errors = np.zeros([1,3])
@@ -68,13 +68,13 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
             #ax2.plot(test_ratios * 100, rmses[idx], color=color, alpha=.2, lw=1, ls='--')
 
         kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'color': color}
-        ax1.plot(test_ratios * 100, r2s.mean(axis=0), label='%d km' % radius, **kw)
-        ax2.plot(test_ratios * 100, rmses.mean(axis=0), label='%d km' % radius, ls='--', **kw)
+        ax1.plot(test_ratios * 100, rmses.mean(axis=0), label='%d km' % radius, **kw)
+        ax2.plot(test_ratios * 100, r2s.mean(axis=0), label='%d km' % radius, ls='--', **kw)
 
         save_np_object('error_details.txt', 't, r2, and rmse details', radii_errors[1:,:], delimiter=', ',
                        header='t, r2, rmse', fmt='%10.5f')
 
-    ax1.legend(loc=6, prop={'size':12.5})
+    ax1.legend(loc=2, prop={'size':12.5})
 
 def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
     centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
@@ -162,7 +162,7 @@ data.dropna(inplace=True)
 
 # plot model performance
 ts = np.arange(.1, 1, .05)
-radii = np.arange(1200, 2701, 500)
+np.arange(1000, 2501, 500)
 colors = 'rgkb'
 ncenters = 10
 plot_performance_analysis(data, ts, radii, colors, ncenters)
@@ -170,15 +170,15 @@ save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
 
 # plot model sensitivity excluding Greenland
 noise_amps = np.arange(0.02, .25, .02)
-radius = 1700
+radius = 1500
 ncenters = 10
 t = .9
 plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters)
 save_cur_fig('GB_sensitivity.png', title='GBRT sensitivity for different noise levels')
 
 # plot model sensitivity for Greenland
-data = load_global_gris_data()
-gris_known, gris_unknown = fill_in_greenland_GHF(data)
+data_ = load_global_gris_data()
+gris_known, gris_unknown = fill_in_greenland_GHF(data_)
 X_train = gris_known.drop(['GHF'], axis=1)
 y_train = gris_known.GHF
 X_test = gris_unknown.drop(['GHF'], axis=1)
