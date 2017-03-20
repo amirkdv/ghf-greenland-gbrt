@@ -87,7 +87,7 @@ def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
     #ax.set_aspect('equal')
     ax.grid(True)
 
-    def _predict(X_train, y_train, X_test, center, noise_amp):
+    def _predict(X_train, y_train, X_test, noise_amp):
         # If noise ~ N(0, s^2), then mean(|noise|) = s * sqrt(2/pi),
         # cf. https://en.wikipedia.org/wiki/Half-normal_distribution
         # So to get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
@@ -103,11 +103,11 @@ def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
         X_train, y_train, X_test, y_test = \
             split(data, center, test_size=t, max_dist=radius)
         sys.stderr.write('** noise_amp = 0, center = %s:\n' % repr(center))
-        y0 = _predict(X_train, y_train, X_test, center, 0)
+        y0 = _predict(X_train, y_train, X_test, 0)
         for idx_noise, noise_amp in enumerate(noise_amps):
             sys.stderr.write('** noise_amp = %.2f, center = %s:\n' % \
                 (noise_amp, repr(center)))
-            y_pred = _predict(X_train, y_train, X_test, center, noise_amp)
+            y_pred = _predict(X_train, y_train, X_test, noise_amp)
             rmse = sqrt(mean_squared_error(y0, y_pred)) / np.mean(y0)
             sys.stderr.write('-> RMSE=%.2f\n' % rmse)
             rmses[idx_ctr][idx_noise] = rmse
