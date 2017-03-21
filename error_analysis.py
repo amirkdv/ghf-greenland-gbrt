@@ -74,7 +74,7 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
         save_np_object('error_details.txt', 't, r2, and rmse details', radii_errors[1:,:], delimiter=', ',
                        header='t, r2, rmse', fmt='%10.5f')
 
-    ax1.legend(loc=2, prop={'size':12.5})
+    ax1.legend(loc=6, prop={'size':12.5})
 
 def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
     centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
@@ -84,7 +84,7 @@ def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
     ax.set_ylabel('RMSE in predicted GHF')
     ax.set_xlim(0, max(noise_amps) * 1.1)
     ax.set_title('GBRT sensitivity to noise in GHF measurements')
-    #ax.set_aspect('equal')
+    ax.set_aspect('equal')
     ax.grid(True)
 
     def _predict(X_train, y_train, X_test, noise_amp):
@@ -129,7 +129,7 @@ def plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps):
     ax.set_ylabel('RMSE in predicted GHF')
     ax.set_xlim(0, max(noise_amps) * 1.1)
     ax.set_title('GBRT sensitivity to noise in GHF measurements')
-    #ax.set_aspect('equal')
+    ax.set_aspect('equal')
     ax.grid(True)
 
     def _predict_greenland(X_train, y_train, X_test, noise_amp):
@@ -169,7 +169,7 @@ plot_performance_analysis(data, ts, radii, colors, ncenters)
 save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
 
 # plot model sensitivity excluding Greenland
-noise_amps = np.arange(0.02, .25, .02)
+noise_amps = np.arange(0.025, .31, .025)
 radius = 1500
 ncenters = 10
 t = .9
@@ -182,7 +182,7 @@ gris_known, gris_unknown = fill_in_greenland_GHF(data_)
 X_train = gris_known.drop(['GHF'], axis=1)
 y_train = gris_known.GHF
 X_test = gris_unknown.drop(['GHF'], axis=1)
-noise_amps = np.arange(0.02, .25, .02)
+noise_amps = np.arange(0.025, .31, .025)
 plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps)
 save_cur_fig('GB_sensitivity_greenland.png', title='GBRT sensitivity for different noise levels for Greenland')
 
