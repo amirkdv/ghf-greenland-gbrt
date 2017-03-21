@@ -38,12 +38,12 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
     ax1.set_xlim(0, 100)
     ax1.set_xlabel('$t$ (percentage of points in circle to predict)')
     ax1.set_title('GBRT performance for different radii')
-    ax1.set_xlim(0, 100)
     ax1.grid(True)
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('$r^2$ (dashed lines)')
     ax2.set_ylim(0.3, 1)
+    ax2.set_xlim(0, 100)
 
     assert len(radii) == len(colors)
     radii_errors = np.zeros([1,3])
