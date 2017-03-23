@@ -236,7 +236,7 @@ for core in GREENLAND.core:
     equi(m, centerlon, centerlat, MAX_ICE_CORE_DIST,
          lw=2, linestyle='-', color='brown', alpha=.8)
 
-scatter_args = {'marker': 's', 's': 35, 'lw': 1, 'cmap': spectral_cmap, 'edgecolor':'black'}
+scatter_args = {'marker': 's', 's': 45, 'lw': 1, 'cmap': spectral_cmap, 'edgecolor':'white'}
 plot_GHF_on_map(m,
                 GREENLAND.lon.as_matrix(), GREENLAND.lat.as_matrix(),
                 GREENLAND.ghf.as_matrix(),
@@ -279,6 +279,14 @@ plot_GHF_on_map_pcolormesh(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 pcolor_args=pcolor_args)
+
+scatter_args = {'marker': 's', 's': 45, 'lw': 1, 'cmap': spectral_cmap, 'edgecolor':'white'}
+plot_GHF_on_map(m,
+                GREENLAND.lon.as_matrix(), GREENLAND.lat.as_matrix(),
+                GREENLAND.ghf.as_matrix(),
+                parallel_step=5., meridian_step=10.,
+                colorbar_args=colorbar_args,
+                scatter_args=scatter_args)
 save_cur_fig('pcolormesh.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
@@ -300,6 +308,15 @@ plot_GHF_on_map_pcolormesh_interp(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 pcolor_args=pcolor_args)
+
+scatter_args = {'marker': 's', 's': 45, 'lw': 1, 'cmap': spectral_cmap, 'edgecolor':'white'}
+plot_GHF_on_map(m,
+                GREENLAND.lon.as_matrix(), GREENLAND.lat.as_matrix(),
+                GREENLAND.ghf.as_matrix(),
+                parallel_step=5., meridian_step=10.,
+                colorbar_args=colorbar_args,
+                scatter_args=scatter_args)
+
 save_cur_fig('pcolormesh_interpolated.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
