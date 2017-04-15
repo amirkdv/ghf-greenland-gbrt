@@ -9,16 +9,13 @@ from ghf_prediction import (
 from ghf_prediction_greenland import fill_in_greenland_GHF
 
 
-def eval_prediction_multiple(data, tasks):
-    return {task: eval_prediction(data, *task) for task in tasks}
-
-def eval_prediction(data, t, radius, center):
+def eval_prediction(data, t, radius, center, **gdr_params):
     X_train, y_train, X_test, y_test = \
         split(data, center, test_size=t, max_dist=radius)
     assert not X_test.empty
 
     reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                          y_train)
+                          y_train, **gdr_params)
     y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
     return error_summary(y_test, y_pred)
 
@@ -60,7 +57,7 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
 
             lngth = len(test_ratios)
             radius_error = np.hstack([test_ratios.reshape(lngth,1),r2s.mean(axis=0).reshape(lngth,1),rmses.mean(axis=0).reshape(lngth,1)])
-        
+
         radii_errors = np.vstack([radii_errors,radius_error])
 
         #for idx in range(ncenters):
