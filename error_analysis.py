@@ -151,6 +151,39 @@ def plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps):
     ax.plot(noise_amps, rmses[0], color='b', alpha=.9, lw=2.5, marker='o')
 
 
+def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
+    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
+
+    fig, ax = plt.subplots()
+
+    train_rmses = np.zeros([ncenters, len(ns_estimators)])
+    test_rmses = np.zeros([ncenters, len(ns_estimators)])
+    for center_idx, center in enumerate(centers):
+        X_train, y_train, X_test, y_test = \
+            split(data, center, test_size=t, max_dist=radius)
+        X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+        X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+        assert not X_test.empty
+
+        for n_idx, n in enumerate(ns_estimators):
+            reg = train_regressor(X_train, y_train, n_estimators=n)
+            _, train_rmse = error_summary(y_train, reg.predict(X_train))
+            _, test_rmse  = error_summary(y_test, reg.predict(X_test))
+            train_rmses[center_idx][n_idx] = train_rmse
+            test_rmses[center_idx][n_idx] = test_rmse
+
+        ax.plot(ns_estimators, train_rmses[center_idx], 'g', alpha=.2, lw=1)
+        ax.plot(ns_estimators, test_rmses[center_idx], 'r', alpha=.2, lw=1)
+
+    ax.plot(ns_estimators, train_rmses.mean(axis=0), 'g', alpha=.9, lw=2.5)
+    ax.plot(ns_estimators, test_rmses.mean(axis=0), 'r', alpha=.9, lw=2.5)
+    ax.grid(True)
+    ax.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
+    ax.set_ylim(0, .5)
+    ax.set_xlabel('Number of trees')
+    ax.set_ylabel('Normalized RMSE')
+    ax.legend()
+
 data = load_global_gris_data()
 # FIXME artificially forced to 135.0 in source
 data.loc[data.GHF == 135.0, 'GHF'] = 0
@@ -173,6 +206,14 @@ t = .9
 plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters)
 save_cur_fig('GB_sensitivity.png', title='GBRT sensitivity for different noise levels')
 
+# plot generalization analysis
+radius = 1700
+ncenters = 10
+t = .9
+ns_estimators = range(200, 3500, 500)
+plot_generalization_analysis(data, t, radius, ncenters, ns_estimators)
+save_cur_fig('generalization.png', title='GBRT generalization power for different number of trees')
+
 # plot model sensitivity for Greenland
 data_ = load_global_gris_data()
 gris_known, gris_unknown = fill_in_greenland_GHF(data_)
@@ -182,4 +223,3 @@ X_test = gris_unknown.drop(['GHF'], axis=1)
 noise_amps = np.arange(0.025, .31, .025)
 plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps)
 save_cur_fig('GB_sensitivity_greenland.png', title='GBRT sensitivity for different noise levels for Greenland')
-
