@@ -159,6 +159,7 @@ def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
     train_rmses = np.zeros([ncenters, len(ns_estimators)])
     test_rmses = np.zeros([ncenters, len(ns_estimators)])
     for center_idx, center in enumerate(centers):
+        sys.stderr.write('%d / %d\n' % (center_idx + 1, ncenters))
         X_train, y_train, X_test, y_test = \
             split(data, center, test_size=t, max_dist=radius)
         X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
@@ -184,6 +185,27 @@ def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
     ax.set_ylabel('Normalized RMSE')
     ax.legend()
 
+def plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators):
+    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
+
+    fig, ax = plt.subplots()
+
+    n_features = len(list(data)) - 3 # 3 = 1 (lat) + 1 (lon) + 1 (ghf)
+    importances = np.zeros([ncenters, n_features])
+    for center_idx, center in enumerate(centers):
+        X_train, y_train, X_test, y_test = \
+            split(data, center, test_size=t, max_dist=radius)
+        X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+        X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+        assert not X_test.empty
+
+        reg = train_regressor(X_train, y_train, n_estimators=n_estimators)
+        importances[center_idx] = reg.feature_importances_
+
+        ax.plot(range(n_features), importances[center_idx], 'k', alpha=.2, lw=1)
+
+    ax.plot(range(n_features), importances.mean(axis=0), 'b', alpha=.9, lw=2.5)
+    ax.grid(True)
 
 def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
     fig = plt.figure()
@@ -285,9 +307,16 @@ radius = 1700
 ncenters = 200
 t = .9
 ns_estimators = range(200, 1100, 200)
-#ns_estimators = range(20, 100, 20)
 plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators)
 save_cur_fig('bias-variance.png', title='GBRT bias/variance for different number of trees')
+
+# plot feature importance analysis
+radius = 1700
+ncenters = 200
+t = .9
+n_estimators = 200
+plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators)
+save_cur_fig('feature-importance.png', title='GBRT feature importances')
 
 # plot model sensitivity for Greenland
 data_ = load_global_gris_data()
