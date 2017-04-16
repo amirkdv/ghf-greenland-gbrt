@@ -6,7 +6,7 @@ from ghf_prediction import (
     load_global_gris_data, save_cur_fig, save_np_object,
     split, split_by_distance, train_regressor, error_summary
 )
-from ghf_prediction_greenland import fill_in_greenland_GHF
+from ghf_greenland import fill_in_greenland_GHF
 
 
 def eval_prediction(data, t, radius, center, **gdr_params):
