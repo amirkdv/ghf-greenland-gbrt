@@ -253,7 +253,7 @@ def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
 
 # saves current matplotlib plot to given filename in OUT_DIR
 def save_cur_fig(filename, title=None):
-    plt.title(title)
+    plt.gcf().suptitle(title)
     plt.savefig(os.path.join(OUT_DIR, filename), dpi=400)
     sys.stderr.write('Saved %s to %s.\n' % (repr(title), filename))
     plt.clf()

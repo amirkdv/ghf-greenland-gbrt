@@ -184,6 +184,72 @@ def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
     ax.set_ylabel('Normalized RMSE')
     ax.legend()
 
+
+def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
+    fig = plt.figure()
+    ax_bias = fig.add_subplot(2, 1, 1)
+    ax_var = fig.add_subplot(2, 1, 2)
+
+    results = {}
+    for n_idx, n in enumerate(ns_estimators):
+        for _ in range(ncenters):
+            sys.stdout.write('--------- center %d / %d, %d estimators' % (_+1, ncenters, n))
+            center = random_prediction_ctr(data, radius)
+            X_train, y_train, X_test, y_test = \
+                split(data, center, test_size=t, max_dist=radius)
+
+            points = [tuple(i) for i in
+                      X_test[['Latitude_1', 'Longitude_1']].values]
+            X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+            X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+            assert not X_test.empty
+
+            reg = train_regressor(X_train, y_train, n_estimators=n)
+            sys.stdout.flush()
+            y_pred = reg.predict(X_test)
+            for y_idx, y in enumerate(y_pred):
+                point = points[y_idx]
+                if point not in results:
+                    results[point] = {'value': y_test.iloc[y_idx],
+                                      'preds':[[] for _ in ns_estimators]}
+                results[point]['preds'][n_idx].append(y)
+
+    ns_estimators = np.array(ns_estimators)
+    bias = np.zeros([len(results), len(ns_estimators)])
+    var = np.zeros([len(results), len(ns_estimators)])
+    for idx, point in enumerate(results):
+        for n_idx in range(len(ns_estimators)):
+            #print point
+            #print results[point]
+            if results[point]['preds'][n_idx]:
+                bias[idx][n_idx] = np.mean(results[point]['preds'][n_idx]) \
+                                 - results[point]['value']
+                var[idx][n_idx] = np.var(results[point]['preds'][n_idx])
+            else:
+                bias[idx][n_idx] = np.NaN
+                var[idx][n_idx] = np.NaN
+
+        mask = np.isfinite(bias[idx])
+        ax_bias.plot(ns_estimators[mask], bias[idx][mask], 'k', alpha=.2, lw=1)
+        ax_var.plot(ns_estimators[mask], var[idx][mask], 'k', alpha=.2, lw=1)
+
+    ax_bias.plot(ns_estimators, np.nanmean(bias, axis=0), 'b', alpha=.9, lw=2.5)
+    ax_var.plot(ns_estimators, np.nanmean(var, axis=0), 'b', alpha=.9, lw=2.5)
+
+    ax_bias.grid(True)
+    ax_var.grid(True)
+
+    ax_bias.set_xlabel('Number of trees')
+    ax_var.set_xlabel('Number of trees')
+
+    ax_bias.set_ylabel('Bias')
+    ax_var.set_ylabel('Variance')
+
+    ax_bias.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
+    ax_var.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
+
+    ax_var.set_ylim(-.1 * np.nanmax(var), None)
+
 data = load_global_gris_data()
 # FIXME artificially forced to 135.0 in source
 data.loc[data.GHF == 135.0, 'GHF'] = 0
@@ -213,6 +279,15 @@ t = .9
 ns_estimators = range(200, 3500, 500)
 plot_generalization_analysis(data, t, radius, ncenters, ns_estimators)
 save_cur_fig('generalization.png', title='GBRT generalization power for different number of trees')
+
+# plot bias/variance analysis
+radius = 1700
+ncenters = 200
+t = .9
+ns_estimators = range(200, 1100, 200)
+#ns_estimators = range(20, 100, 20)
+plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators)
+save_cur_fig('bias-variance.png', title='GBRT bias/variance for different number of trees')
 
 # plot model sensitivity for Greenland
 data_ = load_global_gris_data()
