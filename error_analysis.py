@@ -9,16 +9,6 @@ from ghf_prediction import (
 from ghf_greenland import fill_in_greenland_GHF
 
 
-def eval_prediction(data, t, radius, center, **gdr_params):
-    X_train, y_train, X_test, y_test = \
-        split(data, center, test_size=t, max_dist=radius)
-    assert not X_test.empty
-
-    reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                          y_train, **gdr_params)
-    y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
-    return error_summary(y_test, y_pred)
-
 def random_prediction_ctr(data, radius, min_points=100):
     cands = data.loc[(data.Latitude_1 > 45) & (data.Longitude_1 > -100) & (data.Longitude_1 < 50)]
     while True:
@@ -28,7 +18,19 @@ def random_prediction_ctr(data, radius, min_points=100):
         if len(test) >= min_points:
             return round(center[0], 2), round(center[1], 2)
 
-def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
+def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
+                              plot_r2=True, **gdr_params):
+    # for a fixed center, t, and radius, returns r2 and normalized rmse
+    def _eval_prediction(data, t, radius, center):
+        X_train, y_train, X_test, y_test = \
+            split(data, center, test_size=t, max_dist=radius)
+        assert not X_test.empty
+
+        reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                              y_train, **gdr_params)
+        y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+        return error_summary(y_test, y_pred)
+
     centers = [random_prediction_ctr(data, min(radii)) for _ in range(ncenters)]
     fig, ax1 = plt.subplots()
     ax1.set_ylabel('Normalized RMSE (solid lines)')
@@ -37,10 +39,11 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
     ax1.set_title('GBRT performance for different radii')
     ax1.grid(True)
 
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('$r^2$ (dashed lines)')
-    ax2.set_ylim(0.3, 1)
-    ax2.set_xlim(0, 100)
+    if plot_r2:
+        ax2 = ax1.twinx()
+        ax2.set_ylabel('$r^2$ (dashed lines)')
+        ax2.set_ylim(0.3, 1)
+        ax2.set_xlim(0, 100)
 
     assert len(radii) == len(colors)
     radii_errors = np.zeros([1,3])
@@ -50,7 +53,7 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
         for idx_t, t in enumerate(test_ratios):
             for idx_ctr, center in enumerate(centers):
                 sys.stderr.write('** t = %.2f, r = %d, center = %s:\n' % (t, radius, repr(center)))
-                r2, rmse = eval_prediction(data, t, radius, center)
+                r2, rmse = _eval_prediction(data, t, radius, center)
                 sys.stderr.write('-> r2 = %.2f, RMSE=%.2f\n' % (r2, rmse))
                 rmses[idx_ctr][idx_t] = rmse
                 r2s[idx_ctr][idx_t] = r2
@@ -66,7 +69,8 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters):
 
         kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'color': color}
         ax1.plot(test_ratios * 100, rmses.mean(axis=0), label='%d km' % radius, **kw)
-        ax2.plot(test_ratios * 100, r2s.mean(axis=0), label='%d km' % radius, ls='--', **kw)
+        if plot_r2:
+            ax2.plot(test_ratios * 100, r2s.mean(axis=0), label='%d km' % radius, ls='--', **kw)
 
         save_np_object('error_details.txt', 't, r2, and rmse details', radii_errors[1:,:], delimiter=', ',
                        header='t, r2, rmse', fmt='%10.5f')
