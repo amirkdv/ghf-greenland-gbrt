@@ -35,6 +35,8 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
     fig, ax1 = plt.subplots()
     ax1.set_ylabel('Normalized RMSE (solid lines)')
     ax1.set_xlim(0, 100)
+    # when comparing different setups it's usefil to fix the ylim
+    #ax1.set_ylim(0, .5)
     ax1.set_xlabel('$t$ (percentage of points in circle to predict)')
     ax1.grid(True)
 
@@ -53,7 +55,6 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
             for idx_ctr, center in enumerate(centers):
                 sys.stderr.write('** t = %.2f, r = %d, center = %s:\n' % (t, radius, repr(center)))
                 r2, rmse = _eval_prediction(data, t, radius, center)
-                sys.stderr.write('-> r2 = %.2f, RMSE=%.2f\n' % (r2, rmse))
                 rmses[idx_ctr][idx_t] = rmse
                 r2s[idx_ctr][idx_t] = r2
 
@@ -311,12 +312,26 @@ data.loc[data.GHF == 135.0, 'GHF'] = 0
 data.loc[data.GHF == 0, 'GHF'] = np.nan
 data.dropna(inplace=True)
 
+# throw out all but the top 10 features according to feature importance
+# analysis
+#non_features = ['Latitude_1', 'Longitude_1', 'GHF']
+#top_10_features = ['ETOPO_1deg', 'G_d_2yng_r', 'G_heat_pro', 'WGM2012_Bo',
+    #'age', 'd2_transfo', 'd_2hotspot', 'd_2ridge', 'd_2trench', 'd_2volcano']
+#data = data.loc[:, top_10_features + non_features]
+
+# replace all features with junk
+#non_features = ['Latitude_1', 'Longitude_1', 'GHF']
+#for f in data:
+    #if f not in non_features:
+        #data[f] = np.random.randn(*data[f].shape)
+
 # plot model performance
 ts = np.arange(.1, 1, .05)
 radii = np.arange(1000, 2501, 500)
 colors = 'rgkb'
-ncenters = 10
+ncenters = 50
 plot_performance_analysis(data, ts, radii, colors, ncenters)
+#plot_performance_analysis(data, ts, radii, colors, ncenters, plot_r2=False, n_estimators=200)
 save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
 
 # plot model sensitivity excluding Greenland
