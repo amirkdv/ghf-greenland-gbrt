@@ -186,11 +186,35 @@ def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
     ax.legend()
 
 def plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators):
-    features = list(data)
+    raw_features = list(data)
     for f in ['Latitude_1', 'Longitude_1', 'GHF']:
-        features.pop(features.index(f))
-    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
+        raw_features.pop(raw_features.index(f))
 
+    # collapse categorical dummies for feature importances
+    categoricals = ['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age']
+    decat_by_raw_idx = {}
+    features = []
+    for idx, f in enumerate(raw_features):
+        match = [c for c in categoricals if c == f[:len(c)]]
+        if match:
+            assert len(match) == 1
+            try:
+                i = features.index(match[0])
+            except ValueError:
+                features.append(match[0])
+                i = len(features) - 1
+            decat_by_raw_idx[idx] = i
+            continue
+        features.append(f)
+        decat_by_raw_idx[idx] = len(features) - 1
+
+    # at this point features contains original feature names and raw_features
+    # contains categorical dummies, in each round we map
+    # feature_importances_, which has the same size as raw_features, to feature
+    # importances for original features by adding the importances of each
+    # categorical dummy.
+
+    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
     fig, ax = plt.subplots()
 
     importances = np.zeros([ncenters, len(features)])
@@ -202,7 +226,9 @@ def plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators):
         assert not X_test.empty
 
         reg = train_regressor(X_train, y_train, n_estimators=n_estimators)
-        importances[center_idx] = reg.feature_importances_
+        raw_importances = reg.feature_importances_
+        for idx, value in enumerate(raw_importances):
+            importances[center_idx][decat_by_raw_idx[idx]] += value
 
         ax.plot(range(len(features)), importances[center_idx], 'k', alpha=.2, lw=1)
 
