@@ -36,7 +36,6 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
     ax1.set_ylabel('Normalized RMSE (solid lines)')
     ax1.set_xlim(0, 100)
     ax1.set_xlabel('$t$ (percentage of points in circle to predict)')
-    ax1.set_title('GBRT performance for different radii')
     ax1.grid(True)
 
     if plot_r2:
@@ -84,7 +83,6 @@ def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
     ax.set_xlabel('Relative noise magnitude')
     ax.set_ylabel('RMSE in predicted GHF')
     ax.set_xlim(0, max(noise_amps) * 1.1)
-    ax.set_title('GBRT sensitivity to noise in GHF measurements')
     ax.set_aspect('equal')
     ax.grid(True)
 
@@ -129,7 +127,6 @@ def plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps):
     ax.set_xlabel('Relative noise magnitude')
     ax.set_ylabel('RMSE in predicted GHF')
     ax.set_xlim(0, max(noise_amps) * 1.1)
-    ax.set_title('GBRT sensitivity to noise in GHF measurements')
     ax.set_aspect('equal')
     ax.grid(True)
 
