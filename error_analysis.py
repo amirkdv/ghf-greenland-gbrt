@@ -389,8 +389,8 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
             y_pred = y_train.mean() + np.zeros(len(y_test))
             const_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred , y_test)) / y_test.mean()
 
-        ax.plot(ns_features, rmses[idx_ctr], 'g', alpha=.4, lw=1)
-        ax.plot(ns_features, junk_rmses[idx_ctr], 'k', alpha=.4, lw=1)
+        ax.plot(ns_features, rmses[idx_ctr], 'g', alpha=.2, lw=1)
+        ax.plot(ns_features, junk_rmses[idx_ctr], 'k', alpha=.5, lw=1)
 
     ax.plot(ns_features, rmses.mean(axis=0), 'g', alpha=.7, lw=3, marker='.', label='GBRT')
     ax.plot(ns_features, junk_rmses.mean(axis=0), 'k', alpha=.7, lw=3, marker='.', label='GBRT trained on noise')
@@ -478,10 +478,10 @@ features = [
     'thk_mid_cr',
     'lthlgy_mod', # categorical
 ]
-ncenters = 50
+ncenters = 100
 t = .9
 radius = 1700
-plot_feature_selection_analysis(data, t, radius, ncenters, features)
+plot_feature_selection_analysis(data, t, radius, ncenters, features, n_estimators=200)
 save_cur_fig('feature-selection.png', 'GBRT performance for different number of features')
 
 # plot model sensitivity for Greenland
