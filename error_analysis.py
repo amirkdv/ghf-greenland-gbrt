@@ -41,7 +41,7 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
     fig, ax1 = plt.subplots()
     ax1.set_ylabel('Normalized RMSE (solid lines)')
     ax1.set_xlim(0, 100)
-    # when comparing different setups it's usefil to fix the ylim
+    # when comparing different setups it's useful to fix the ylim
     #ax1.set_ylim(0, .5)
     ax1.set_xlabel('$t$ (percentage of points in circle to predict)')
     ax1.grid(True)
@@ -327,24 +327,85 @@ def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
 
     ax_var.set_ylim(-.1 * np.nanmax(var), None)
 
+
+# Plots the average performance of GBRT, as measured by normalized RMSE, over
+# ncenters cross validation sets of given radius and ratio, as a function of
+# the number of features used for prediction. The features list is assumed to
+# be in decreasing order of importance.
+def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_params):
+    non_features = ['Latitude_1', 'Longitude_1', 'GHF']
+    dummy = data.copy()
+    for f in list(dummy):
+        if f in non_features:
+            continue
+        dummy[f] = np.random.randn(*dummy[f].shape)
+
+    rmses = np.zeros([ncenters, len(features)])
+    junk_rmses = np.zeros([ncenters, len(features)])
+    const_rmses = np.zeros([ncenters, len(features)])
+
+    fig, ax = plt.subplots()
+    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
+    ns_features = range(1, len(features) + 1)
+    for idx_ctr, center in enumerate(centers):
+        print 'center: %d / %d' % (1 + idx_ctr, ncenters)
+        for idx_n, n_features in enumerate(ns_features):
+            cols = non_features[:] # copy it; we'll be modifying it
+            for idx_f, feature in enumerate(features):
+                if idx_f == n_features:
+                    break
+                if feature in CATEGORICAL_FEATURES:
+                    for col in list(data):
+                        if col[:len(feature)] == feature:
+                            cols.append(col)
+                else:
+                    cols.append(feature)
+
+            X_train, y_train, X_test, y_test = \
+                split(data.loc[:, cols], center, test_size=t, max_dist=radius)
+            assert not X_test.empty
+            reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                                  y_train, **gdr_params)
+            y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+            rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
+
+            # GBRT with junk feature values (signal-to-noise ratio = 0)
+            X_train, y_train, X_test, y_test = \
+                split(dummy.loc[:, cols], center, test_size=t, max_dist=radius)
+            assert not X_test.empty
+            reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                                  y_train, **gdr_params)
+            y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+            junk_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
+
+            # the simplest predictor: constant avg(GHF)
+            y_pred = y_train.mean() + np.zeros(len(y_test))
+            const_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred , y_test)) / y_test.mean()
+
+        ax.plot(ns_features, rmses[idx_ctr], 'g', alpha=.4, lw=1)
+        ax.plot(ns_features, junk_rmses[idx_ctr], 'k', alpha=.4, lw=1)
+
+    ax.plot(ns_features, rmses.mean(axis=0), 'g', alpha=.7, lw=3, marker='.', label='GBRT')
+    ax.plot(ns_features, junk_rmses.mean(axis=0), 'k', alpha=.7, lw=3, marker='.', label='GBRT trained on noise')
+    ax.plot(ns_features, const_rmses.mean(axis=0), 'r', alpha=.9, lw=1 , marker='.', label='Constant predictor')
+
+    ax.set_xlabel('number of included features')
+    ax.set_ylabel('normalized RMSE')
+    ax.set_ylim(0, .6)
+    ax.set_xlim(0, len(features) + 1)
+    ax.grid(True)
+    ax.legend(fontsize=10)
+    ax.set_xticks(ns_features)
+    xtick_labels = ['%s - %d' % (feature, idx + 1) for idx, feature in enumerate(features)]
+    ax.set_xticklabels(xtick_labels, rotation=90, fontsize=8)
+
+    fig.subplots_adjust(bottom=0.25)
+
 data = load_global_gris_data()
 # FIXME artificially forced to 135.0 in source
 data.loc[data.GHF == 135.0, 'GHF'] = 0
 data.loc[data.GHF == 0, 'GHF'] = np.nan
 data.dropna(inplace=True)
-
-# throw out all but the top 10 features according to feature importance
-# analysis
-#non_features = ['Latitude_1', 'Longitude_1', 'GHF']
-#top_10_features = ['ETOPO_1deg', 'G_d_2yng_r', 'G_heat_pro', 'WGM2012_Bo',
-    #'age', 'd2_transfo', 'd_2hotspot', 'd_2ridge', 'd_2trench', 'd_2volcano']
-#data = data.loc[:, top_10_features + non_features]
-
-# replace all features with junk
-#non_features = ['Latitude_1', 'Longitude_1', 'GHF']
-#for f in data:
-    #if f not in non_features:
-        #data[f] = np.random.randn(*data[f].shape)
 
 # plot model performance
 ts = np.arange(.1, 1, .05)
@@ -352,7 +413,6 @@ radii = np.arange(1000, 2501, 500)
 colors = 'rgkb'
 ncenters = 50
 plot_performance_analysis(data, ts, radii, colors, ncenters)
-#plot_performance_analysis(data, ts, radii, colors, ncenters, plot_r2=False, n_estimators=200)
 save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
 
 # plot model sensitivity excluding Greenland
@@ -384,8 +444,38 @@ radius = 1700
 ncenters = 200
 t = .9
 n_estimators = 200
-plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators)
+plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators=n_estimators)
 save_cur_fig('feature-importance.png', title='GBRT feature importances')
+
+# plot performance by varying number of features
+# features in decreasing order of importance:
+features = [
+    'd_2trench',
+    'd_2hotspot',
+    'd_2volcano',
+    'd_2ridge',
+    'G_d_2yng_r',
+    'age',
+    'G_heat_pro',
+    'WGM2012_Bo',
+    'd2_transfo',
+    'ETOPO_1deg',
+    'upman_den_',
+    'moho_GReD',
+    'crusthk_cr',
+    'litho_asth',
+    'thk_up_cru',
+    'G_ther_age', # categorical
+    'magnetic_M',
+    'G_u_m_vel_', # categorical
+    'thk_mid_cr',
+    'lthlgy_mod', # categorical
+]
+ncenters = 50
+t = .9
+radius = 1700
+plot_feature_selection_analysis(data, t, radius, ncenters, features)
+save_cur_fig('feature-selection.png', 'GBRT performance for different number of features')
 
 # plot model sensitivity for Greenland
 data_ = load_global_gris_data()
