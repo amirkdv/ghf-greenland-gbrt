@@ -4,11 +4,14 @@ from math import sqrt, pi
 from ghf_prediction import (
     plt, np, mean_squared_error,
     load_global_gris_data, save_cur_fig, save_np_object,
-    split, split_by_distance, train_regressor, error_summary
+    split, split_by_distance, train_regressor, error_summary,
+    CATEGORICAL_FEATURES,
 )
 from ghf_greenland import fill_in_greenland_GHF
 
 
+# Returns a random longitude-latitude pair that serves as the center of
+# validation circle.
 def random_prediction_ctr(data, radius, min_points=100):
     cands = data.loc[(data.Latitude_1 > 45) & (data.Longitude_1 > -100) & (data.Longitude_1 < 50)]
     while True:
@@ -18,6 +21,9 @@ def random_prediction_ctr(data, radius, min_points=100):
         if len(test) >= min_points:
             return round(center[0], 2), round(center[1], 2)
 
+# For all combinations of given radii and test_ratios, ncenters random centers
+# are picked for cross-validation and their average normalized RMSE and r2 are
+# plotted.
 def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
                               plot_r2=True, **gdr_params):
     # for a fixed center, t, and radius, returns r2 and normalized rmse
@@ -77,6 +83,9 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
 
     ax1.legend(loc=6, prop={'size':12.5})
 
+# For each given noise amplitude, performs cross-validation on ncenters with
+# given radius and test ratio and the average normalized rmse is reported as
+# the perturbation in prediction caused by noise.
 def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
     centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
 
@@ -153,6 +162,13 @@ def plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps):
     ax.plot(noise_amps, rmses[0], color='b', alpha=.9, lw=2.5, marker='o')
 
 
+# For all given values for n_estimators (number of trees) for GBRT, perform
+# cross-validation over ncenters circles with given radius and test ratio. The
+# average training and validation error for each number of trees is plotted.
+# This is the standard plot to detect overfitting defined as the turning point
+# beyond which validation error starts increasing while training error is
+# driven down to zero. As expected, GBRT does not overfit (test error
+# plateaus).
 def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
     centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
 
@@ -187,17 +203,18 @@ def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
     ax.set_ylabel('Normalized RMSE')
     ax.legend()
 
-def plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators):
+# Plot feature importance results for ncenters rounds of cross validation for
+# given test ratio and radius.
+def plot_feature_importance_analysis(data, t, radius, ncenters, **gdr_params):
     raw_features = list(data)
     for f in ['Latitude_1', 'Longitude_1', 'GHF']:
         raw_features.pop(raw_features.index(f))
 
     # collapse categorical dummies for feature importances
-    categoricals = ['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age']
     decat_by_raw_idx = {}
     features = []
     for idx, f in enumerate(raw_features):
-        match = [c for c in categoricals if c == f[:len(c)]]
+        match = [c for c in CATEGORICAL_FEATURES if c == f[:len(c)]]
         if match:
             assert len(match) == 1
             try:
@@ -227,7 +244,7 @@ def plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators):
         X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
         assert not X_test.empty
 
-        reg = train_regressor(X_train, y_train, n_estimators=n_estimators)
+        reg = train_regressor(X_train, y_train, **gdr_params)
         raw_importances = reg.feature_importances_
         for idx, value in enumerate(raw_importances):
             importances[center_idx][decat_by_raw_idx[idx]] += value
@@ -241,6 +258,10 @@ def plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators):
     ax.grid(True)
     fig.subplots_adjust(bottom=0.2)
 
+# For each given value of n_estimators, peforms ncenters rounds of cross
+# validation with given radius and test ratio. Plots the average bias and
+# variance in predictions for _any prediction point_ against the increasing
+# number of estimators.
 def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
     fig = plt.figure()
     ax_bias = fig.add_subplot(2, 1, 1)

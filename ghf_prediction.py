@@ -16,7 +16,6 @@ pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
 
 MAX_GHF  = 150   # max limit of ghf considered
-N_ESTIMATORS = 5000 # number of estimators for gradient boosting regressor
 
 OUT_DIR = 'global_learning_plots_gb_circles_gaussian/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
@@ -29,10 +28,11 @@ IGNORED_COLS = [
     #'G_heat_pro', 'd_2hotspots', 'd_2volcano', 'crusthk_cr', 'litho_asth',
     #'d_2trench', 'G_d_2yng_r', 'd_2ridge', 'd2_transfo'
     ]
+CATEGORICAL_FEATURES = ['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age']
 GDR_PARAMS = {
     'loss': 'ls',
     'learning_rate': 0.05,
-    'n_estimators': N_ESTIMATORS,
+    'n_estimators': 5000,
     'subsample': 1.0,
     'criterion': 'friedman_mse',
     'min_samples_split': 2,
@@ -72,8 +72,7 @@ def load_global_gris_data():
     data_gris = process_greenland_data(data_gris)
 
     data = pd.concat([data_global, data_gris])
-    data = pd.get_dummies(data,
-                          columns=['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age'])
+    data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES)
 
     return data
 
