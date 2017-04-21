@@ -333,12 +333,11 @@ def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
 # the number of features used for prediction. The features list is assumed to
 # be in decreasing order of importance.
 def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_params):
+    data = data.copy()
     non_features = ['Latitude_1', 'Longitude_1', 'GHF']
-    dummy = data.copy()
-    for f in list(dummy):
-        if f in non_features:
-            continue
-        dummy[f] = np.random.randn(*dummy[f].shape)
+    noise_cols = [f + '_noise' for f in list(data) if f not in non_features]
+    for f in list(noise_cols):
+        data[f] = np.random.randn(len(data))
 
     rmses = np.zeros([ncenters, len(features)])
     junk_rmses = np.zeros([ncenters, len(features)])
@@ -349,36 +348,44 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
     ns_features = range(1, len(features) + 1)
     for idx_ctr, center in enumerate(centers):
         print 'center: %d / %d' % (1 + idx_ctr, ncenters)
+        # all three versions use the same split of data; note that X_train and
+        # X_test now have both noise columns and ordinary columns
+        X_train, y_train, X_test, y_test = \
+            split(data, center, test_size=t, max_dist=radius)
+        assert not X_test.empty
         for idx_n, n_features in enumerate(ns_features):
             cols = non_features[:] # copy it; we'll be modifying it
+            cols_noise = non_features[:]
             for idx_f, feature in enumerate(features):
                 if idx_f == n_features:
                     break
                 if feature in CATEGORICAL_FEATURES:
                     for col in list(data):
                         if col[:len(feature)] == feature:
-                            cols.append(col)
+                            if col[:-len('_noise')] == '_noise':
+                                cols_noise.append(col)
+                            else:
+                                cols.append(col)
                 else:
                     cols.append(feature)
+                    cols_noise.append(feature + '_noise')
 
-            X_train, y_train, X_test, y_test = \
-                split(data.loc[:, cols], center, test_size=t, max_dist=radius)
-            assert not X_test.empty
-            reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+            X_train_ = X_train.loc[:, cols]
+            X_test_ = X_test.loc[:, cols]
+            reg = train_regressor(X_train_.drop(non_features, axis=1),
                                   y_train, **gdr_params)
-            y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+            y_pred = reg.predict(X_test_.drop(non_features, axis=1))
             rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
 
             # GBRT with junk feature values (signal-to-noise ratio = 0)
-            X_train, y_train, X_test, y_test = \
-                split(dummy.loc[:, cols], center, test_size=t, max_dist=radius)
-            assert not X_test.empty
-            reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+            X_train_ = X_train.loc[:, cols_noise]
+            X_test_ = X_test.loc[:, cols_noise]
+            reg = train_regressor(X_train_.drop(non_features, axis=1),
                                   y_train, **gdr_params)
-            y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+            y_pred = reg.predict(X_test_.drop(non_features, axis=1))
             junk_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
 
-            # the simplest predictor: constant avg(GHF)
+            # the simplest (constant) predictor: avg(GHF) over training
             y_pred = y_train.mean() + np.zeros(len(y_test))
             const_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred , y_test)) / y_test.mean()
 
