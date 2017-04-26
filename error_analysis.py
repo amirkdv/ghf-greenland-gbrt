@@ -4,7 +4,7 @@ from math import sqrt, pi
 from ghf_prediction import (
     plt, np, mean_squared_error,
     load_global_gris_data, save_cur_fig, save_np_object,
-    split, split_by_distance, train_regressor, error_summary,
+    split_with_circle, split_by_distance, train_regressor, error_summary,
     CATEGORICAL_FEATURES,
 )
 from ghf_greenland import fill_in_greenland_GHF
@@ -29,7 +29,7 @@ def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
     # for a fixed center, t, and radius, returns r2 and normalized rmse
     def _eval_prediction(data, t, radius, center):
         X_train, y_train, X_test, y_test = \
-            split(data, center, test_size=t, max_dist=radius)
+            split_with_circle(data, center, test_size=t, radius=radius)
         assert not X_test.empty
 
         reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
@@ -110,7 +110,7 @@ def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
     rmses = np.zeros((ncenters, len(noise_amps)))
     for idx_ctr, center in enumerate(centers):
         X_train, y_train, X_test, y_test = \
-            split(data, center, test_size=t, max_dist=radius)
+            split_with_circle(data, center, test_size=t, radius=radius)
         sys.stderr.write('** noise_amp = 0, center = %s:\n' % repr(center))
         y0 = _predict(X_train, y_train, X_test, 0)
         for idx_noise, noise_amp in enumerate(noise_amps):
@@ -179,7 +179,7 @@ def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
     for center_idx, center in enumerate(centers):
         sys.stderr.write('%d / %d\n' % (center_idx + 1, ncenters))
         X_train, y_train, X_test, y_test = \
-            split(data, center, test_size=t, max_dist=radius)
+            split_with_circle(data, center, test_size=t, radius=radius)
         X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
         X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
         assert not X_test.empty
@@ -239,7 +239,7 @@ def plot_feature_importance_analysis(data, t, radius, ncenters, **gdr_params):
     importances = np.zeros([ncenters, len(features)])
     for center_idx, center in enumerate(centers):
         X_train, y_train, X_test, y_test = \
-            split(data, center, test_size=t, max_dist=radius)
+            split_with_circle(data, center, test_size=t, radius=radius)
         X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
         X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
         assert not X_test.empty
@@ -273,7 +273,7 @@ def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
             sys.stdout.write('--------- center %d / %d, %d estimators' % (_+1, ncenters, n))
             center = random_prediction_ctr(data, radius)
             X_train, y_train, X_test, y_test = \
-                split(data, center, test_size=t, max_dist=radius)
+                split_with_circle(data, center, test_size=t, radius=radius)
 
             points = [tuple(i) for i in
                       X_test[['Latitude_1', 'Longitude_1']].values]
@@ -351,7 +351,7 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
         # all three versions use the same split of data; note that X_train and
         # X_test now have both noise columns and ordinary columns
         X_train, y_train, X_test, y_test = \
-            split(data, center, test_size=t, max_dist=radius)
+            split_with_circle(data, center, test_size=t, radius=radius)
         assert not X_test.empty
         for idx_n, n_features in enumerate(ns_features):
             cols = non_features[:] # copy it; we'll be modifying it

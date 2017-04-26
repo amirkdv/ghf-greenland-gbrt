@@ -116,12 +116,12 @@ def haversine_distance(data, center):
     return data.apply(_haversine, axis=1)
 
 # splits rows in data into a training and test set according to the following
-# rule: consider a circle C centered at center and with radius max_dist. The
-# training set is those rows outside C and a randomly chosen subset of those
-# rows within C (proportion of points in C kept for test is given by
-# test_size; float between 0 and 1).
-def split(data, center, test_size=.15, max_dist=3500):
-    data_test, data_train = split_by_distance(data, center, max_dist)
+# rule: consider a circle C with given center and radius. The training set is
+# those rows outside C and a randomly chosen subset of those rows within C
+# (proportion of points in C kept for test is given by test_size; float between
+# 0 and 1).
+def split_with_circle(data, center, test_size=.15, radius=3500):
+    data_test, data_train = split_by_distance(data, center, radius)
     additional_train, data_test = train_test_split(
         data_test, random_state=0, test_size=test_size
     )
