@@ -4,7 +4,8 @@ from math import sqrt, pi
 from ghf_prediction import (
     plt, np, mean_squared_error,
     load_global_gris_data, save_cur_fig, save_np_object,
-    split_with_circle, split_by_distance, train_regressor, error_summary,
+    split_with_circle, split_random, split_by_distance,
+    train_regressor, error_summary,
     CATEGORICAL_FEATURES,
 )
 from ghf_greenland import fill_in_greenland_GHF
@@ -347,7 +348,7 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
     centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
     ns_features = range(1, len(features) + 1)
     for idx_ctr, center in enumerate(centers):
-        print 'center: %d / %d' % (1 + idx_ctr, ncenters)
+        sys.stderr.write('center: %d / %d\n' % (1 + idx_ctr, ncenters))
         # all three versions use the same split of data; note that X_train and
         # X_test now have both noise columns and ordinary columns
         X_train, y_train, X_test, y_test = \
@@ -408,88 +409,110 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
 
     fig.subplots_adjust(bottom=0.25)
 
-data = load_global_gris_data()
-# FIXME artificially forced to 135.0 in source
-data.loc[data.GHF == 135.0, 'GHF'] = 0
-data.loc[data.GHF == 0, 'GHF'] = np.nan
-data.dropna(inplace=True)
+# ================================================= #
+# Experiment functions
+# --------------------
+# each "experiment" is self contained (no parameters; only input is the data
+# set), calls a plot_X function and writes a figure to disk.
+# ================================================= #
+def exp_performance(data):
+    # plot model performance
+    ts = np.arange(.1, 1, .05)
+    radii = np.arange(1000, 2501, 500)
+    colors = 'rgkb'
+    ncenters = 50
+    plot_performance_analysis(data, ts, radii, colors, ncenters)
+    save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
 
-# plot model performance
-ts = np.arange(.1, 1, .05)
-radii = np.arange(1000, 2501, 500)
-colors = 'rgkb'
-ncenters = 50
-plot_performance_analysis(data, ts, radii, colors, ncenters)
-save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
+def exp_sensitivity(data):
+    # plot model sensitivity excluding Greenland
+    noise_amps = np.arange(0.025, .31, .025)
+    radius = 1500
+    ncenters = 10
+    t = .9
+    plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters)
+    save_cur_fig('GB_sensitivity.png', title='GBRT sensitivity for different noise levels')
 
-# plot model sensitivity excluding Greenland
-noise_amps = np.arange(0.025, .31, .025)
-radius = 1500
-ncenters = 10
-t = .9
-plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters)
-save_cur_fig('GB_sensitivity.png', title='GBRT sensitivity for different noise levels')
+def exp_sensitivity_greenland(data):
+    # plot model sensitivity for Greenland
+    data_ = load_global_gris_data()
+    gris_known, gris_unknown = fill_in_greenland_GHF(data_)
+    X_train = gris_known.drop(['GHF'], axis=1)
+    y_train = gris_known.GHF
+    X_test = gris_unknown.drop(['GHF'], axis=1)
+    noise_amps = np.arange(0.025, .31, .025)
+    plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps)
+    save_cur_fig('GB_sensitivity_greenland.png', title='GBRT sensitivity for different noise levels for Greenland')
 
-# plot generalization analysis
-radius = 1700
-ncenters = 10
-t = .9
-ns_estimators = range(200, 3500, 500)
-plot_generalization_analysis(data, t, radius, ncenters, ns_estimators)
-save_cur_fig('generalization.png', title='GBRT generalization power for different number of trees')
+def exp_generalization(data):
+    # plot generalization analysis
+    radius = 1700
+    ncenters = 10
+    t = .9
+    ns_estimators = range(200, 3500, 500)
+    plot_generalization_analysis(data, t, radius, ncenters, ns_estimators)
+    save_cur_fig('generalization.png', title='GBRT generalization power for different number of trees')
 
-# plot bias/variance analysis
-radius = 1700
-ncenters = 200
-t = .9
-ns_estimators = range(200, 1100, 200)
-plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators)
-save_cur_fig('bias-variance.png', title='GBRT bias/variance for different number of trees')
+def exp_bias_variance(data):
+    # plot bias/variance analysis
+    radius = 1700
+    ncenters = 200
+    t = .9
+    ns_estimators = range(200, 1100, 200)
+    plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators)
+    save_cur_fig('bias-variance.png', title='GBRT bias/variance for different number of trees')
 
-# plot feature importance analysis
-radius = 1700
-ncenters = 200
-t = .9
-n_estimators = 200
-plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators=n_estimators)
-save_cur_fig('feature-importance.png', title='GBRT feature importances')
+def exp_feature_importance(data):
+    # plot feature importance analysis
+    radius = 1700
+    ncenters = 200
+    t = .9
+    n_estimators = 200
+    plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators=n_estimators)
+    save_cur_fig('feature-importance.png', title='GBRT feature importances')
 
-# plot performance by varying number of features
-# features in decreasing order of importance:
-features = [
-    'd_2trench',
-    'd_2hotspot',
-    'd_2volcano',
-    'd_2ridge',
-    'G_d_2yng_r',
-    'age',
-    'G_heat_pro',
-    'WGM2012_Bo',
-    'd2_transfo',
-    'ETOPO_1deg',
-    'upman_den_',
-    'moho_GReD',
-    'crusthk_cr',
-    'litho_asth',
-    'thk_up_cru',
-    'G_ther_age', # categorical
-    'magnetic_M',
-    'G_u_m_vel_', # categorical
-    'thk_mid_cr',
-    'lthlgy_mod', # categorical
-]
-ncenters = 100
-t = .9
-radius = 1700
-plot_feature_selection_analysis(data, t, radius, ncenters, features, n_estimators=200)
-save_cur_fig('feature-selection.png', 'GBRT performance for different number of features')
+def exp_feature_selection(data):
+    # plot performance by varying number of features
+    # features in decreasing order of importance:
+    features = [
+        'd_2trench',
+        'd_2hotspot',
+        'd_2volcano',
+        'd_2ridge',
+        'G_d_2yng_r',
+        'age',
+        'G_heat_pro',
+        'WGM2012_Bo',
+        'd2_transfo',
+        'ETOPO_1deg',
+        'upman_den_',
+        'moho_GReD',
+        'crusthk_cr',
+        'litho_asth',
+        'thk_up_cru',
+        'G_ther_age', # categorical
+        'magnetic_M',
+        'G_u_m_vel_', # categorical
+        'thk_mid_cr',
+        'lthlgy_mod', # categorical
+    ]
+    ncenters = 100
+    t = .9
+    radius = 1700
+    plot_feature_selection_analysis(data, t, radius, ncenters, features, n_estimators=200)
+    save_cur_fig('feature-selection.png', 'GBRT performance for different number of features')
 
-# plot model sensitivity for Greenland
-data_ = load_global_gris_data()
-gris_known, gris_unknown = fill_in_greenland_GHF(data_)
-X_train = gris_known.drop(['GHF'], axis=1)
-y_train = gris_known.GHF
-X_test = gris_unknown.drop(['GHF'], axis=1)
-noise_amps = np.arange(0.025, .31, .025)
-plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps)
-save_cur_fig('GB_sensitivity_greenland.png', title='GBRT sensitivity for different noise levels for Greenland')
+if __name__ == '__main__':
+    data = load_global_gris_data()
+    # FIXME artificially forced to 135.0 in source
+    data.loc[data.GHF == 135.0, 'GHF'] = 0
+    data.loc[data.GHF == 0, 'GHF'] = np.nan
+    data.dropna(inplace=True)
+
+    exp_performance(data)
+    exp_sensitivity(data)
+    exp_sensitivity_greenland(data)
+    exp_generalization(data)
+    exp_bias_variance(data)
+    exp_feature_importance(data)
+    exp_feature_selection(data)
