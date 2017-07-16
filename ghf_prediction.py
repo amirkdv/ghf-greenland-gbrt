@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from time import time
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import GradientBoostingRegressor
 from math import radians, sin, cos, asin, sqrt, floor
 
@@ -131,6 +131,16 @@ def split_with_circle(data, center, test_size=.15, radius=3500):
     X_test,  y_test  = data_test.drop('GHF', axis=1),  data_test['GHF']
 
     return X_train, y_train, X_test, y_test
+
+def tune_params(data, param_grid, cv_fold=10):
+    def _score(reg, X_test, y_test):
+        y_pred = reg.predict(X_test)
+        return sqrt(mean_squared_error(y_test, y_pred)) / np.mean(y_test)
+
+    gbm = GradientBoostingRegressor(**GDR_PARAMS)
+    search = GridSearchCV(gbm, param_grid, scoring=_score, cv=cv_fold, n_jobs=1, verbose=10)
+    search.fit(data.drop(['Latitude_1', 'Longitude_1', 'GHF'], axis=1), data['GHF'])
+    print search.best_params_
 
 # plots a series of GHF values at given latitude and longitude positions
 def plot_GHF_on_map(m, lons, lats, values,
