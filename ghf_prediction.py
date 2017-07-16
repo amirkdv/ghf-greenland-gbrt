@@ -18,6 +18,7 @@ plt.ticklabel_format(useOffset=False)
 plt.rc('font', family='CMU Serif')
 
 MAX_GHF  = 150   # max limit of ghf considered
+GREENLAND_RADIUS = 1300
 
 OUT_DIR = 'plots/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
@@ -45,9 +46,10 @@ GDR_PARAMS = {
     'init': None,
     'random_state': 0,
     'max_features': 0.3,
+    'alpha': 0.9, # FIXME remove not needed as per  http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
     'alpha': 0.9,
-    #'verbose': 0,
-    'verbose': 10,
+    'verbose': 0,
+    #'verbose': 10,
     'max_leaf_nodes': None,
     'warm_start': False,
     'presort': 'auto',
@@ -105,6 +107,19 @@ def process_greenland_data(data):
     )
     return data
 
+# Returns a random longitude-latitude pair that serves as the center of
+# validation circle.
+def random_prediction_ctr(data, radius, min_density=45):
+    cands = data.loc[(data.Latitude_1 > 45) & (data.Longitude_1 > -100) & (data.Longitude_1 < 50)]
+    while True:
+        center = cands.sample(n=1)
+        center = center.Longitude_1, center.Latitude_1
+        test, train = split_by_distance(data, center, radius)
+        area = np.pi * (radius / 1000.) ** 2
+        # FIXME this can loop infinitely if a large enough min_density is given
+        if len(test) / area >= min_density:
+            return round(center[0], 2), round(center[1], 2)
+
 # returns a pair of DataFrames: one containing rows in data that are closer
 # than radius to center, and those that are not.
 def split_by_distance(data, center, radius):
@@ -131,17 +146,30 @@ def haversine_distance(data, center):
 
     return data.apply(_haversine, axis=1)
 
+# density in sample per 1e6 km^2, radius in km
+def roi_density_to_test_size(density, radius, num_samples):
+    area = np.pi * (radius / 1000.) ** 2
+    test_size = 1 - (area * density) / num_samples
+    max_density = num_samples / area
+    assert max_density >= density, \
+        'demanded density (%.2f) larger than max density in ROI (%.2f)' % (density, max_density)
+
 # splits rows in data into a training and test set according to the following
 # rule: consider a circle C with given center and radius. The training set is
 # those rows outside C and a randomly chosen subset of those rows within C
 # (proportion of points in C kept for test is given by test_size; float between
 # 0 and 1).
-def split_with_circle(data, center, test_size=.15, radius=3500):
+def split_with_circle(data, center, roi_density=None, radius=3500):
     data_test, data_train = split_by_distance(data, center, radius)
-    additional_train, data_test = train_test_split(
-        data_test, random_state=0, test_size=test_size
+    test_size = roi_density_to_test_size(roi_density, radius, len(data_test))
+    additional_train, reduced_data_test = train_test_split(
+        data_test, random_state=0, test_size=test_size # FIXME
     )
+    #print 'ROI area:', round(area, 2), \
+          #'ROI test size:', round(len(reduced_data_test) * 1. / len(data_test), 2), 'demanded test size:', round(test_size, 2), \
+          #'density:', round(len(additional_train) / area, 2), 'demanded density:', round(roi_density, 2)
     data_train = pd.concat([data_train, additional_train])
+    data_test = reduced_data_test
 
     X_train, y_train = data_train.drop('GHF', axis=1), data_train['GHF']
     X_test,  y_test  = data_test.drop('GHF', axis=1),  data_test['GHF']

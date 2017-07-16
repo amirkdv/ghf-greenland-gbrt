@@ -3,96 +3,160 @@ from random import randint
 from math import sqrt, pi
 from ghf_prediction import (
     plt, np, mean_squared_error,
-    load_global_gris_data, save_cur_fig, save_np_object,
-    split_with_circle, split_random, split_by_distance,
-    train_regressor, error_summary,
-    CATEGORICAL_FEATURES,
+    load_global_gris_data, save_cur_fig, save_np_object, pickle_dump, pickle_load,
+    split_with_circle, split_by_distance, tune_params,
+    train_regressor, error_summary, random_prediction_ctr,
+    CATEGORICAL_FEATURES, GREENLAND_RADIUS
 )
-from ghf_greenland import fill_in_greenland_GHF
+from ghf_greenland import greenland_train_test_sets
 
+# for a fixed center, t, and radius, returns r2 and normalized rmse
+def _eval_prediction(data, roi_density, radius, center, **gdr_params):
+    X_train, y_train, X_test, y_test = \
+        split_with_circle(data, center, roi_density=roi_density, radius=radius)
+    assert not X_test.empty
 
-# Returns a random longitude-latitude pair that serves as the center of
-# validation circle.
-def random_prediction_ctr(data, radius, min_points=100):
-    cands = data.loc[(data.Latitude_1 > 45) & (data.Longitude_1 > -100) & (data.Longitude_1 < 50)]
-    while True:
-        center = cands.sample(n=1)
-        center = center.Longitude_1, center.Latitude_1
-        test, train = split_by_distance(data, center, radius)
-        if len(test) >= min_points:
-            return round(center[0], 2), round(center[1], 2)
+    reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                          y_train, **gdr_params)
+    y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+    y_avg = y_train.mean() + np.zeros(len(y_test))
+    return error_summary(y_test, y_pred), error_summary(y_test, y_avg)
 
-# For all combinations of given radii and test_ratios, ncenters random centers
-# are picked for cross-validation and their average normalized RMSE and r2 are
-# plotted.
-def plot_performance_analysis(data, test_ratios, radii, colors, ncenters,
-                              plot_r2=True, **gdr_params):
-    # for a fixed center, t, and radius, returns r2 and normalized rmse
-    def _eval_prediction(data, t, radius, center):
-        X_train, y_train, X_test, y_test = \
-            split_with_circle(data, center, test_size=t, radius=radius)
-        assert not X_test.empty
+# ncenters random centers are picked and over all given ROI densities
+# cross-validation error (normalized RMSE and r2) are averaged
+def plot_error_by_density(data, roi_densities, radius, ncenters, load_from=None,
+                          dump_to='error_by_radius.txt', **gdr_params):
+    fig = plt.figure(figsize=(12,8))
+    ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
-        reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                              y_train, **gdr_params)
-        y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
-        return error_summary(y_test, y_pred)
-
-    centers = [random_prediction_ctr(data, min(radii)) for _ in range(ncenters)]
-    fig, ax1 = plt.subplots()
-    ax1.set_ylabel('Normalized RMSE (solid lines)')
-    ax1.set_xlim(0, 100)
-    # when comparing different setups it's useful to fix the ylim
-    #ax1.set_ylim(0, .5)
-    ax1.set_xlabel('$t$ (percentage of points in circle to predict)')
-    ax1.grid(True)
-
-    if plot_r2:
-        ax2 = ax1.twinx()
-        ax2.set_ylabel('$r^2$ (dashed lines)')
-        ax2.set_ylim(0.3, 1)
-        ax2.set_xlim(0, 100)
-
-    assert len(radii) == len(colors)
-    radii_errors = np.zeros([1,3])
-    for radius, color in zip(radii, colors):
-        shape = (ncenters, len(test_ratios))
+    if load_from is not None:
+        res = pickle_load(load_from)
+        for v in ['roi_densities', 'ncenters', 'rmses', 'r2s', 'rmses_baseline', 'r2s_baseline']:
+            exec('%s = res["%s"]' % (v, v))
+        assert len(rmses_baseline) == len(r2s_baseline) == len(rmses) == len(r2s), \
+               'array length (# of centers) should be the same for baseline and train vs test'
+    else:
+        required_density = max(roi_densities)
+        centers = [random_prediction_ctr(data, radius, min_density=required_density)
+                   for _ in range(ncenters)]
+        shape = (ncenters, len(roi_densities))
         r2s, rmses = np.zeros(shape), np.zeros(shape)
-        for idx_t, t in enumerate(test_ratios):
+        r2s_baseline, rmses_baseline = np.zeros(shape), np.zeros(shape)
+        for idx_density, roi_density in enumerate(roi_densities):
             for idx_ctr, center in enumerate(centers):
-                sys.stderr.write('** t = %.2f, r = %d, center = %s:\n' % (t, radius, repr(center)))
-                r2, rmse = _eval_prediction(data, t, radius, center)
-                rmses[idx_ctr][idx_t] = rmse
-                r2s[idx_ctr][idx_t] = r2
+                sys.stderr.write('# density = %.2f ' % roi_density)
+                (r2, rmse), (r2_baseline, rmse_baseline) = \
+                    _eval_prediction(data, roi_density, radius, center, **gdr_params)
+                rmses[idx_ctr][idx_density] = rmse
+                r2s[idx_ctr][idx_density] = r2
 
-            lngth = len(test_ratios)
-            radius_error = np.hstack([test_ratios.reshape(lngth,1),r2s.mean(axis=0).reshape(lngth,1),rmses.mean(axis=0).reshape(lngth,1)])
+                rmses_baseline[idx_ctr][idx_density] = rmse_baseline
+                r2s_baseline[idx_ctr][idx_density] = r2_baseline
+        if dump_to:
+            res = {'roi_densities': roi_densities, 'ncenters': ncenters,
+                   'rmses': rmses, 'r2s': r2s,
+                   'rmses_baseline': rmses_baseline, 'r2s_baseline': r2s_baseline}
+            pickle_dump(dump_to, res, comment='GBRT performance results')
 
-        radii_errors = np.vstack([radii_errors,radius_error])
+    kw = {'alpha': .2, 'lw': 1, 'color': 'k'}
+    for idx_ctr in range(ncenters):
+        ax_rmse.plot(roi_densities, rmses[idx_ctr], **kw)
+        ax_r2.plot(roi_densities, r2s[idx_ctr], **kw)
 
-        #for idx in range(ncenters):
-            #ax1.plot(test_ratios * 100, r2s[idx], color=color, alpha=.2, lw=1)
-            #ax2.plot(test_ratios * 100, rmses[idx], color=color, alpha=.2, lw=1, ls='--')
+    kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'markersize': 6, 'color': 'k'}
+    ax_rmse.plot(roi_densities, rmses.mean(axis=0), **kw)
+    ax_r2.plot(roi_densities, r2s.mean(axis=0), **kw)
 
-        kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'color': color}
-        ax1.plot(test_ratios * 100, rmses.mean(axis=0), label='%d km' % radius, **kw)
-        if plot_r2:
-            ax2.plot(test_ratios * 100, r2s.mean(axis=0), label='%d km' % radius, ls='--', **kw)
+    kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'ls': '--', 'color': 'k'}
+    ax_rmse.plot(roi_densities, rmses_baseline.mean(axis=0), label='baseline predictor', **kw)
+    ax_r2.plot(roi_densities, r2s_baseline.mean(axis=0), **kw)
 
-        save_np_object('error_details.txt', 't, r2, and rmse details', radii_errors[1:,:], delimiter=', ',
-                       header='t, r2, rmse', fmt='%10.5f')
+    ax_rmse.set_ylabel('Normalized RMSE', fontsize=16)
+    ax_r2.set_ylabel('$r^2$', fontsize=16)
+    ax_r2.set_ylim(-.05, 1)
+    ax_r2.set_xlim(min(roi_densities) - 5, max(roi_densities) + 5)
+    ax_r2.set_yticks(np.arange(0, 1.01, .1))
+    ax_rmse.set_ylim(0, .5)
+    ax_rmse.set_yticks(np.arange(0, .51, .05))
+    ax_rmse.set_xlim(*ax_r2.get_xlim())
+    for ax in [ax_rmse, ax_r2]:
+        # FIXME force xlims to be the same
+        ax.set_xlabel('density of training points in ROI ($10^{-6}$ km $^{-2}$)',
+                      fontsize=16)
+        ax.grid(True)
+    ax_rmse.legend(prop={'size':14}, numpoints=1)
+    fig.tight_layout()
+    #fig.suptitle('GBRT performance for different densities of training points in ROI',
+                 #fontsize=16)
 
-    ax1.legend(loc=6, prop={'size':12.5})
+# ncenters random centers are picked and over all given radii
+# cross-validation error (normalized RMSE and r2) are averaged
+def plot_error_by_radius(data, roi_density, radii, ncenters, load_from=None,
+                         dump_to='error_by_radius.txt', **gdr_params):
+    fig = plt.figure(figsize=(12,8))
+    ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
+
+    if load_from is not None:
+        res = pickle_load(load_from)
+        for v in ['radii', 'ncenters', 'rmses', 'r2s', 'rmses_baseline', 'r2s_baseline']:
+            exec('%s = res["%s"]' % (v, v))
+        assert len(rmses_baseline) == len(r2s_baseline) == len(rmses) == len(r2s), \
+               'array length (# of centers) should be the same for baseline and train vs test'
+    else:
+        centers = [random_prediction_ctr(data, min(radii), min_density=roi_density)
+                   for _ in range(ncenters)]
+        shape = (ncenters, len(radii))
+        r2s, rmses = np.zeros(shape), np.zeros(shape)
+        r2s_baseline, rmses_baseline = np.zeros(shape), np.zeros(shape)
+        for idx_radius, radius in enumerate(radii):
+            for idx_ctr, center in enumerate(centers):
+                sys.stderr.write('# radius = %.0f ' % radius)
+                (r2, rmse), (r2_baseline, rmse_baseline) = \
+                    _eval_prediction(data, roi_density, radius, center, **gdr_params)
+                rmses[idx_ctr][idx_radius] = rmse
+                r2s[idx_ctr][idx_radius] = r2
+
+                rmses_baseline[idx_ctr][idx_radius] = rmse_baseline
+                r2s_baseline[idx_ctr][idx_radius] = r2_baseline
+        if dump_to:
+            res = {'radii': radii, 'roi_density': roi_density,
+                   'ncenters': ncenters, 'rmses': rmses, 'r2s': r2s,
+                   'rmses_baseline': rmses_baseline, 'r2s_baseline': r2s_baseline}
+            pickle_dump(dump_to, res, comment='GBRT performance results')
+
+    kw = {'alpha': .2, 'lw': 1, 'color': 'k'}
+    for idx_ctr in range(ncenters):
+        ax_rmse.plot(radii, rmses[idx_ctr], **kw)
+        ax_r2.plot(radii, r2s[idx_ctr], **kw)
+    kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'color': 'k'}
+    ax_rmse.plot(radii, rmses.mean(axis=0), **kw)
+    ax_rmse.plot(radii, rmses_baseline.mean(axis=0), ls='--', **kw)
+    ax_r2.plot(radii, r2s.mean(axis=0), **kw)
+    ax_r2.plot(radii, r2s_baseline.mean(axis=0), ls='--', **kw)
+
+    ax_rmse.set_ylabel('Normalized RMSE')
+    ax_r2.set_ylabel('$r^2$')
+    ax_r2.set_ylim(-.05, 1)
+    ax_r2.set_xlim(min(radii) - 100, max(radii) + 100)
+    ax_r2.set_yticks(np.arange(0, 1.01, .1))
+    ax_rmse.set_ylim(0, .5)
+    ax_rmse.set_yticks(np.arange(0, .51, .05))
+    ax_rmse.set_xlim(*ax_r2.get_xlim())
+    for ax in [ax_rmse, ax_r2]:
+        # FIXME force xlims to be the same
+        ax.set_xlabel('radius of ROI (km)')
+        ax.grid(True)
+    ax_r2.legend(loc=6, prop={'size':12.5})
 
 # For each given noise amplitude, performs cross-validation on ncenters with
 # given radius and test ratio and the average normalized rmse is reported as
 # the perturbation in prediction caused by noise.
-def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
-    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
-
+def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
+                              load_from=None, dump_to='sensitivity.txt'):
     fig, ax = plt.subplots()
-    ax.set_xlabel('Relative noise magnitude')
-    ax.set_ylabel('RMSE in predicted GHF')
+    #fig.suptitle('sensitivity of GBRT predictions to noise in training GHF')
+    ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=14)
+    ax.set_ylabel('Normalized RMSE difference in $\widehat{\\mathrm{GHF}}$', fontsize=14)
     ax.set_xlim(0, max(noise_amps) * 1.1)
     ax.set_aspect('equal')
     ax.grid(True)
@@ -107,60 +171,44 @@ def plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters):
                               y_train + noise)
         return reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
-    y0 = []
-    rmses = np.zeros((ncenters, len(noise_amps)))
-    for idx_ctr, center in enumerate(centers):
-        X_train, y_train, X_test, y_test = \
-            split_with_circle(data, center, test_size=t, radius=radius)
-        sys.stderr.write('** noise_amp = 0, center = %s:\n' % repr(center))
-        y0 = _predict(X_train, y_train, X_test, 0)
-        for idx_noise, noise_amp in enumerate(noise_amps):
-            sys.stderr.write('** noise_amp = %.2f, center = %s:\n' % \
-                (noise_amp, repr(center)))
-            y_pred = _predict(X_train, y_train, X_test, noise_amp)
-            rmse = sqrt(mean_squared_error(y0, y_pred)) / np.mean(y0)
-            sys.stderr.write('-> RMSE=%.2f\n' % rmse)
-            rmses[idx_ctr][idx_noise] = rmse
+    if load_from is not None:
+        res = pickle_load(load_from)
+        rmses = res['rmses']
+        noise_amps = res['noise_amps']
+    else:
+        centers = [random_prediction_ctr(data, radius, min_density=roi_density)
+                   for _ in range(ncenters)]
+        y0 = []
+        centers = [None] + centers # the first one is for the Greenland case
+        rmses = np.zeros((len(centers), len(noise_amps)))
+        for idx_ctr, center in enumerate(centers):
+            if center is None:
+                # Greenland case
+                X_train, y_train, X_test = greenland_train_test_sets()
+            else:
+                X_train, y_train, X_test, _ = \
+                    split_with_circle(data, center, roi_density=roi_density, radius=radius)
+            sys.stderr.write('(ctr %d) noise_amp = 0.00 ' % (idx_ctr + 1))
+            y0 = _predict(X_train, y_train, X_test, 0)
+            for idx_noise, noise_amp in enumerate(noise_amps):
+                sys.stderr.write('(ctr %d) noise_amp = %.2f ' % (idx_ctr + 1, noise_amp))
+                y_pred = _predict(X_train, y_train, X_test, noise_amp)
+                rmse = sqrt(mean_squared_error(y0, y_pred)) / np.mean(y0)
+                rmses[idx_ctr][idx_noise] = rmse
+
+        res = {'rmses': rmses, 'noise_amps': noise_amps}
+        pickle_dump('sensitivity.txt', res, 'sensitivity analysis')
 
     for idx in range(ncenters):
-        ax.plot(noise_amps, rmses[idx], color='k', alpha=.2, lw=1)
+        if idx == 0:
+            # Greenland case
+            ax.plot(noise_amps, rmses[0], color='b', alpha=.5, lw=2.5, marker='o', markeredgewidth=0.0)
+        else:
+            ax.plot(noise_amps, rmses[idx], color='k', alpha=.2, lw=1)
 
-    ax.plot(noise_amps, rmses.mean(axis=0), alpha=.9, lw=2.5, marker='o', color='k')
-
-
-## same as plot_sensitivity_analysis
-## applied only for Greenland. ncenter
-## is removed and hard-coded as 1
-## y_test does not exist
-def plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps):
-
-    fig, ax = plt.subplots()
-    ax.set_xlabel('Relative noise magnitude')
-    ax.set_ylabel('RMSE in predicted GHF')
-    ax.set_xlim(0, max(noise_amps) * 1.1)
-    ax.set_aspect('equal')
-    ax.grid(True)
-
-    def _predict_greenland(X_train, y_train, X_test, noise_amp):
-        # If noise ~ N(0, s^2), then mean(|noise|) = s * sqrt(2/pi),
-        # cf. https://en.wikipedia.org/wiki/Half-normal_distribution
-        # So to get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
-        # have noise ~ N(0, s*^2) with s* = mean(y) * noise_ampl * sqrt(pi/2).
-        noise = np.mean(y_train) * noise_amp * sqrt(pi / 2) * np.random.randn(len(y_train))
-        reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                              y_train + noise)
-        return reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
-
-    rmses = np.zeros((1, len(noise_amps)))
-    y0 = _predict_greenland(X_train, y_train, X_test, 0)
-    for idx_noise, noise_amp in enumerate(noise_amps):
-        sys.stderr.write('** noise_amp = %.2f:' %noise_amp)
-        y_pred = _predict_greenland(X_train, y_train, X_test, noise_amp)
-        rmse = sqrt(mean_squared_error(y0, y_pred)) / np.mean(y0)
-        sys.stderr.write('-> RMSE=%.2f\n' % rmse)
-        rmses[0][idx_noise] = rmse
-
-    ax.plot(noise_amps, rmses[0], color='b', alpha=.9, lw=2.5, marker='o')
+    ax.plot(noise_amps, rmses[1:].mean(axis=0), alpha=.9, lw=2.5, marker='o', color='k')
+    ax.set_ylim(0, .3)
+    fig.tight_layout()
 
 
 # For all given values for n_estimators (number of trees) for GBRT, perform
@@ -170,43 +218,62 @@ def plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps):
 # beyond which validation error starts increasing while training error is
 # driven down to zero. As expected, GBRT does not overfit (test error
 # plateaus).
-def plot_generalization_analysis(data, t, radius, ncenters, ns_estimators):
-    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
-
+def plot_generalization_analysis(data, roi_density, radius, ncenters,
+                                 ns_estimators, load_from=None):
     fig, ax = plt.subplots()
 
-    train_rmses = np.zeros([ncenters, len(ns_estimators)])
-    test_rmses = np.zeros([ncenters, len(ns_estimators)])
-    for center_idx, center in enumerate(centers):
-        sys.stderr.write('%d / %d\n' % (center_idx + 1, ncenters))
-        X_train, y_train, X_test, y_test = \
-            split_with_circle(data, center, test_size=t, radius=radius)
-        X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
-        X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
-        assert not X_test.empty
+    if load_from is not None:
+        res = pickle_load(load_from)
+        for v in ['roi_density', 'radius', 'ns_estimators', 'train_rmses', 'test_rmses']:
+            exec('%s = res["%s"]' % (v, v))
+        assert len(train_rmses) == len(test_rmses), \
+               'array length (# of centers) should be the same for training and test'
+    else:
+        # FIXME min_density
+        centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
 
-        for n_idx, n in enumerate(ns_estimators):
-            reg = train_regressor(X_train, y_train, n_estimators=n)
-            _, train_rmse = error_summary(y_train, reg.predict(X_train))
-            _, test_rmse  = error_summary(y_test, reg.predict(X_test))
-            train_rmses[center_idx][n_idx] = train_rmse
-            test_rmses[center_idx][n_idx] = test_rmse
+        train_rmses = np.zeros([ncenters, len(ns_estimators)])
+        test_rmses = np.zeros([ncenters, len(ns_estimators)])
+        for center_idx, center in enumerate(centers):
+            sys.stderr.write('%d / %d\n' % (center_idx + 1, ncenters))
+            X_train, y_train, X_test, y_test = \
+                split_with_circle(data, center, roi_density=roi_density, radius=radius)
+            X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+            X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+            assert not X_test.empty
 
+            for n_idx, n in enumerate(ns_estimators):
+                sys.stderr.write('# estimators: %d ' % n)
+                reg = train_regressor(X_train, y_train, n_estimators=n)
+                _, train_rmse = error_summary(y_train, reg.predict(X_train))
+                _, test_rmse  = error_summary(y_test, reg.predict(X_test))
+                train_rmses[center_idx][n_idx] = train_rmse
+                test_rmses[center_idx][n_idx] = test_rmse
+
+        res = {'roi_density': roi_density,
+               'radius': radius,
+               'ns_estimators': ns_estimators,
+               'train_rmses': train_rmses,
+               'test_rmses': test_rmses}
+        pickle_dump('generalization.txt', res, comment='generalization errors')
+
+    for center_idx in range(len(train_rmses)):
         ax.plot(ns_estimators, train_rmses[center_idx], 'g', alpha=.2, lw=1)
         ax.plot(ns_estimators, test_rmses[center_idx], 'r', alpha=.2, lw=1)
 
-    ax.plot(ns_estimators, train_rmses.mean(axis=0), 'g', alpha=.9, lw=2.5)
-    ax.plot(ns_estimators, test_rmses.mean(axis=0), 'r', alpha=.9, lw=2.5)
+    ax.plot(ns_estimators, train_rmses.mean(axis=0), 'g', marker='o', alpha=.9, lw=1.5, label='training')
+    ax.plot(ns_estimators, test_rmses.mean(axis=0), 'r', marker='o', alpha=.9, lw=1.5, label='validation')
     ax.grid(True)
     ax.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
-    ax.set_ylim(0, .5)
+    ax.set_ylim(0, .3)
+    ax.set_yticks(np.arange(0, .31, .05))
     ax.set_xlabel('Number of trees')
     ax.set_ylabel('Normalized RMSE')
     ax.legend()
 
 # Plot feature importance results for ncenters rounds of cross validation for
 # given test ratio and radius.
-def plot_feature_importance_analysis(data, t, radius, ncenters, **gdr_params):
+def plot_feature_importance_analysis(data, roi_density, radius, ncenters, **gdr_params):
     raw_features = list(data)
     for f in ['Latitude_1', 'Longitude_1', 'GHF']:
         raw_features.pop(raw_features.index(f))
@@ -234,13 +301,13 @@ def plot_feature_importance_analysis(data, t, radius, ncenters, **gdr_params):
     # importances for original features by adding the importances of each
     # categorical dummy.
 
-    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
+    centers = [random_prediction_ctr(data, radius, min_density=roi_density) for _ in range(ncenters)]
     fig, ax = plt.subplots()
 
     importances = np.zeros([ncenters, len(features)])
     for center_idx, center in enumerate(centers):
         X_train, y_train, X_test, y_test = \
-            split_with_circle(data, center, test_size=t, radius=radius)
+            split_with_circle(data, center, roi_density=roi_density, radius=radius)
         X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
         X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
         assert not X_test.empty
@@ -260,10 +327,10 @@ def plot_feature_importance_analysis(data, t, radius, ncenters, **gdr_params):
     fig.subplots_adjust(bottom=0.2)
 
 # For each given value of n_estimators, peforms ncenters rounds of cross
-# validation with given radius and test ratio. Plots the average bias and
+# validation with given radius and ROI density. Plots the average bias and
 # variance in predictions for _any prediction point_ against the increasing
 # number of estimators.
-def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
+def plot_bias_variance_analysis(data, roi_density, radius, ncenters, ns_estimators):
     fig = plt.figure()
     ax_bias = fig.add_subplot(2, 1, 1)
     ax_var = fig.add_subplot(2, 1, 2)
@@ -274,7 +341,7 @@ def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
             sys.stdout.write('--------- center %d / %d, %d estimators' % (_+1, ncenters, n))
             center = random_prediction_ctr(data, radius)
             X_train, y_train, X_test, y_test = \
-                split_with_circle(data, center, test_size=t, radius=radius)
+                split_with_circle(data, center, roi_density=roi_density, radius=radius)
 
             points = [tuple(i) for i in
                       X_test[['Latitude_1', 'Longitude_1']].values]
@@ -330,10 +397,11 @@ def plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators):
 
 
 # Plots the average performance of GBRT, as measured by normalized RMSE, over
-# ncenters cross validation sets of given radius and ratio, as a function of
-# the number of features used for prediction. The features list is assumed to
-# be in decreasing order of importance.
-def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_params):
+# ncenters cross validation sets of given radius and ROI density, as a function
+# of the number of features used for prediction. The features list is assumed
+# to be in decreasing order of importance.
+def plot_feature_selection_analysis(data, t, radius, ncenters, features,
+                                    **gdr_params):
     data = data.copy()
     non_features = ['Latitude_1', 'Longitude_1', 'GHF']
     noise_cols = [f + '_noise' for f in list(data) if f not in non_features]
@@ -345,14 +413,16 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
     const_rmses = np.zeros([ncenters, len(features)])
 
     fig, ax = plt.subplots()
+    # FIXME min_density
     centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
+    #centers = [0 for _ in range(ncenters)]
     ns_features = range(1, len(features) + 1)
     for idx_ctr, center in enumerate(centers):
         sys.stderr.write('center: %d / %d\n' % (1 + idx_ctr, ncenters))
         # all three versions use the same split of data; note that X_train and
         # X_test now have both noise columns and ordinary columns
         X_train, y_train, X_test, y_test = \
-            split_with_circle(data, center, test_size=t, radius=radius)
+            split_with_circle(data, center, roi_density=roi_density, radius=radius)
         assert not X_test.empty
         for idx_n, n_features in enumerate(ns_features):
             cols = non_features[:] # copy it; we'll be modifying it
@@ -377,6 +447,7 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
                                   y_train, **gdr_params)
             y_pred = reg.predict(X_test_.drop(non_features, axis=1))
             rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
+            #print 'error', rmses[idx_ctr][idx_n]
 
             # GBRT with junk feature values (signal-to-noise ratio = 0)
             X_train_ = X_train.loc[:, cols_noise]
@@ -385,13 +456,15 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
                                   y_train, **gdr_params)
             y_pred = reg.predict(X_test_.drop(non_features, axis=1))
             junk_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
+            #print 'on noise', junk_rmses[idx_ctr][idx_n]
 
             # the simplest (constant) predictor: avg(GHF) over training
             y_pred = y_train.mean() + np.zeros(len(y_test))
             const_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred , y_test)) / y_test.mean()
+            #print 'const. predictor', const_rmses[idx_ctr][idx_n]
 
         ax.plot(ns_features, rmses[idx_ctr], 'g', alpha=.2, lw=1)
-        ax.plot(ns_features, junk_rmses[idx_ctr], 'k', alpha=.5, lw=1)
+        #ax.plot(ns_features, junk_rmses[idx_ctr], 'k', alpha=.5, lw=1)
 
     ax.plot(ns_features, rmses.mean(axis=0), 'g', alpha=.7, lw=3, marker='.', label='GBRT')
     ax.plot(ns_features, junk_rmses.mean(axis=0), 'k', alpha=.7, lw=3, marker='.', label='GBRT trained on noise')
@@ -415,60 +488,51 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features, **gdr_p
 # each "experiment" is self contained (no parameters; only input is the data
 # set), calls a plot_X function and writes a figure to disk.
 # ================================================= #
-def exp_performance(data):
-    # plot model performance
-    ts = np.arange(.1, 1, .05)
-    radii = np.arange(1000, 2501, 500)
-    colors = 'rgkb'
+def exp_error_by_density(data):
+    densities = np.append(np.array([1]), np.arange(5, 51, 5))
+    radius = GREENLAND_RADIUS
     ncenters = 50
-    plot_performance_analysis(data, ts, radii, colors, ncenters)
-    save_cur_fig('GB_performance.png', title='GBRT performance for different radii')
+    plot_error_by_density(data, densities, radius, ncenters)#, load_from='error_by_density.txt')
+    save_cur_fig('GB_performance_by_density.png')
+
+def exp_error_by_radius(data):
+    radius = GREENLAND_RADIUS
+    roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
+    ncenters = 50
+    radii = np.arange(500, 4001, 500)
+    plot_error_by_radius(data, roi_density, radii, ncenters)#, load_from='error_by_radius.txt')
+    save_cur_fig('GB_performance_by_radius.png', title='GBRT performance for different radii of ROI')
 
 def exp_sensitivity(data):
-    # plot model sensitivity excluding Greenland
+    radius = GREENLAND_RADIUS
+    roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     noise_amps = np.arange(0.025, .31, .025)
-    radius = 1500
-    ncenters = 10
-    t = .9
-    plot_sensitivity_analysis(data, t, radius, noise_amps, ncenters)
-    save_cur_fig('GB_sensitivity.png', title='GBRT sensitivity for different noise levels')
-
-def exp_sensitivity_greenland(data):
-    # plot model sensitivity for Greenland
-    data_ = load_global_gris_data()
-    gris_known, gris_unknown = fill_in_greenland_GHF(data_)
-    X_train = gris_known.drop(['GHF'], axis=1)
-    y_train = gris_known.GHF
-    X_test = gris_unknown.drop(['GHF'], axis=1)
-    noise_amps = np.arange(0.025, .31, .025)
-    plot_sensitivity_analysis_greenland(X_train, y_train, X_test, noise_amps)
-    save_cur_fig('GB_sensitivity_greenland.png', title='GBRT sensitivity for different noise levels for Greenland')
+    ncenters = 50
+    plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters)#, load_from='sensitivity.txt')
+    save_cur_fig('GB_sensitivity.png')
 
 def exp_generalization(data):
-    # plot generalization analysis
-    radius = 1700
-    ncenters = 10
-    t = .9
-    ns_estimators = range(200, 3500, 500)
-    plot_generalization_analysis(data, t, radius, ncenters, ns_estimators)
+    radius = GREENLAND_RADIUS
+    ncenters = 50
+    roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
+    ns_estimators = range(50, 750, 100) + range(750, 3001, 750)
+    plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators)#, load_from='generalization.txt')
     save_cur_fig('generalization.png', title='GBRT generalization power for different number of trees')
 
 def exp_bias_variance(data):
-    # plot bias/variance analysis
-    radius = 1700
+    radius = GREENLAND_RADIUS
     ncenters = 200
-    t = .9
+    roi_density = 11.3 # Greenland
     ns_estimators = range(200, 1100, 200)
-    plot_bias_variance_analysis(data, t, radius, ncenters, ns_estimators)
+    plot_bias_variance_analysis(data, roi_density, radius, ncenters, ns_estimators)
     save_cur_fig('bias-variance.png', title='GBRT bias/variance for different number of trees')
 
 def exp_feature_importance(data):
-    # plot feature importance analysis
-    radius = 1700
+    radius = GREENLAND_RADIUS
     ncenters = 200
-    t = .9
+    roi_density = 11.3 # Greenland
     n_estimators = 200
-    plot_feature_importance_analysis(data, t, radius, ncenters, n_estimators=n_estimators)
+    plot_feature_importance_analysis(data, roi_density, radius, ncenters, n_estimators=n_estimators)
     save_cur_fig('feature-importance.png', title='GBRT feature importances')
 
 def exp_feature_selection(data):
@@ -497,10 +561,30 @@ def exp_feature_selection(data):
         'lthlgy_mod', # categorical
     ]
     ncenters = 100
-    t = .9
-    radius = 1700
-    plot_feature_selection_analysis(data, t, radius, ncenters, features, n_estimators=200)
-    save_cur_fig('feature-selection.png', 'GBRT performance for different number of features')
+    roi_density = 11.3 # Greenland
+
+    radius = GREENLAND_RADIUS
+    _gdr_params = {
+        #'learning_rate': 0.1, # shrinkage
+        'n_estimators': 200, # no of weak learners
+        'subsample': 0.5, # stochastic GBRT
+        'max_depth': 10, # max depth of individual (weak) learners
+    }
+    plot_feature_selection_analysis(data, roi_density, radius, ncenters, features, **_gdr_params)
+    save_cur_fig('feature-selection-t=1-stochastic.png', 'Stochastic GBRT performance, whole circles as test set')
+
+def exp_tune_params():
+    param_grid = {
+        'n_estimators': [200],
+        'criterion': ['friedman_mse', 'mse'],
+        'learning_rate': [0.01, 0.05, 0.2, 0.5],
+        'subsample': [1, .9, .5, .1], # < 1 implies stochastic boosting
+        'min_samples_leaf': [1, 3, 10, 20],
+        'max_depth': [4, 10, 20],
+        'min_impurity_split': [1e-07, 1e-3, 1e-1],
+        'max_features': [.1, .3, .7]
+    }
+    tune_params(data, param_grid, cv_fold=10)
 
 if __name__ == '__main__':
     data = load_global_gris_data()
@@ -509,10 +593,11 @@ if __name__ == '__main__':
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
 
-    exp_performance(data)
-    exp_sensitivity(data)
-    exp_sensitivity_greenland(data)
-    exp_generalization(data)
-    exp_bias_variance(data)
-    exp_feature_importance(data)
-    exp_feature_selection(data)
+    exp_error_by_density(data)
+    #exp_error_by_radius(data)
+    #exp_sensitivity(data)
+    #exp_generalization(data)
+    #exp_bias_variance(data)
+    #exp_feature_importance(data)
+    #exp_feature_selection(data)
+    #exp_tune_params()
