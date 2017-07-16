@@ -199,7 +199,7 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
         res = {'rmses': rmses, 'noise_amps': noise_amps}
         pickle_dump('sensitivity.txt', res, 'sensitivity analysis')
 
-    for idx in range(ncenters):
+    for idx in range(ncenters+1):
         if idx == 0:
             # Greenland case
             ax.plot(noise_amps, rmses[0], color='b', alpha=.5, lw=2.5, marker='o', markeredgewidth=0.0)

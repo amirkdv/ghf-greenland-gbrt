@@ -313,11 +313,6 @@ def save_cur_fig(filename, title=None):
     sys.stderr.write('Saved %s to %s.\n' % (repr(title), filename))
     plt.clf()
 
-def save_np_object(path, name, obj, **kw):
-    np.savetxt(os.path.join(OUT_DIR, path), obj, **kw)
-    sys.stderr.write('Saved %s to %s.\n' % (name, path))
-
-
 def pickle_dump(path, obj, comment=None):
     with open(os.path.join(OUT_DIR, path), 'w') as f:
         pickle.dump(obj, f)
