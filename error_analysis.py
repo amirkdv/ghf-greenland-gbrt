@@ -3,7 +3,7 @@ from random import randint
 from math import sqrt, pi
 from ghf_prediction import (
     plt, np, mean_squared_error,
-    load_global_gris_data, save_cur_fig, save_np_object, pickle_dump, pickle_load,
+    load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
     split_with_circle, split_by_distance, tune_params,
     train_regressor, error_summary, random_prediction_ctr,
     CATEGORICAL_FEATURES, GREENLAND_RADIUS

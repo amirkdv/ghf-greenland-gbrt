@@ -2,7 +2,7 @@ from mpl_toolkits.basemap import Basemap
 from circles import equi
 from ghf_prediction import (
     plt, pd, np,
-    load_global_gris_data, save_cur_fig, save_np_object,
+    load_global_gris_data, save_cur_fig,
     split, train_regressor,
     plot_GHF_on_map,
     plot_GHF_on_map_pcolormesh,

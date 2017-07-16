@@ -338,8 +338,8 @@ def train_regressor(X_train, y_train, logfile=None, **gdr_params):
     importance = reg.feature_importances_
     hdrs = list(X_train.columns.values)
     logs = np.asarray(sorted(zip(hdrs, importance), key=lambda x: x[1]))
-    if logfile:
-        save_np_object(logfile, 'feature importances', logs, fmt="%s")
+#    if logfile:
+#        save_np_object(logfile, 'feature importances', logs, fmt="%s")
 
     return reg
 
