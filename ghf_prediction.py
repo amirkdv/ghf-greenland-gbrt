@@ -5,6 +5,7 @@ import os.path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import pickle
 from time import time
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
@@ -270,6 +271,16 @@ def save_cur_fig(filename, title=None):
 def save_np_object(path, name, obj, **kw):
     np.savetxt(os.path.join(OUT_DIR, path), obj, **kw)
     sys.stderr.write('Saved %s to %s.\n' % (name, path))
+
+
+def pickle_dump(path, obj, comment=None):
+    with open(os.path.join(OUT_DIR, path), 'w') as f:
+        pickle.dump(obj, f)
+    sys.stderr.write('dumped %s to %s.\n' % (comment if comment else 'object', path))
+
+def pickle_load(path):
+    with open(os.path.join(OUT_DIR, path), 'rb') as f:
+        return pickle.load(f)
 
 # Trains and returns a GradientBoostingRegressor over the given training
 # feature and value vectors. Feature importance values are stored in
