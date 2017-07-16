@@ -15,6 +15,7 @@ from math import radians, sin, cos, asin, sqrt, floor
 
 pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
+plt.rc('font', family='CMU Serif')
 
 MAX_GHF  = 150   # max limit of ghf considered
 
