@@ -368,7 +368,7 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
     plt.xlim([0, MAX_GHF])
     plt.ylim([0, MAX_GHF])
 
-    title = title + '\n$r^2=%.3f, RMSE=%.2f$' % (r2, rmse**0.5)
+    title = title + '\n$r^2=%.3f, RMSE=%.2f$' % (r2, rmse)
     # FIXME pull setting title out of function; requires save_cur_fig to not
     # set title instead let the plot functions do it.
     save_cur_fig(filename, title=title)
