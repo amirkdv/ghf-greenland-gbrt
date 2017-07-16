@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from ghf_prediction import haversine_distance
+from ghf_prediction import haversine_distance, load_global_gris_data
 
 MAX_ICE_CORE_DIST = 150.
 
@@ -54,3 +54,10 @@ def fill_in_greenland_GHF(data):
     data.dropna(inplace=True)
     return data, gris_unknown
 
+def greenland_train_test_sets():
+    data = load_global_gris_data()
+    gris_known, gris_unknown = fill_in_greenland_GHF(data)
+    X_train = gris_known.drop(['GHF'], axis=1)
+    y_train = gris_known.GHF
+    X_test = gris_unknown.drop(['GHF'], axis=1)
+    return X_train, y_train, X_test
