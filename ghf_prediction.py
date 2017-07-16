@@ -68,12 +68,26 @@ def read_csv(path):
 
 # loads GLOBAL_CSV and GRIS_CSV, performs GRIS specific filters, and returns a
 # single DataFrame.
-def load_global_gris_data():
+def load_global_gris_data(plot_projections_to=None):
     data_global = read_csv(GLOBAL_CSV)
     data_gris = read_csv(GRIS_CSV)
     data_gris = process_greenland_data(data_gris)
 
     data = pd.concat([data_global, data_gris])
+
+    if plot_projections_to:
+        fig = plt.figure(figsize=(16, 20))
+        for idx, f in enumerate(list(data)):
+            if f == 'GHF':
+                continue
+            ax = fig.add_subplot(6, 4, idx + 1)
+            ax.scatter(data[f], data['GHF'], c='k', s=2, alpha=.4, label=f)
+            ax.tick_params(labelsize=6)
+            ax.grid(True)
+            ax.legend(fontsize=12)
+
+        fig.savefig(plot_projections_to, dpi=300)
+
     data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES)
 
     return data
