@@ -34,7 +34,7 @@ CATEGORICAL_FEATURES = ['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age']
 GDR_PARAMS = {
     'loss': 'ls',
     'learning_rate': 0.05,
-    'n_estimators': 5000,
+    'n_estimators': 1000,
     'subsample': 1.0,
     'criterion': 'friedman_mse',
     'min_samples_split': 2,
