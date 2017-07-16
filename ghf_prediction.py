@@ -19,7 +19,7 @@ plt.rc('font', family='CMU Serif')
 
 MAX_GHF  = 150   # max limit of ghf considered
 
-OUT_DIR = 'global_learning_plots_gb_circles_gaussian/'
+OUT_DIR = 'plots/'
 OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
 
 GLOBAL_CSV = '1deg_all_resampled_w_missing_from_goutorbe.csv'
