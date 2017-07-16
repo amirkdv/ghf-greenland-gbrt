@@ -109,7 +109,7 @@ def process_greenland_data(data):
 
 # Returns a random longitude-latitude pair that serves as the center of
 # validation circle.
-def random_prediction_ctr(data, radius, min_density=0.):
+def random_prediction_ctr(data, radius, min_density=0):
     cands = data.loc[(data.Latitude_1 > 45) & (data.Longitude_1 > -100) & (data.Longitude_1 < 50)]
     while True:
         center = cands.sample(n=1)
@@ -153,7 +153,7 @@ def roi_density_to_test_size(density, radius, num_samples):
     max_density = num_samples / area
     assert max_density >= density, \
         'demanded density (%.2f) larger than max density in ROI (%.2f)' % (density, max_density)
-    return test_size
+    return test_size - 0.01
 
 # splits rows in data into a training and test set according to the following
 # rule: consider a circle C with given center and radius. The training set is
