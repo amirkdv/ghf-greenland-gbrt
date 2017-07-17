@@ -56,14 +56,14 @@ for roi_density in roi_densities:
     equi(m, center[0], center[1], GREENLAND_RADIUS,
          lw=2, linestyle='-', color='black', alpha=.5)
     save_cur_fig('%i-diff-map.png'%roi_density,
-         title='GHF error on test set (true - predicted)')
+         title='GHF error on test set (true - predicted) with '+r'$\rho_{ROI}$ = %i'%roi_density)
         
     plot_test_pred_linregress(y_test, y_pred, '%i_linear_correlation.png'%roi_density,
-                              title='   ')
+                              title=r'$\rho_{ROI}$ = %i'%roi_density)
 
     print center
 
-
+'''
 # Main Text Figure 2
 X = data.drop(['GHF'],axis=1)
 y = data.GHF
@@ -119,3 +119,4 @@ save_cur_fig('GHF_1deg_averaged_map_train.png',
 
 plot_test_pred_linregress(y_test, y_pred, 'GHF_linear_correlation.png',
                           title='   ')
+'''
