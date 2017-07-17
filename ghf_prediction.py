@@ -15,7 +15,7 @@ from math import radians, sin, cos, asin, sqrt, floor
 
 pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
-plt.rc('font', family='CMU Serif')
+plt.rc('font', family='TeX Gyre Schola')
 
 MAX_GHF  = 150   # max limit of ghf considered
 GREENLAND_RADIUS = 1300
@@ -358,17 +358,30 @@ def error_summary(y_test, y_pred):
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
 def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
+    # first x=y line, then dumb predictor (average), then the
+    # correlation between y_test and y_pred 
+    plt.plot(np.linspace(0,MAX_GHF,50), np.linspace(0,MAX_GHF,50),'k--',label='ideal $GHF=\widehat{GHF}$',
+                alpha=0.4,lw=1)
+
+    data = load_global_gris_data()
+    data.loc[data.GHF == 135.0, 'GHF'] = 0
+    data.loc[data.GHF == 0, 'GHF'] = np.nan
+    data.dropna(inplace=True)
+
+    plt.plot(np.linspace(0,MAX_GHF,50),np.ones([50,1])*data.GHF.mean(),'r--',lw=1,alpha=0.5,
+             label='baseline predictor')
     r2, rmse = error_summary(y_test, y_pred)
 
-    plt.scatter(y_test, y_pred, label='tests, r$^2$=%f' % r2)
-    plt.grid(True)
+    plt.scatter(y_test, y_pred, label='GBRT predictions',s=20,edgecolor='black',c='blue')
+    plt.grid(linestyle='dotted')
     plt.axes().set_aspect('equal')
-    plt.xlabel('$GHF$')
-    plt.ylabel('$\widehat{GHF}$')
+    plt.xlabel('$GHF$ (mW m$^{-2}$)')
+    plt.ylabel('$\widehat{GHF}$ (mW m$^{-2}$)')
     plt.xlim([0, MAX_GHF])
     plt.ylim([0, MAX_GHF])
 
     title = title + '\n$r^2=%.3f, RMSE=%.2f$' % (r2, rmse)
+    plt.legend(loc=2)
     # FIXME pull setting title out of function; requires save_cur_fig to not
     # set title instead let the plot functions do it.
     save_cur_fig(filename, title=title)
