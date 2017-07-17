@@ -267,9 +267,10 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
     ax.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
     ax.set_ylim(0, .3)
     ax.set_yticks(np.arange(0, .31, .05))
-    ax.set_xlabel('Number of trees')
-    ax.set_ylabel('Normalized RMSE')
-    ax.legend()
+    ax.set_xlabel('Number of trees', fontsize=16)
+    ax.set_ylabel('Normalized RMSE', fontsize=16)
+    ax.legend(prop={'size':12.5})
+    fig.tight_layout()
 
 # Plot feature importance results for ncenters rounds of cross validation for
 # given test ratio and radius.
@@ -517,7 +518,7 @@ def exp_generalization(data):
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ns_estimators = range(50, 750, 100) + range(750, 3001, 750)
     plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators)#, load_from='generalization.txt')
-    save_cur_fig('generalization.png', title='GBRT generalization power for different number of trees')
+    save_cur_fig('generalization.png')
 
 def exp_bias_variance(data):
     radius = GREENLAND_RADIUS
