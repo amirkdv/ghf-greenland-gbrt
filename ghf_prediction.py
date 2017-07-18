@@ -391,6 +391,6 @@ def plot_GHF_histogram(values):
     hist, _, _ = plt.hist(values, np.linspace(0,MAX_GHF,61), lw=1, color='b', edgecolor='k', normed=True)
     plt.xlabel('GHF (mW m$^{-2}$)')
     plt.ylabel('Normalized Frequency')
-    plt.grid(True)
+    plt.grid(linestyle='dotted')
     plt.xlim([0, MAX_GHF])
     plt.ylim([0, max(hist) * 1.1])

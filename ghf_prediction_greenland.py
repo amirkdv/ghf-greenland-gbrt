@@ -3,7 +3,7 @@ from circles import equi
 from ghf_prediction import (
     plt, pd, np,
     load_global_gris_data, save_cur_fig,
-    split, train_regressor,
+    train_regressor,
     plot_GHF_on_map,
     plot_GHF_on_map_pcolormesh,
     plot_GHF_on_map_pcolormesh_interp,
@@ -30,8 +30,8 @@ def save_gris_prediction_data(gris_unknown, gris_known, y_gris, filename):
     final[:, 1] = lons
     final[:, 2] = ghfs
 
-    save_np_object(filename, 'gris data', final, delimiter=', ',
-                   header='lon, lat, ghf', fmt='%10.5f')
+#    save_np_object(filename, 'gris data', final, delimiter=', ',
+#                   header='lon, lat, ghf', fmt='%10.5f')
 
 
 data = load_global_gris_data()
@@ -55,8 +55,8 @@ X_test = gris_unknown.drop(['GHF'], axis=1)
 m = Basemap(projection='aeqd',
       lon_0 = -37.64,
       lat_0 = 72.58,
-      width = 7500000,
-      height = 7500000)
+      width = 6500000,
+      height = 6500000)
 
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
@@ -75,9 +75,9 @@ for core in GREENLAND.core:
     centerlon = GREENLAND[GREENLAND['core'] == core].lon.as_matrix()
     centerlat = GREENLAND[GREENLAND['core'] == core].lat.as_matrix()
     equi(m, centerlon, centerlat, MAX_ICE_CORE_DIST,
-         lw=2, linestyle='-', color='brown', alpha=.8)
+         lw=1, linestyle='-', color='black', alpha=.3)
 
-save_cur_fig('GHF_1deg_averaged_map_train.png', title='GHF at training set')
+save_cur_fig('greenland_training_w_gris.png', title='GHF at training set')
 
 #plot_GHF_on_map(m,
 #                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
@@ -161,7 +161,7 @@ plot_GHF_on_map(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-save_cur_fig('predicted_Greenland_GHF_1deg.png',
+save_cur_fig('greenland_predicted_points.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 m = Basemap(width=1600000, height=2800000, resolution='l',
@@ -174,7 +174,7 @@ colorbar_args = {'location': 'right', 'pad': '5%'}
 #                parallel_step=5., meridian_step=10.,
 #                colorbar_args=colorbar_args,
 #                scatter_args=scatter_args)
-scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': spectral_cmap}
+scatter_args = {'marker': 'o', 's': 18, 'lw': 0, 'cmap': spectral_cmap}
 plot_GHF_on_map(m,
                 gris_known.Longitude_1.as_matrix(), gris_known.Latitude_1.as_matrix(),
                 gris_known.GHF,
@@ -186,7 +186,7 @@ for core in GREENLAND.core:
     centerlon = GREENLAND[GREENLAND['core'] == core].lon.as_matrix()
     centerlat = GREENLAND[GREENLAND['core'] == core].lat.as_matrix()
     equi(m, centerlon, centerlat, MAX_ICE_CORE_DIST,
-         lw=2, linestyle='-', color='brown', alpha=.8)
+         lw=2, linestyle='-', color='black', alpha=.3)
 
 scatter_args = {'marker': 's', 's': 45, 'lw': 1, 'cmap': spectral_cmap, 'edgecolor':'white'}
 plot_GHF_on_map(m,
@@ -198,18 +198,18 @@ plot_GHF_on_map(m,
 save_cur_fig('greenland_prescribed_GHF.png',
              title='Points with prescribed GHF \n around GHF measurements (mW m$^{-2}$)')
 
-m = Basemap(projection='robin',lon_0=0,resolution='c')
-spectral_cmap = plt.get_cmap('spectral', 13)
-spectral_cmap.set_under('black')
-spectral_cmap.set_over('grey')
-colorbar_args = {'location': 'bottom', 'pad': '10%'}
-pcolor_args = {'cmap': spectral_cmap}
-plot_GHF_on_map_pcolormesh(m,
-                X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
-                y_train,
-                colorbar_args=colorbar_args,
-                pcolor_args=pcolor_args)
-save_cur_fig('pcolormesh_global.png', title='GHF at training set')
+#m = Basemap(projection='robin',lon_0=0,resolution='c')
+#spectral_cmap = plt.get_cmap('spectral', 13)
+#spectral_cmap.set_under('black')
+#spectral_cmap.set_over('grey')
+#colorbar_args = {'location': 'bottom', 'pad': '10%'}
+#pcolor_args = {'cmap': spectral_cmap}
+#plot_GHF_on_map_pcolormesh(m,
+#                X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
+#                y_train,
+#                colorbar_args=colorbar_args,
+#                pcolor_args=pcolor_args)
+#save_cur_fig('pcolormesh_global.png', title='GHF at training set')
 
 m = Basemap(width=1600000, height=2650000, resolution='l',
             projection='stere', lat_ts=71, lon_0=-41.5, lat_0=72)
@@ -239,7 +239,7 @@ plot_GHF_on_map(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-save_cur_fig('pcolormesh.png',
+save_cur_fig('greenland_predicted.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 
@@ -269,7 +269,7 @@ plot_GHF_on_map(m,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 
-save_cur_fig('pcolormesh_interpolated.png',
+save_cur_fig('greenland_predicted_interpolated.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 
@@ -284,5 +284,6 @@ plot_GHF_histogram(y_train)
 save_cur_fig('hist_global.png', title='GHF global measurement')
 
 # Store greenland predictions and known values for ARC GIS
+# FIXME: out of use for now - save_np_object removed 
 # --------------------------------------------------------
-save_gris_prediction_data(X_gris, gris_known, y_gris, 'lat_lon_ghf.txt')
+#save_gris_prediction_data(X_gris, gris_known, y_gris, 'lat_lon_ghf.txt')

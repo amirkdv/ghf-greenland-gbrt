@@ -35,7 +35,7 @@ for roi_density in roi_densities:
     X_train, y_train, X_test, y_test = split_with_circle(data, center, 
                                        roi_density=roi_density, radius=GREENLAND_RADIUS)
     reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                          y_train, logfile='GHF_1deg_averaged_logfile.txt')
+                          y_train, logfile='%i_rho_logfile.txt'%roi_density)
     y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
     m = Basemap(projection='merc',lat_0=center[0], lon_0=center[1],
@@ -63,14 +63,14 @@ for roi_density in roi_densities:
 
     print center
 
-'''
+
 # Main Text Figure 2
 X = data.drop(['GHF'],axis=1)
 y = data.GHF
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=None, test_size=0.15)
 
 reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                      y_train, logfile='GHF_1deg_averaged_logfile.txt')
+                      y_train, logfile='random_logfile.txt')
 y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
 m = Basemap(projection='robin',lon_0=0,resolution='c')
@@ -84,7 +84,7 @@ plot_GHF_on_map(m,
                 parallel_step=20., meridian_step=60.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-save_cur_fig('GHF_1deg_diff_map.png',
+save_cur_fig('random_difference.png',
      title='GHF error on test set (true - predicted)')
     
 spectral_cmap = plt.get_cmap('spectral', 13)
@@ -99,7 +99,7 @@ plot_GHF_on_map(m,
                 parallel_step=20., meridian_step=60.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-save_cur_fig('GHF_1deg_averaged_map_test.png',
+save_cur_fig('random_test.png',
      title='measured GHF at test set')
 
 spectral_cmap = plt.get_cmap('spectral', 13)
@@ -114,9 +114,9 @@ plot_GHF_on_map(m,
                 parallel_step=20., meridian_step=60.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-save_cur_fig('GHF_1deg_averaged_map_train.png',
+save_cur_fig('random_train.png',
      title='GHF at training set')
 
-plot_test_pred_linregress(y_test, y_pred, 'GHF_linear_correlation.png',
+plot_test_pred_linregress(y_test, y_pred, 'random_linear_correlation.png',
                           title='   ')
-'''
+
