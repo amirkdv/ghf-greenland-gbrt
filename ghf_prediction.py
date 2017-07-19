@@ -152,7 +152,7 @@ def roi_density_to_test_size(density, radius, num_samples):
     max_density = num_samples / area
     assert max_density >= density, \
         'demanded density (%.2f) larger than max density in ROI (%.2f)' % (density, max_density)
-    return test_size - 0.01
+    return test_size
 
 # splits rows in data into a training and test set according to the following
 # rule: consider a circle C with given center and radius. The training set is
@@ -162,14 +162,15 @@ def roi_density_to_test_size(density, radius, num_samples):
 def split_with_circle(data, center, roi_density=None, radius=3500):
     data_test, data_train = split_by_distance(data, center, radius)
     test_size = roi_density_to_test_size(roi_density, radius, len(data_test))
-    additional_train, reduced_data_test = train_test_split(
-        data_test, random_state=0, test_size=test_size # FIXME
-    )
-    #print 'ROI area:', round(area, 2), \
-          #'ROI test size:', round(len(reduced_data_test) * 1. / len(data_test), 2), 'demanded test size:', round(test_size, 2), \
-          #'density:', round(len(additional_train) / area, 2), 'demanded density:', round(roi_density, 2)
-    data_train = pd.concat([data_train, additional_train])
-    data_test = reduced_data_test
+    if test_size > 0:
+        additional_train, reduced_data_test = train_test_split(
+            data_test, random_state=0, test_size=test_size
+        )
+        #print 'ROI area:', round(area, 2), \
+              #'ROI test size:', round(len(reduced_data_test) * 1. / len(data_test), 2), 'demanded test size:', round(test_size, 2), \
+              #'density:', round(len(additional_train) / area, 2), 'demanded density:', round(roi_density, 2)
+        data_train = pd.concat([data_train, additional_train])
+        data_test = reduced_data_test
 
     X_train, y_train = data_train.drop('GHF', axis=1), data_train['GHF']
     X_test,  y_test  = data_test.drop('GHF', axis=1),  data_test['GHF']
