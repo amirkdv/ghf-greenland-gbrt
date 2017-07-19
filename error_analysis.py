@@ -44,7 +44,7 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
         r2s_baseline, rmses_baseline = np.zeros(shape), np.zeros(shape)
         for idx_density, roi_density in enumerate(roi_densities):
             for idx_ctr, center in enumerate(centers):
-                sys.stderr.write('# density = %.2f ' % roi_density)
+                sys.stderr.write('# density = %.2f, center %d/%d ' % (roi_density, idx_ctr + 1, ncenters))
                 (r2, rmse), (r2_baseline, rmse_baseline) = \
                     _eval_prediction(data, roi_density, radius, center, **gdr_params)
                 rmses[idx_ctr][idx_density] = rmse
@@ -153,7 +153,8 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
 # the perturbation in prediction caused by noise.
 def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
                               replot=False, dumpfile=None):
-    fig, ax = plt.subplots()
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(1, 1, 1)
     #fig.suptitle('sensitivity of GBRT predictions to noise in training GHF')
     ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=14)
     ax.set_ylabel('Normalized RMSE difference in $\widehat{\\mathrm{GHF}}$', fontsize=14)
@@ -175,11 +176,12 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
         res = pickle_load(dumpfile)
         rmses = res['rmses']
         noise_amps = res['noise_amps']
+        noise_amps = np.append([0], noise_amps)
     else:
         centers = [random_prediction_ctr(data, radius, min_density=roi_density)
                    for _ in range(ncenters)]
         y0 = []
-        centers = [None] + centers # the first one is for the Greenland case
+        centers = [None] + centers # one extra "center" (Greenland)
         rmses = np.zeros((len(centers), len(noise_amps)))
         for idx_ctr, center in enumerate(centers):
             if center is None:
@@ -203,13 +205,20 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
     for idx in range(ncenters+1):
         if idx == 0:
             # Greenland case
-            ax.plot(noise_amps, rmses[0], color='b', alpha=.5, lw=2.5, marker='o', markeredgewidth=0.0)
+            ax.plot(noise_amps, np.append([0], rmses[0]), color='b',
+                    alpha=.5, lw=2.5, marker='o', markeredgewidth=0.0,
+                    label='Greenland')
         else:
-            ax.plot(noise_amps, rmses[idx], color='k', alpha=.2, lw=1)
+            ax.plot(noise_amps, np.append([0], rmses[idx]), color='k',
+                    alpha=.2, lw=1)
 
-    ax.plot(noise_amps, rmses[1:].mean(axis=0), alpha=.9, lw=2.5, marker='o', color='k')
-    ax.set_xlim(0, .35)
-    ax.set_ylim(0, .35)
+    ax.plot(noise_amps, np.append([0], rmses[1:].mean(axis=0)),
+            alpha=.9, lw=2.5, marker='o', color='k', label='global average')
+    ax.set_xticks(np.arange(0, .35, .05))
+    ax.set_yticks(np.arange(0, .35, .05))
+    ax.set_xlim(-.025, .325)
+    ax.set_ylim(-.025, .325)
+    ax.legend(loc=1)
     fig.tight_layout()
 
 

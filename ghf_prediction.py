@@ -36,7 +36,7 @@ GDR_PARAMS = {
     'loss': 'ls',
     'learning_rate': 0.05,
     'n_estimators': 1000,
-    'subsample': 1.0,
+    'subsample': 1., # less than 1 values would lead to stochastic GBRT
     'criterion': 'friedman_mse',
     'min_samples_split': 2,
     'min_samples_leaf': 9,
@@ -46,7 +46,6 @@ GDR_PARAMS = {
     'init': None,
     'random_state': 0,
     'max_features': 0.3,
-    'alpha': 0.9, # FIXME remove not needed as per  http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
     'alpha': 0.9,
     'verbose': 0,
     #'verbose': 10,
@@ -359,7 +358,7 @@ def error_summary(y_test, y_pred):
 # predicted values) and saves the plot to OUT_DIR/filename.
 def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
     # first x=y line, then dumb predictor (average), then the
-    # correlation between y_test and y_pred 
+    # correlation between y_test and y_pred
     plt.plot(np.linspace(0,MAX_GHF,50), np.linspace(0,MAX_GHF,50),'k--',label='ideal $GHF=\widehat{GHF}$',
                 alpha=0.4,lw=1)
 
