@@ -207,7 +207,8 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
             ax.plot(noise_amps, rmses[idx], color='k', alpha=.2, lw=1)
 
     ax.plot(noise_amps, rmses[1:].mean(axis=0), alpha=.9, lw=2.5, marker='o', color='k')
-    ax.set_ylim(0, .3)
+    ax.set_xlim(0, .35)
+    ax.set_ylim(0, .35)
     fig.tight_layout()
 
 
