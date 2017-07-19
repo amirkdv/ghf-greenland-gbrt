@@ -1,6 +1,7 @@
 import sys
 from random import randint
 from math import sqrt, pi
+from sklearn import linear_model
 from ghf_prediction import (
     plt, np, mean_squared_error,
     load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
@@ -11,16 +12,25 @@ from ghf_prediction import (
 from ghf_greenland import greenland_train_test_sets
 
 # for a fixed center, t, and radius, returns r2 and normalized rmse
-def _eval_prediction(data, roi_density, radius, center, **gdr_params):
+def compare_models(data, roi_density, radius, center, **gdr_params):
     X_train, y_train, X_test, y_test = \
         split_with_circle(data, center, roi_density=roi_density, radius=radius)
     assert not X_test.empty
 
-    reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+    # consider 3 predictors: GBRT, linear regression, and a constant predictor
+    gbrt = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                           y_train, **gdr_params)
-    y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
-    y_avg = y_train.mean() + np.zeros(len(y_test))
-    return error_summary(y_test, y_pred), error_summary(y_test, y_avg)
+    y_gbrt = gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+
+    lin_reg = linear_model.LinearRegression()
+    lin_reg.fit(X_train, y_train)
+    y_lin = lin_reg.predict(X_test)
+
+    y_const = y_train.mean() + np.zeros(len(y_test))
+    # error_summary returns (r2, rmse) pairs
+    return {'gbrt': error_summary(y_test, y_gbrt),
+            'linear':  error_summary(y_test, y_lin),
+            'constant': error_summary(y_test, y_const)}
 
 # ncenters random centers are picked and over all given ROI densities
 # cross-validation error (normalized RMSE and r2) are averaged
@@ -30,54 +40,70 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
     if replot:
-        res = pickle_load(dumpfile)
-        for v in ['roi_densities', 'ncenters', 'rmses', 'r2s', 'rmses_baseline', 'r2s_baseline']:
-            exec('%s = res["%s"]' % (v, v))
-        assert len(rmses_baseline) == len(r2s_baseline) == len(rmses) == len(r2s), \
-               'array length (# of centers) should be the same for baseline and train vs test'
+        results = pickle_load(dumpfile)
     else:
-        required_density = max(roi_densities)
-        centers = [random_prediction_ctr(data, radius, min_density=required_density)
-                   for _ in range(ncenters)]
+        centers = [
+            random_prediction_ctr(data, radius, min_density=max(roi_densities))
+            for _ in range(ncenters)
+        ]
         shape = (ncenters, len(roi_densities))
-        r2s, rmses = np.zeros(shape), np.zeros(shape)
-        r2s_baseline, rmses_baseline = np.zeros(shape), np.zeros(shape)
+        # blank error matrix (keyed by center number and roi density index),
+        # used to initialize multiple components of the results dictionary.
+        blank = np.zeros(shape)
+
+        results = {
+            'ncenters': ncenters,
+            'roi_densities': roi_densities,
+            'errors': {
+                'gbrt': {'rmse': blank.copy(), 'r2': blank.copy()},
+                'linear': {'rmse': blank.copy(), 'r2': blank.copy()},
+                'constant': {'rmse': blank.copy(), 'r2': blank.copy()},
+            },
+        }
         for idx_density, roi_density in enumerate(roi_densities):
             for idx_ctr, center in enumerate(centers):
                 sys.stderr.write('# density = %.2f, center %d/%d ' % (roi_density, idx_ctr + 1, ncenters))
-                (r2, rmse), (r2_baseline, rmse_baseline) = \
-                    _eval_prediction(data, roi_density, radius, center, **gdr_params)
-                rmses[idx_ctr][idx_density] = rmse
-                r2s[idx_ctr][idx_density] = r2
-
-                rmses_baseline[idx_ctr][idx_density] = rmse_baseline
-                r2s_baseline[idx_ctr][idx_density] = r2_baseline
+                comp = compare_models(data, roi_density, radius, center, **gdr_params)
+                for k in results['errors'].keys():
+                    # k is one of gbrt, linear, or constant
+                    results['errors'][k]['r2'][idx_ctr][idx_density] = comp[k][0]
+                    results['errors'][k]['rmse'][idx_ctr][idx_density] = comp[k][1]
         if dumpfile:
-            res = {'roi_densities': roi_densities, 'ncenters': ncenters,
-                   'rmses': rmses, 'r2s': r2s,
-                   'rmses_baseline': rmses_baseline, 'r2s_baseline': r2s_baseline}
-            pickle_dump(dumpfile, res, comment='GBRT performance results')
+            pickle_dump(dumpfile, results, comment='GBRT performance results')
 
-    kw = {'alpha': .2, 'lw': 1, 'color': 'k'}
-    for idx_ctr in range(ncenters):
-        ax_rmse.plot(roi_densities, rmses[idx_ctr], **kw)
-        ax_r2.plot(roi_densities, r2s[idx_ctr], **kw)
+    errors = results['errors']
+    roi_densities = results['roi_densities']
+    ncenters = results['ncenters']
 
+    # Plot GBRT results
     kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'markersize': 6, 'color': 'k'}
-    ax_rmse.plot(roi_densities, rmses.mean(axis=0), **kw)
-    ax_r2.plot(roi_densities, r2s.mean(axis=0), **kw)
+    ax_rmse.plot(roi_densities, errors['gbrt']['rmse'].mean(axis=0), label='GBRT', **kw)
+    ax_r2.plot(roi_densities, errors['gbrt']['r2'].mean(axis=0), **kw)
 
+    # Plot GBRT individual results (thin lines)
+    #kw = {'alpha': .2, 'lw': .5, 'color': 'k'}
+    #for idx_ctr in range(ncenters):
+        #ax_rmse.plot(roi_densities, errors['gbrt']['rmse'][idx_ctr], **kw)
+        #ax_r2.plot(roi_densities, errors['gbrt']['r2'][idx_ctr], **kw)
+
+    # Plot Linear Regression results
     kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'ls': '--', 'color': 'k'}
-    ax_rmse.plot(roi_densities, rmses_baseline.mean(axis=0), label='baseline predictor', **kw)
-    ax_r2.plot(roi_densities, r2s_baseline.mean(axis=0), **kw)
+    ax_rmse.plot(roi_densities, errors['linear']['rmse'].mean(axis=0), label='linear regression', **kw)
+    ax_r2.plot(roi_densities, errors['linear']['r2'].mean(axis=0), **kw)
 
+    # Plot constant predictor results
+    kw = {'alpha': .9, 'lw': 1, 'marker': '*', 'markersize': 4, 'ls': '--', 'color': 'r', 'markeredgecolor': 'r'}
+    ax_rmse.plot(roi_densities, errors['constant']['rmse'].mean(axis=0), label='constant predictor', **kw)
+    ax_r2.plot(roi_densities, errors['constant']['r2'].mean(axis=0), **kw)
+
+    # Style plot
     ax_rmse.set_ylabel('Normalized RMSE', fontsize=14)
     ax_r2.set_ylabel('$r^2$', fontsize=16)
     ax_r2.set_ylim(-.05, 1)
     ax_r2.set_xlim(min(roi_densities) - 5, max(roi_densities) + 5)
     ax_r2.set_yticks(np.arange(0, 1.01, .1))
-    ax_rmse.set_ylim(0, .4)
-    ax_rmse.set_yticks(np.arange(0, .41, .05))
+    ax_rmse.set_ylim(0, .5)
+    ax_rmse.set_yticks(np.arange(0, .51, .05))
     ax_rmse.set_xlim(*ax_r2.get_xlim())
     for ax in [ax_rmse, ax_r2]:
         # FIXME force xlims to be the same
@@ -86,56 +112,78 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
         ax.grid(True)
     ax_rmse.legend(prop={'size':12}, numpoints=1)
     fig.tight_layout()
-    #fig.suptitle('GBRT performance for different densities of training points in ROI',
-                 #fontsize=16)
 
 # ncenters random centers are picked and over all given radii
 # cross-validation error (normalized RMSE and r2) are averaged
 def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
                          dumpfile=None, **gdr_params):
-    fig = plt.figure(figsize=(12,8))
+    fig = plt.figure(figsize=(11,5))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
     if replot:
-        res = pickle_load(dumpfile)
-        for v in ['radii', 'ncenters', 'rmses', 'r2s', 'rmses_baseline', 'r2s_baseline']:
-            exec('%s = res["%s"]' % (v, v))
-        assert len(rmses_baseline) == len(r2s_baseline) == len(rmses) == len(r2s), \
-               'array length (# of centers) should be the same for baseline and train vs test'
+        results = pickle_load(dumpfile)
     else:
-        centers = [random_prediction_ctr(data, min(radii), min_density=roi_density)
-                   for _ in range(ncenters)]
+        centers = [
+            # HACK there's no easy way to check if for a given center the
+            # demanded density is attainable for circles of all desired radii.
+            # Ask for twice the density we need on the largest radius and hope
+            # for the best!
+            random_prediction_ctr(data, max(radii), min_density=2*roi_density)
+            for _ in range(ncenters)
+        ]
         shape = (ncenters, len(radii))
-        r2s, rmses = np.zeros(shape), np.zeros(shape)
-        r2s_baseline, rmses_baseline = np.zeros(shape), np.zeros(shape)
+        # blank error matrix (keyed by center number and roi density index),
+        # used to initialize multiple components of the results dictionary.
+        blank = np.zeros(shape)
+
+        results = {
+            'ncenters': ncenters,
+            'radii': radii,
+            'errors': {
+                'gbrt': {'rmse': blank.copy(), 'r2': blank.copy()},
+                'linear': {'rmse': blank.copy(), 'r2': blank.copy()},
+                'constant': {'rmse': blank.copy(), 'r2': blank.copy()},
+            },
+        }
         for idx_radius, radius in enumerate(radii):
             for idx_ctr, center in enumerate(centers):
-                sys.stderr.write('# radius = %.0f ' % radius)
-                (r2, rmse), (r2_baseline, rmse_baseline) = \
-                    _eval_prediction(data, roi_density, radius, center, **gdr_params)
-                rmses[idx_ctr][idx_radius] = rmse
-                r2s[idx_ctr][idx_radius] = r2
-
-                rmses_baseline[idx_ctr][idx_radius] = rmse_baseline
-                r2s_baseline[idx_ctr][idx_radius] = r2_baseline
+                sys.stderr.write('# radius = %.0f, center %d/%d ' % (radius, idx_ctr + 1, ncenters))
+                comp = compare_models(data, roi_density, radius, center, **gdr_params)
+                for k in results['errors'].keys():
+                    # k is one of gbrt, linear, or constant
+                    results['errors'][k]['r2'][idx_ctr][idx_radius] = comp[k][0]
+                    results['errors'][k]['rmse'][idx_ctr][idx_radius] = comp[k][1]
         if dumpfile:
-            res = {'radii': radii, 'roi_density': roi_density,
-                   'ncenters': ncenters, 'rmses': rmses, 'r2s': r2s,
-                   'rmses_baseline': rmses_baseline, 'r2s_baseline': r2s_baseline}
-            pickle_dump(dumpfile, res, comment='GBRT performance results')
+            pickle_dump(dumpfile, results, comment='GBRT performance results')
 
-    kw = {'alpha': .2, 'lw': 1, 'color': 'k'}
-    for idx_ctr in range(ncenters):
-        ax_rmse.plot(radii, rmses[idx_ctr], **kw)
-        ax_r2.plot(radii, r2s[idx_ctr], **kw)
-    kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'color': 'k'}
-    ax_rmse.plot(radii, rmses.mean(axis=0), **kw)
-    ax_rmse.plot(radii, rmses_baseline.mean(axis=0), ls='--', **kw)
-    ax_r2.plot(radii, r2s.mean(axis=0), **kw)
-    ax_r2.plot(radii, r2s_baseline.mean(axis=0), ls='--', **kw)
+    errors = results['errors']
+    radii = results['radii']
+    ncenters = results['ncenters']
 
-    ax_rmse.set_ylabel('Normalized RMSE')
-    ax_r2.set_ylabel('$r^2$')
+    # Plot GBRT results
+    kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'markersize': 6, 'color': 'k'}
+    ax_rmse.plot(radii, errors['gbrt']['rmse'].mean(axis=0), label='GBRT', **kw)
+    ax_r2.plot(radii, errors['gbrt']['r2'].mean(axis=0), **kw)
+
+    # Plot GBRT individual results (thin lines)
+    #kw = {'alpha': .2, 'lw': .5, 'color': 'k'}
+    #for idx_ctr in range(ncenters):
+        #ax_rmse.plot(radii, errors['gbrt']['rmse'][idx_ctr], **kw)
+        #ax_r2.plot(radii, errors['gbrt']['r2'][idx_ctr], **kw)
+
+    # Plot Linear Regression results
+    kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'ls': '--', 'color': 'k'}
+    ax_rmse.plot(radii, errors['linear']['rmse'].mean(axis=0), label='linear regression', **kw)
+    ax_r2.plot(radii, errors['linear']['r2'].mean(axis=0), **kw)
+
+    # Plot constant predictor results
+    kw = {'alpha': .9, 'lw': 1, 'marker': '*', 'markersize': 4, 'ls': '--', 'color': 'r', 'markeredgecolor': 'r'}
+    ax_rmse.plot(radii, errors['constant']['rmse'].mean(axis=0), label='constant predictor', **kw)
+    ax_r2.plot(radii, errors['constant']['r2'].mean(axis=0), **kw)
+
+    # Style plot
+    ax_rmse.set_ylabel('Normalized RMSE', fontsize=14)
+    ax_r2.set_ylabel('$r^2$', fontsize=16)
     ax_r2.set_ylim(-.05, 1)
     ax_r2.set_xlim(min(radii) - 100, max(radii) + 100)
     ax_r2.set_yticks(np.arange(0, 1.01, .1))
@@ -144,9 +192,11 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
     ax_rmse.set_xlim(*ax_r2.get_xlim())
     for ax in [ax_rmse, ax_r2]:
         # FIXME force xlims to be the same
-        ax.set_xlabel('radius of ROI (km)')
+        ax.set_xlabel('radius of ROI (km)',
+                      fontsize=14)
         ax.grid(True)
-    ax_r2.legend(loc=6, prop={'size':12.5})
+    ax_rmse.legend(prop={'size':12}, numpoints=1)
+    fig.tight_layout()
 
 # For each given noise amplitude, performs cross-validation on ncenters with
 # given radius and test ratio and the average normalized rmse is reported as
@@ -516,7 +566,7 @@ def exp_error_by_radius(data):
     radii = np.arange(500, 4001, 500)
     dumpfile = 'error_by_radius.txt'
     plot_error_by_radius(data, roi_density, radii, ncenters, dumpfile=dumpfile)#, replot=True)
-    save_cur_fig('GB_performance_by_radius.png', title='GBRT performance for different radii of ROI')
+    save_cur_fig('GB_error_by_radius.png')
 
 def exp_sensitivity(data):
     radius = GREENLAND_RADIUS
