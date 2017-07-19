@@ -26,7 +26,7 @@ def _eval_prediction(data, roi_density, radius, center, **gdr_params):
 # cross-validation error (normalized RMSE and r2) are averaged
 def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
                           dumpfile=None, **gdr_params):
-    fig = plt.figure(figsize=(16,8))
+    fig = plt.figure(figsize=(11,5))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
     if replot:
@@ -71,7 +71,7 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
     ax_rmse.plot(roi_densities, rmses_baseline.mean(axis=0), label='baseline predictor', **kw)
     ax_r2.plot(roi_densities, r2s_baseline.mean(axis=0), **kw)
 
-    ax_rmse.set_ylabel('Normalized RMSE', fontsize=16)
+    ax_rmse.set_ylabel('Normalized RMSE', fontsize=14)
     ax_r2.set_ylabel('$r^2$', fontsize=16)
     ax_r2.set_ylim(-.05, 1)
     ax_r2.set_xlim(min(roi_densities) - 5, max(roi_densities) + 5)
@@ -82,9 +82,9 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
     for ax in [ax_rmse, ax_r2]:
         # FIXME force xlims to be the same
         ax.set_xlabel('density of training points in ROI ($10^{-6}$ km $^{-2}$)',
-                      fontsize=16)
+                      fontsize=14)
         ax.grid(True)
-    ax_rmse.legend(prop={'size':14}, numpoints=1)
+    ax_rmse.legend(prop={'size':12}, numpoints=1)
     fig.tight_layout()
     #fig.suptitle('GBRT performance for different densities of training points in ROI',
                  #fontsize=16)
@@ -153,11 +153,11 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
 # the perturbation in prediction caused by noise.
 def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
                               replot=False, dumpfile=None):
-    fig = plt.figure(figsize=(10, 8))
+    fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot(1, 1, 1)
     #fig.suptitle('sensitivity of GBRT predictions to noise in training GHF')
-    ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=14)
-    ax.set_ylabel('Normalized RMSE difference in $\widehat{\\mathrm{GHF}}$', fontsize=14)
+    ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=12)
+    ax.set_ylabel('Normalized RMSE difference in $\widehat{\\mathrm{GHF}}$', fontsize=12)
     ax.set_xlim(0, max(noise_amps) * 1.1)
     ax.set_aspect('equal')
     ax.grid(True)
@@ -218,7 +218,7 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
     ax.set_yticks(np.arange(0, .35, .05))
     ax.set_xlim(-.025, .325)
     ax.set_ylim(-.025, .325)
-    ax.legend(loc=1)
+    ax.legend(loc=1, fontsize=12)
     fig.tight_layout()
 
 
