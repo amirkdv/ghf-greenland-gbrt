@@ -24,13 +24,13 @@ def _eval_prediction(data, roi_density, radius, center, **gdr_params):
 
 # ncenters random centers are picked and over all given ROI densities
 # cross-validation error (normalized RMSE and r2) are averaged
-def plot_error_by_density(data, roi_densities, radius, ncenters, load_from=None,
-                          dump_to='error_by_radius.txt', **gdr_params):
+def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
+                          dumpfile=None, **gdr_params):
     fig = plt.figure(figsize=(16,8))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
-    if load_from is not None:
-        res = pickle_load(load_from)
+    if replot:
+        res = pickle_load(dumpfile)
         for v in ['roi_densities', 'ncenters', 'rmses', 'r2s', 'rmses_baseline', 'r2s_baseline']:
             exec('%s = res["%s"]' % (v, v))
         assert len(rmses_baseline) == len(r2s_baseline) == len(rmses) == len(r2s), \
@@ -52,11 +52,11 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, load_from=None,
 
                 rmses_baseline[idx_ctr][idx_density] = rmse_baseline
                 r2s_baseline[idx_ctr][idx_density] = r2_baseline
-        if dump_to:
+        if dumpfile:
             res = {'roi_densities': roi_densities, 'ncenters': ncenters,
                    'rmses': rmses, 'r2s': r2s,
                    'rmses_baseline': rmses_baseline, 'r2s_baseline': r2s_baseline}
-            pickle_dump(dump_to, res, comment='GBRT performance results')
+            pickle_dump(dumpfile, res, comment='GBRT performance results')
 
     kw = {'alpha': .2, 'lw': 1, 'color': 'k'}
     for idx_ctr in range(ncenters):
@@ -91,13 +91,13 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, load_from=None,
 
 # ncenters random centers are picked and over all given radii
 # cross-validation error (normalized RMSE and r2) are averaged
-def plot_error_by_radius(data, roi_density, radii, ncenters, load_from=None,
-                         dump_to='error_by_radius.txt', **gdr_params):
+def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
+                         dumpfile=None, **gdr_params):
     fig = plt.figure(figsize=(12,8))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
-    if load_from is not None:
-        res = pickle_load(load_from)
+    if replot:
+        res = pickle_load(dumpfile)
         for v in ['radii', 'ncenters', 'rmses', 'r2s', 'rmses_baseline', 'r2s_baseline']:
             exec('%s = res["%s"]' % (v, v))
         assert len(rmses_baseline) == len(r2s_baseline) == len(rmses) == len(r2s), \
@@ -118,11 +118,11 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, load_from=None,
 
                 rmses_baseline[idx_ctr][idx_radius] = rmse_baseline
                 r2s_baseline[idx_ctr][idx_radius] = r2_baseline
-        if dump_to:
+        if dumpfile:
             res = {'radii': radii, 'roi_density': roi_density,
                    'ncenters': ncenters, 'rmses': rmses, 'r2s': r2s,
                    'rmses_baseline': rmses_baseline, 'r2s_baseline': r2s_baseline}
-            pickle_dump(dump_to, res, comment='GBRT performance results')
+            pickle_dump(dumpfile, res, comment='GBRT performance results')
 
     kw = {'alpha': .2, 'lw': 1, 'color': 'k'}
     for idx_ctr in range(ncenters):
@@ -152,7 +152,7 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, load_from=None,
 # given radius and test ratio and the average normalized rmse is reported as
 # the perturbation in prediction caused by noise.
 def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
-                              load_from=None, dump_to='sensitivity.txt'):
+                              replot=False, dumpfile=None):
     fig, ax = plt.subplots()
     #fig.suptitle('sensitivity of GBRT predictions to noise in training GHF')
     ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=14)
@@ -171,8 +171,8 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
                               y_train + noise)
         return reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
-    if load_from is not None:
-        res = pickle_load(load_from)
+    if replot:
+        res = pickle_load(dumpfile)
         rmses = res['rmses']
         noise_amps = res['noise_amps']
     else:
@@ -196,8 +196,9 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
                 rmse = sqrt(mean_squared_error(y0, y_pred)) / np.mean(y0)
                 rmses[idx_ctr][idx_noise] = rmse
 
-        res = {'rmses': rmses, 'noise_amps': noise_amps}
-        pickle_dump('sensitivity.txt', res, 'sensitivity analysis')
+        if dumpfile:
+            res = {'rmses': rmses, 'noise_amps': noise_amps}
+            pickle_dump(dumpfile, res, 'sensitivity analysis')
 
     for idx in range(ncenters+1):
         if idx == 0:
@@ -220,11 +221,11 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
 # driven down to zero. As expected, GBRT does not overfit (test error
 # plateaus).
 def plot_generalization_analysis(data, roi_density, radius, ncenters,
-                                 ns_estimators, load_from=None):
+                                 ns_estimators, replot=False, dumpfile=None):
     fig, ax = plt.subplots()
 
-    if load_from is not None:
-        res = pickle_load(load_from)
+    if replot:
+        res = pickle_load(dumpfile)
         for v in ['roi_density', 'radius', 'ns_estimators', 'train_rmses', 'test_rmses']:
             exec('%s = res["%s"]' % (v, v))
         assert len(train_rmses) == len(test_rmses), \
@@ -251,12 +252,13 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
                 train_rmses[center_idx][n_idx] = train_rmse
                 test_rmses[center_idx][n_idx] = test_rmse
 
-        res = {'roi_density': roi_density,
-               'radius': radius,
-               'ns_estimators': ns_estimators,
-               'train_rmses': train_rmses,
-               'test_rmses': test_rmses}
-        pickle_dump('generalization.txt', res, comment='generalization errors')
+        if dumpfile:
+            res = {'roi_density': roi_density,
+                   'radius': radius,
+                   'ns_estimators': ns_estimators,
+                   'train_rmses': train_rmses,
+                   'test_rmses': test_rmses}
+            pickle_dump(dumpfile, res, comment='generalization errors')
 
     for center_idx in range(len(train_rmses)):
         ax.plot(ns_estimators, train_rmses[center_idx], 'g', alpha=.2, lw=1)
@@ -494,15 +496,17 @@ def exp_error_by_density(data):
     densities = np.append(np.array([1]), np.arange(5, 51, 5))
     radius = GREENLAND_RADIUS
     ncenters = 50
-    plot_error_by_density(data, densities, radius, ncenters)#, load_from='error_by_density.txt')
-    save_cur_fig('GB_performance_by_density.png')
+    dumpfile = 'error_by_density.txt'
+    plot_error_by_density(data, densities, radius, ncenters, dumpfile=dumpfile)#, replot=True)
+    save_cur_fig('GB_error_by_density.png')
 
 def exp_error_by_radius(data):
     radius = GREENLAND_RADIUS
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ncenters = 50
     radii = np.arange(500, 4001, 500)
-    plot_error_by_radius(data, roi_density, radii, ncenters)#, load_from='error_by_radius.txt')
+    dumpfile = 'error_by_radius.txt'
+    plot_error_by_radius(data, roi_density, radii, ncenters, dumpfile=dumpfile)#, replot=True)
     save_cur_fig('GB_performance_by_radius.png', title='GBRT performance for different radii of ROI')
 
 def exp_sensitivity(data):
@@ -510,7 +514,8 @@ def exp_sensitivity(data):
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     noise_amps = np.arange(0.025, .31, .025)
     ncenters = 50
-    plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters)#, load_from='sensitivity.txt')
+    dumpfile = 'sensitivity.txt'
+    plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters, dumpfile=dumpfile)#, replot=True)
     save_cur_fig('GB_sensitivity.png')
 
 def exp_generalization(data):
@@ -518,7 +523,8 @@ def exp_generalization(data):
     ncenters = 50
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ns_estimators = range(50, 750, 100) + range(750, 3001, 750)
-    plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators)#, load_from='generalization.txt')
+    dumpfile = 'generalization.txt'
+    plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators, dumpfile=dumpfile)#, replot=True)
     save_cur_fig('generalization.png')
 
 def exp_bias_variance(data):
