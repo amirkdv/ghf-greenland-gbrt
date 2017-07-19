@@ -76,8 +76,8 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, load_from=None,
     ax_r2.set_ylim(-.05, 1)
     ax_r2.set_xlim(min(roi_densities) - 5, max(roi_densities) + 5)
     ax_r2.set_yticks(np.arange(0, 1.01, .1))
-    ax_rmse.set_ylim(0, .5)
-    ax_rmse.set_yticks(np.arange(0, .51, .05))
+    ax_rmse.set_ylim(0, .4)
+    ax_rmse.set_yticks(np.arange(0, .41, .05))
     ax_rmse.set_xlim(*ax_r2.get_xlim())
     for ax in [ax_rmse, ax_r2]:
         # FIXME force xlims to be the same
