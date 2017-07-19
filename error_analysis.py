@@ -26,7 +26,7 @@ def _eval_prediction(data, roi_density, radius, center, **gdr_params):
 # cross-validation error (normalized RMSE and r2) are averaged
 def plot_error_by_density(data, roi_densities, radius, ncenters, load_from=None,
                           dump_to='error_by_radius.txt', **gdr_params):
-    fig = plt.figure(figsize=(12,8))
+    fig = plt.figure(figsize=(16,8))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
     if load_from is not None:
