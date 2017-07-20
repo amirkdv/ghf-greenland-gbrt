@@ -17,10 +17,12 @@ def compare_models(data, roi_density, radius, center, **gdr_params):
         split_with_circle(data, center, roi_density=roi_density, radius=radius)
     assert not X_test.empty
 
+    X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+    X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+
     # consider 3 predictors: GBRT, linear regression, and a constant predictor
-    gbrt = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                          y_train, **gdr_params)
-    y_gbrt = gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+    gbrt = train_regressor(X_train, y_train, **gdr_params)
+    y_gbrt = gbrt.predict(X_test)
 
     lin_reg = linear_model.LinearRegression()
     lin_reg.fit(X_train, y_train)
