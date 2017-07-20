@@ -3,7 +3,7 @@ from circles import equi
 from ghf_prediction import (
     plt, pd, np,
     load_global_gris_data, save_cur_fig,
-    train_regressor,
+    train_gbrt, train_linear,
     plot_GHF_on_map,
     plot_GHF_on_map_pcolormesh,
     plot_GHF_on_map_pcolormesh_interp,
@@ -88,7 +88,7 @@ save_cur_fig('greenland_training_w_gris.png', title='GHF at training set')
 
 # Predict GHF over test set
 # -----------------------------
-reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+reg = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                       y_train, logfile='GHF_1deg_averaged_logfile.txt')
 y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 

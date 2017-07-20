@@ -8,7 +8,8 @@ from ghf_prediction import (
     plt, np, mean_squared_error,
     load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
     split_with_circle, split_by_distance, tune_params,
-    train_regressor, error_summary, random_prediction_ctr,
+    train_gbrt, train_linear,
+    error_summary, random_prediction_ctr,
     CATEGORICAL_FEATURES, GREENLAND_RADIUS,
     plot_test_pred_linregress, train_test_split
 )
@@ -34,7 +35,7 @@ center = (28.67, 45.5)
 for roi_density in roi_densities:
     X_train, y_train, X_test, y_test = split_with_circle(data, center, 
                                        roi_density=roi_density, radius=GREENLAND_RADIUS)
-    reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+    reg = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                           y_train, logfile='%i_rho_logfile.txt'%roi_density)
     y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
@@ -69,7 +70,7 @@ X = data.drop(['GHF'],axis=1)
 y = data.GHF
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=None, test_size=0.15)
 
-reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+reg = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                       y_train, logfile='random_logfile.txt')
 y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
