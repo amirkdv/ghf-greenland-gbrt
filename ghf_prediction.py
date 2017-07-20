@@ -322,10 +322,16 @@ def pickle_load(path):
     with open(os.path.join(OUT_DIR, path), 'rb') as f:
         return pickle.load(f)
 
+
+def train_linear(X_train, y_train):
+    reg = LinearRegression()
+    reg.fit(X_train, y_train)
+    return reg
+
 # Trains and returns a GradientBoostingRegressor over the given training
 # feature and value vectors. Feature importance values are stored in
 # OUTDIR/logfile
-def train_regressor(X_train, y_train, logfile=None, **gdr_params):
+def train_gbrt(X_train, y_train, logfile=None, **gdr_params):
     sys.stderr.write('-> Training ...')
     start = time()
     # allow keyword arguments to override default GDR parameters

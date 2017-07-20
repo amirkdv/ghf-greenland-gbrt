@@ -1,12 +1,11 @@
 import sys
 from random import randint
 from math import sqrt, pi
-from sklearn import linear_model
 from ghf_prediction import (
     plt, np, mean_squared_error,
     load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
     split_with_circle, split_by_distance, tune_params,
-    train_regressor, error_summary, random_prediction_ctr,
+    train_gbrt, train_linear, error_summary, random_prediction_ctr,
     CATEGORICAL_FEATURES, GREENLAND_RADIUS
 )
 from ghf_greenland import greenland_train_test_sets
@@ -21,11 +20,10 @@ def compare_models(data, roi_density, radius, center, **gdr_params):
     X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
 
     # consider 3 predictors: GBRT, linear regression, and a constant predictor
-    gbrt = train_regressor(X_train, y_train, **gdr_params)
+    gbrt = train_gbrt(X_train, y_train, **gdr_params)
     y_gbrt = gbrt.predict(X_test)
 
-    lin_reg = linear_model.LinearRegression()
-    lin_reg.fit(X_train, y_train)
+    lin_reg = train_linear(X_train, y_train)
     y_lin = lin_reg.predict(X_test)
 
     y_const = y_train.mean() + np.zeros(len(y_test))
@@ -220,9 +218,9 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
         # So to get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
         # have noise ~ N(0, s*^2) with s* = mean(y) * noise_ampl * sqrt(pi/2).
         noise = np.mean(y_train) * noise_amp * sqrt(pi / 2) * np.random.randn(len(y_train))
-        reg = train_regressor(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+        gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                               y_train + noise)
-        return reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+        return gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
     if replot:
         res = pickle_load(dumpfile)
@@ -307,9 +305,9 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
 
             for n_idx, n in enumerate(ns_estimators):
                 sys.stderr.write('# estimators: %d ' % n)
-                reg = train_regressor(X_train, y_train, n_estimators=n)
-                _, train_rmse = error_summary(y_train, reg.predict(X_train))
-                _, test_rmse  = error_summary(y_test, reg.predict(X_test))
+                gbrt = train_gbrt(X_train, y_train, n_estimators=n)
+                _, train_rmse = error_summary(y_train, gbrt.predict(X_train))
+                _, test_rmse  = error_summary(y_test, gbrt.predict(X_test))
                 train_rmses[center_idx][n_idx] = train_rmse
                 test_rmses[center_idx][n_idx] = test_rmse
 
@@ -377,8 +375,8 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters, **gdr_
         X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
         assert not X_test.empty
 
-        reg = train_regressor(X_train, y_train, **gdr_params)
-        raw_importances = reg.feature_importances_
+        gbrt = train_gbrt(X_train, y_train, **gdr_params)
+        raw_importances = gbrt.feature_importances_
         for idx, value in enumerate(raw_importances):
             importances[center_idx][decat_by_raw_idx[idx]] += value
 
@@ -414,9 +412,9 @@ def plot_bias_variance_analysis(data, roi_density, radius, ncenters, ns_estimato
             X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
             assert not X_test.empty
 
-            reg = train_regressor(X_train, y_train, n_estimators=n)
+            gbrt = train_gbrt(X_train, y_train, n_estimators=n)
             sys.stdout.flush()
-            y_pred = reg.predict(X_test)
+            y_pred = gbrt.predict(X_test)
             for y_idx, y in enumerate(y_pred):
                 point = points[y_idx]
                 if point not in results:
@@ -508,18 +506,18 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features,
 
             X_train_ = X_train.loc[:, cols]
             X_test_ = X_test.loc[:, cols]
-            reg = train_regressor(X_train_.drop(non_features, axis=1),
+            gbrt = train_gbrt(X_train_.drop(non_features, axis=1),
                                   y_train, **gdr_params)
-            y_pred = reg.predict(X_test_.drop(non_features, axis=1))
+            y_pred = gbrt.predict(X_test_.drop(non_features, axis=1))
             rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
             #print 'error', rmses[idx_ctr][idx_n]
 
             # GBRT with junk feature values (signal-to-noise ratio = 0)
             X_train_ = X_train.loc[:, cols_noise]
             X_test_ = X_test.loc[:, cols_noise]
-            reg = train_regressor(X_train_.drop(non_features, axis=1),
+            gbrt = train_gbrt(X_train_.drop(non_features, axis=1),
                                   y_train, **gdr_params)
-            y_pred = reg.predict(X_test_.drop(non_features, axis=1))
+            y_pred = gbrt.predict(X_test_.drop(non_features, axis=1))
             junk_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
             #print 'on noise', junk_rmses[idx_ctr][idx_n]
 
