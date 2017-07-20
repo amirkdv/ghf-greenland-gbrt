@@ -308,7 +308,9 @@ def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
 # saves current matplotlib plot to given filename in OUT_DIR
 def save_cur_fig(filename, title=None):
     if title:
-        plt.gcf().suptitle(title)
+        ax = plt.gcf().add_subplot(111)
+        ax.set_title(title)
+#        plt.gcf().suptitle(title)
     plt.savefig(os.path.join(OUT_DIR, filename), dpi=400)
     sys.stderr.write('Saved %s to %s.\n' % (repr(title), filename))
     plt.clf()
@@ -363,10 +365,10 @@ def error_summary(y_test, y_pred):
 
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
-def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
+def plot_test_pred_linregress(y_test, y_pred, reg_type, filename, title=None):
     # first x=y line, then dumb predictor (average), then the
     # correlation between y_test and y_pred
-    plt.plot(np.linspace(0,MAX_GHF,50), np.linspace(0,MAX_GHF,50),'k--',label='ideal $GHF=\widehat{GHF}$',
+    plt.plot(np.linspace(0,MAX_GHF,50), np.linspace(0,MAX_GHF,50),'k--',label='ideal predictor',
                 alpha=0.4,lw=1)
 
     data = load_global_gris_data()
@@ -378,7 +380,7 @@ def plot_test_pred_linregress(y_test, y_pred, filename, title=None):
              label='baseline predictor')
     r2, rmse = error_summary(y_test, y_pred)
 
-    plt.scatter(y_test, y_pred, label='GBRT predictions',s=20,edgecolor='black',c='blue')
+    plt.scatter(y_test, y_pred,label=reg_type+' predictor',s=30,edgecolor='white',c='blue',alpha=0.9)
     plt.grid(linestyle='dotted')
     plt.axes().set_aspect('equal')
     plt.xlabel('$GHF$ (mW m$^{-2}$)')
