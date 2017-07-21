@@ -59,7 +59,7 @@ for roi_density in roi_densities:
                     scatter_args=scatter_args)
     equi(m, center[0], center[1], GREENLAND_RADIUS,
          lw=2, linestyle='-', color='black', alpha=.5)
-    title = r'GHF error ($GHF - \widehat{GHF}$ ) on test set with ' + \
+    title = r'$GHF - \widehat{GHF}$ on test set with ' + \
             r'$\rho_{ROI}$ = %d'%roi_density
     save_cur_fig('%d-diff-map.png' % roi_density, title=title)
 
@@ -93,8 +93,8 @@ plot_GHF_on_map(m,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 save_cur_fig('gbrt_random_difference.png',
-     title='GHF error on test set (true - GBRT predicted)')
-    
+     title='$GHF - \widehat{GHF}$ on test set')
+
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
@@ -122,8 +122,7 @@ plot_GHF_on_map(m,
                 parallel_step=20., meridian_step=60.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-save_cur_fig('gbrt_random_train.png',
-     title='GHF at training set')
+save_cur_fig('gbrt_random_train.png', title='GHF at training set')
 
 plot_test_pred_linregress(y_test, y_pred_gbrt, label='GBRT', color='black')
 save_cur_fig('gbrt_random_linear_correlation.png')
@@ -144,8 +143,8 @@ plot_GHF_on_map(m,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 save_cur_fig('linear_random_difference.png',
-     title='GHF error on test set (true - linear predicted)')
-    
+     title=r'$GHF - \widehat{GHF}_{\mathrm{linear}}$ on test set')
+
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
@@ -187,10 +186,8 @@ plot_GHF_on_map(m,
                 parallel_step=20., meridian_step=60.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-save_cur_fig('global_ghf.png',
-     title='Global GHF measurements')
+save_cur_fig('global_ghf.png', title='Global GHF measurements')
 
 plot_GHF_histogram(y)
-save_cur_fig('global_ghf_histogram.png',
-     title=' ')
+save_cur_fig('global_ghf_histogram.png')
 
