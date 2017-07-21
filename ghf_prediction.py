@@ -162,7 +162,8 @@ def roi_density_to_test_size(density, radius, num_samples):
 def split_with_circle(data, center, roi_density=None, radius=3500):
     data_test, data_train = split_by_distance(data, center, radius)
     test_size = roi_density_to_test_size(roi_density, radius, len(data_test))
-    if test_size > 0:
+    assert test_size > 0
+    if test_size < 1:
         additional_train, reduced_data_test = train_test_split(
             data_test, random_state=0, test_size=test_size
         )
