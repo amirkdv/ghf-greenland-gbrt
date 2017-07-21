@@ -33,7 +33,7 @@ roi_densities = [50, 0, 20, 10, 5]
 center = (28.67, 45.5)
 
 plt.clf()
-
+'''
 for roi_density in roi_densities:
     print 'center: ', center
     X_train, y_train, X_test, y_test = split_with_circle(data, center,
@@ -66,7 +66,7 @@ for roi_density in roi_densities:
     plot_test_pred_linregress(y_test, y_pred, label='GBRT', color='black')
     save_cur_fig('%d_linear_correlation.png' % roi_density,
                  title=r'$\rho_{ROI}$ = %i' % roi_density)
-
+'''
 
 
 ### Main Text Figure 1
@@ -75,7 +75,7 @@ X = data.drop(['GHF'],axis=1)
 y = data.GHF
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=11, test_size=0.10)
-
+'''
 reg_gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                       y_train, logfile='gbrt_random_logfile.txt')
 y_pred_gbrt = reg_gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
@@ -95,6 +95,7 @@ plot_GHF_on_map(m,
 save_cur_fig('gbrt_random_difference.png',
      title='$GHF - \widehat{GHF}$ on test set')
 
+plt.clf()
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
@@ -110,6 +111,7 @@ plot_GHF_on_map(m,
 save_cur_fig('gbrt_random_test.png',
      title='measured GHF at test set')
 
+plt.clf()
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
@@ -124,6 +126,7 @@ plot_GHF_on_map(m,
                 scatter_args=scatter_args)
 save_cur_fig('gbrt_random_train.png', title='GHF at training set')
 
+plt.clf()
 plot_test_pred_linregress(y_test, y_pred_gbrt, label='GBRT', color='black')
 save_cur_fig('gbrt_random_linear_correlation.png')
 
@@ -132,7 +135,9 @@ reg_linear = train_linear(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                       y_train)
 y_pred_linear = reg_linear.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
+plt.clf()
 m = Basemap(projection='robin',lon_0=0,resolution='c')
+diff_cmap = plt.get_cmap('PiYG', 20)
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0.25, 'edgecolor':'black','cmap': diff_cmap}
 colorbar_args = {'location': 'bottom', 'pad': '10%'}
 plot_GHF_on_map(m,
@@ -145,6 +150,7 @@ plot_GHF_on_map(m,
 save_cur_fig('linear_random_difference.png',
      title=r'$GHF - \widehat{GHF}_{\mathrm{linear}}$ on test set')
 
+plt.clf()
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
@@ -160,6 +166,7 @@ plot_GHF_on_map(m,
 save_cur_fig('linear_random_test.png',
      title='measured GHF at test set')
 
+plt.clf()
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
@@ -175,10 +182,18 @@ plot_GHF_on_map(m,
 save_cur_fig('linear_random_train.png',
      title='GHF at training set')
 
+plt.clf()
 plot_test_pred_linregress(y_test, y_pred_linear, label='linear predictor', color='blue')
 save_cur_fig('linear_random_linear_correlation.png')
-
+'''
 ## global GHF and its histogram
+plt.clf()
+m = Basemap(projection='robin',lon_0=0,resolution='c')
+spectral_cmap = plt.get_cmap('spectral', 13)
+spectral_cmap.set_under('black')
+spectral_cmap.set_over('grey')
+colorbar_args = {'location': 'bottom', 'pad': '10%'}
+scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': spectral_cmap}
 plot_GHF_on_map(m,
                 X.Longitude_1.as_matrix(), X.Latitude_1.as_matrix(),
                 y,
@@ -188,6 +203,7 @@ plot_GHF_on_map(m,
                 scatter_args=scatter_args)
 save_cur_fig('global_ghf.png', title='Global GHF measurements')
 
+plt.clf()
 plot_GHF_histogram(y)
 save_cur_fig('global_ghf_histogram.png')
 
