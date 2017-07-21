@@ -76,7 +76,7 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
     ncenters = results['ncenters']
 
     # Plot GBRT results
-    kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'markersize': 6, 'color': 'k'}
+    kw = {'alpha': .9, 'lw': 2, 'marker': 'o', 'markersize': 5, 'color': 'k'}
     ax_rmse.plot(roi_densities, errors['gbrt']['rmse'].mean(axis=0), label='GBRT', **kw)
     ax_r2.plot(roi_densities, errors['gbrt']['r2'].mean(axis=0), **kw)
 
@@ -87,12 +87,12 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
         #ax_r2.plot(roi_densities, errors['gbrt']['r2'][idx_ctr], **kw)
 
     # Plot Linear Regression results
-    kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'ls': '--', 'color': 'k'}
+    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'markeredgecolor': 'b', 'color': 'b'}
     ax_rmse.plot(roi_densities, errors['linear']['rmse'].mean(axis=0), label='linear regression', **kw)
     ax_r2.plot(roi_densities, errors['linear']['r2'].mean(axis=0), **kw)
 
     # Plot constant predictor results
-    kw = {'alpha': .9, 'lw': 1, 'marker': '*', 'markersize': 4, 'ls': '--', 'color': 'r', 'markeredgecolor': 'r'}
+    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'color': 'r', 'markeredgecolor': 'r'}
     ax_rmse.plot(roi_densities, errors['constant']['rmse'].mean(axis=0), label='constant predictor', **kw)
     ax_r2.plot(roi_densities, errors['constant']['r2'].mean(axis=0), **kw)
 
@@ -161,7 +161,7 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
     ncenters = results['ncenters']
 
     # Plot GBRT results
-    kw = {'alpha': .9, 'lw': 2.5, 'marker': 'o', 'markersize': 6, 'color': 'k'}
+    kw = {'alpha': .9, 'lw': 2, 'marker': 'o', 'markersize': 5, 'color': 'k'}
     ax_rmse.plot(radii, errors['gbrt']['rmse'].mean(axis=0), label='GBRT', **kw)
     ax_r2.plot(radii, errors['gbrt']['r2'].mean(axis=0), **kw)
 
@@ -172,12 +172,12 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
         #ax_r2.plot(radii, errors['gbrt']['r2'][idx_ctr], **kw)
 
     # Plot Linear Regression results
-    kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'ls': '--', 'color': 'k'}
+    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'markeredgecolor': 'b', 'color': 'b'}
     ax_rmse.plot(radii, errors['linear']['rmse'].mean(axis=0), label='linear regression', **kw)
     ax_r2.plot(radii, errors['linear']['r2'].mean(axis=0), **kw)
 
     # Plot constant predictor results
-    kw = {'alpha': .9, 'lw': 1, 'marker': '*', 'markersize': 4, 'ls': '--', 'color': 'r', 'markeredgecolor': 'r'}
+    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'color': 'r', 'markeredgecolor': 'r'}
     ax_rmse.plot(radii, errors['constant']['rmse'].mean(axis=0), label='constant predictor', **kw)
     ax_r2.plot(radii, errors['constant']['r2'].mean(axis=0), **kw)
 
