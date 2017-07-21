@@ -75,7 +75,7 @@ X = data.drop(['GHF'],axis=1)
 y = data.GHF
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=11, test_size=0.10)
-'''
+
 reg_gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                       y_train, logfile='gbrt_random_logfile.txt')
 y_pred_gbrt = reg_gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
@@ -93,8 +93,8 @@ plot_GHF_on_map(m,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
 save_cur_fig('gbrt_random_difference.png',
-     title='$GHF - \widehat{GHF}$ on test set')
-
+     title='$GHF - \widehat{GHF}_{\mathrm{GBRT}}$ on test set')
+'''
 plt.clf()
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
@@ -185,7 +185,7 @@ save_cur_fig('linear_random_train.png',
 plt.clf()
 plot_test_pred_linregress(y_test, y_pred_linear, label='linear predictor', color='blue')
 save_cur_fig('linear_random_linear_correlation.png')
-'''
+
 ## global GHF and its histogram
 plt.clf()
 m = Basemap(projection='robin',lon_0=0,resolution='c')
@@ -206,4 +206,4 @@ save_cur_fig('global_ghf.png', title='Global GHF measurements')
 plt.clf()
 plot_GHF_histogram(y)
 save_cur_fig('global_ghf_histogram.png')
-
+'''
