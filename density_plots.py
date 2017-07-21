@@ -32,13 +32,11 @@ roi_densities = [50, 0, 20, 10, 5]
 #center = random_prediction_ctr(data, GREENLAND_RADIUS)
 center = (28.67, 45.5)
 
-# for some reason sometimes the fonts get messed up
-# clf will just remove whatever the hell is in python's 
-# effed-up mind
 plt.clf()
 
 for roi_density in roi_densities:
-    X_train, y_train, X_test, y_test = split_with_circle(data, center, 
+    print 'center: ', center
+    X_train, y_train, X_test, y_test = split_with_circle(data, center,
                                        roi_density=roi_density, radius=GREENLAND_RADIUS)
     reg = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                           y_train, logfile='%i_rho_logfile.txt'%roi_density)
@@ -61,13 +59,14 @@ for roi_density in roi_densities:
                     scatter_args=scatter_args)
     equi(m, center[0], center[1], GREENLAND_RADIUS,
          lw=2, linestyle='-', color='black', alpha=.5)
-    save_cur_fig('%i-diff-map.png'%roi_density,
-         title='GHF error on test set (true - predicted) with '+r'$\rho_{ROI}$ = %i'%roi_density)
-        
-    plot_test_pred_linregress(y_test, y_pred, 'GBRT', '%i_linear_correlation.png'%roi_density,
-                              title=r'$\rho_{ROI}$ = %i'%roi_density)
+    title = r'GHF error ($GHF - \widehat{GHF}$ ) on test set with ' + \
+            r'$\rho_{ROI}$ = %d'%roi_density
+    save_cur_fig('%d-diff-map.png' % roi_density, title=title)
 
-    print center
+    plot_test_pred_linregress(y_test, y_pred, label='GBRT', color='black')
+    save_cur_fig('%d_linear_correlation.png' % roi_density,
+                 title=r'$\rho_{ROI}$ = %i' % roi_density)
+
 
 
 ### Main Text Figure 1
@@ -126,8 +125,8 @@ plot_GHF_on_map(m,
 save_cur_fig('gbrt_random_train.png',
      title='GHF at training set')
 
-plot_test_pred_linregress(y_test, y_pred_gbrt, 'GBRT', 'gbrt_random_linear_correlation.png',
-                          title='   ')
+plot_test_pred_linregress(y_test, y_pred_gbrt, label='GBRT', color='black')
+save_cur_fig('gbrt_random_linear_correlation.png')
 
 ## linear regression
 reg_linear = train_linear(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
@@ -177,8 +176,8 @@ plot_GHF_on_map(m,
 save_cur_fig('linear_random_train.png',
      title='GHF at training set')
 
-plot_test_pred_linregress(y_test, y_pred_linear, 'linear', 'linear_random_linear_correlation.png',
-                          title='   ')
+plot_test_pred_linregress(y_test, y_pred_linear, label='linear predictor', color='blue')
+save_cur_fig('linear_random_linear_correlation.png')
 
 ## global GHF and its histogram
 plot_GHF_on_map(m,

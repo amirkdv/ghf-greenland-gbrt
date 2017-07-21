@@ -366,34 +366,35 @@ def error_summary(y_test, y_pred):
 
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
-def plot_test_pred_linregress(y_test, y_pred, reg_type, filename, title=None):
+def plot_test_pred_linregress(y_test, y_pred, label, color='blue'):
     # first x=y line, then dumb predictor (average), then the
     # correlation between y_test and y_pred
-    plt.plot(np.linspace(0,MAX_GHF,50), np.linspace(0,MAX_GHF,50),'k--',label='ideal predictor',
-                alpha=0.4,lw=1)
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ghf_range = np.linspace(0,MAX_GHF,50)
+    ax.plot(ghf_range, ghf_range, 'k--', alpha=0.7, lw=1, label='ideal predictor')
 
     data = load_global_gris_data()
     data.loc[data.GHF == 135.0, 'GHF'] = 0
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
 
-    plt.plot(np.linspace(0,MAX_GHF,50),np.ones([50,1])*data.GHF.mean(),'r--',lw=1,alpha=0.5,
-             label='baseline predictor')
+    ax.plot(ghf_range, np.ones([50,1]) * data.GHF.mean(),'r--', lw=1, alpha=0.7,
+            label='constant predictor')
     r2, rmse = error_summary(y_test, y_pred)
 
-    plt.scatter(y_test, y_pred,label=reg_type+' predictor',s=30,edgecolor='white',c='blue',alpha=0.9)
-    plt.grid(linestyle='dotted')
-    plt.axes().set_aspect('equal')
-    plt.xlabel('$GHF$ (mW m$^{-2}$)')
-    plt.ylabel('$\widehat{GHF}$ (mW m$^{-2}$)')
-    plt.xlim([0, MAX_GHF])
-    plt.ylim([0, MAX_GHF])
+    scatter_kw = {'color': color, 'edgecolor': 'white', 's': 30, 'alpha': .9}
+    ax.scatter(y_test, y_pred, label=label, **scatter_kw)
+    ax.grid(linestyle='dotted')
+    ax.set_aspect('equal')
+    ax.set_xlabel('$GHF$ (mW m$^{-2}$)')
+    ax.set_ylabel('$\widehat{GHF}$ (mW m$^{-2}$)')
+    ax.set_xlim([0, MAX_GHF])
+    ax.set_ylim([0, MAX_GHF])
 
-    title = title + '\n$r^2=%.3f, RMSE=%.2f$' % (r2, rmse)
-    plt.legend(loc=2)
-    # FIXME pull setting title out of function; requires save_cur_fig to not
-    # set title instead let the plot functions do it.
-    save_cur_fig(filename, title=title)
+    ax.set_title('$r^2=%.2f, RMSE=%.2f$' % (r2, rmse))
+    ax.legend(loc=2)
+    fig.tight_layout()
 
 # plots the histogram of given GHF values
 def plot_GHF_histogram(values):

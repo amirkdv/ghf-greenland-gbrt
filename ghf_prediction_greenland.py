@@ -142,8 +142,8 @@ y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
 ## Linear Regression between known and predicted values in test set
 ## ----------------------------------------------------------------
-#plot_test_pred_linregress(y_test, y_pred, 'GHF_1deg_averaged_plot.png',
-#                          title='Linear regression between predicted vs true GHF')
+#plot_test_pred_linregress(y_test, y_pred)
+#save_cur_fig('GHF_1deg_averaged_plot.png', title='Linear regression between predicted vs true GHF')
 
 # Predictions for Greenland
 # =========================
@@ -284,6 +284,6 @@ plot_GHF_histogram(y_train)
 save_cur_fig('hist_global.png', title='GHF global measurement')
 
 # Store greenland predictions and known values for ARC GIS
-# FIXME: out of use for now - save_np_object removed 
+# FIXME: out of use for now - save_np_object removed
 # --------------------------------------------------------
 #save_gris_prediction_data(X_gris, gris_known, y_gris, 'lat_lon_ghf.txt')
