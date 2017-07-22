@@ -255,7 +255,7 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
     for idx in range(ncenters+1):
         if idx == 0:
             # Greenland case
-            ax.plot(noise_amps, np.append([0], rmses[0]), color='b',
+            ax.plot(noise_amps, np.append([0], rmses[0]), color='g',
                     alpha=.5, lw=2.5, marker='o', markeredgewidth=0.0,
                     label='Greenland')
         else:
