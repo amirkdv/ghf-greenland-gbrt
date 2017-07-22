@@ -33,7 +33,7 @@ roi_densities = [50, 0, 20, 10, 5]
 center = (28.67, 45.5)
 
 plt.clf()
-'''
+
 for roi_density in roi_densities:
     print 'center: ', center
     X_train, y_train, X_test, y_test = split_with_circle(data, center,
@@ -41,6 +41,8 @@ for roi_density in roi_densities:
     reg = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                           y_train, logfile='%i_rho_logfile.txt'%roi_density)
     y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+
+    r2, rmse = error_summary(y_test, y_pred)
 
     m = Basemap(projection='merc',lat_0=center[0], lon_0=center[1],
                 resolution = 'l', area_thresh = 1000.0,
@@ -61,14 +63,13 @@ for roi_density in roi_densities:
          lw=2, linestyle='-', color='black', alpha=.5)
     title = r'$GHF - \widehat{GHF}$ on test set with ' + \
             r'$\rho_{ROI}$ = %d'%roi_density
-    save_cur_fig('%d-diff-map.png' % roi_density, title=title)
+#    save_cur_fig('%d-diff-map.png' % roi_density, title=title)
 
     plot_test_pred_linregress(y_test, y_pred, label='GBRT', color='black')
     save_cur_fig('%d_linear_correlation.png' % roi_density,
-                 title=r'$\rho_{ROI}$ = %i' % roi_density)
+                 title=r'$\rho_{ROI}$ = %i, $r^2=%.2f, RMSE=%.2f$' % (roi_density,r2, rmse))
+
 '''
-
-
 ### Main Text Figure 1
 ## gbrt regression
 X = data.drop(['GHF'],axis=1)
@@ -94,7 +95,7 @@ plot_GHF_on_map(m,
                 scatter_args=scatter_args)
 save_cur_fig('gbrt_random_difference.png',
      title='$GHF - \widehat{GHF}_{\mathrm{GBRT}}$ on test set')
-'''
+
 plt.clf()
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
