@@ -335,11 +335,15 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
     fig.tight_layout()
 
 # Plot feature importance results for ncenters rounds of cross validation for
-# given test ratio and radius.
+# given ROI training density and radius.
 def plot_feature_importance_analysis(data, roi_density, radius, ncenters, **gdr_params):
     raw_features = list(data)
     for f in ['Latitude_1', 'Longitude_1', 'GHF']:
         raw_features.pop(raw_features.index(f))
+
+    for f in raw_features + ['GHF']:
+        data[f] = (data[f] - data[f].min()) / (data[f].max() - data[f].min())
+        #print f, round(data[f].min(), 2), round(data[f].max(), 2), round(data[f].mean(), 2)
 
     # collapse categorical dummies for feature importances
     decat_by_raw_idx = {}
@@ -365,10 +369,15 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters, **gdr_
     # categorical dummy.
 
     centers = [random_prediction_ctr(data, radius, min_density=roi_density) for _ in range(ncenters)]
-    fig, ax = plt.subplots()
+    fig = plt.figure(figsize=(8, 10))
+    ax_gbrt = fig.add_subplot(2, 1, 1)
+    ax_lin = fig.add_subplot(2, 1, 2)
 
-    importances = np.zeros([ncenters, len(features)])
+    gbrt_importances = np.zeros([ncenters, len(features)])
+    lin_coefficients = np.zeros([ncenters, len(features)])
+    lin_intercepts = np.zeros(ncenters)
     for center_idx, center in enumerate(centers):
+        sys.stderr.write('%d / %d ' % (center_idx + 1, ncenters))
         X_train, y_train, X_test, y_test = \
             split_with_circle(data, center, roi_density=roi_density, radius=radius)
         X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
@@ -378,16 +387,30 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters, **gdr_
         gbrt = train_gbrt(X_train, y_train, **gdr_params)
         raw_importances = gbrt.feature_importances_
         for idx, value in enumerate(raw_importances):
-            importances[center_idx][decat_by_raw_idx[idx]] += value
+            gbrt_importances[center_idx][decat_by_raw_idx[idx]] += value
 
-        ax.plot(range(len(features)), importances[center_idx], 'k', alpha=.2, lw=1)
+        lin_reg = train_linear(X_train, y_train)
+        raw_coefficients = lin_reg.coef_
+        lin_intercepts[center_idx] = lin_reg.intercept_
 
-    ax.plot(range(len(features)), importances.mean(axis=0), 'b', alpha=.9, lw=2.5)
-    ax.set_xticks(range(len(features)))
-    ax.set_xticklabels(features, rotation=90, fontsize=8)
-    ax.set_xlim(-1, len(features) + 1)
-    ax.grid(True)
-    fig.subplots_adjust(bottom=0.2)
+        for idx, value in enumerate(raw_coefficients):
+            lin_coefficients[center_idx][decat_by_raw_idx[idx]] += value
+
+        ax_gbrt.plot(range(len(features)), gbrt_importances[center_idx], 'k', alpha=.2, lw=1)
+        ax_lin.plot(range(len(features)), np.log(np.abs(lin_coefficients[center_idx])), 'b', alpha=.2, lw=1)
+
+    ax_gbrt.plot(range(len(features)), gbrt_importances.mean(axis=0), 'k', alpha=.4, lw=3)
+    ax_lin.plot(range(len(features)), np.log(np.abs(lin_coefficients.mean(axis=0))), 'b', alpha=.4, lw=3)
+    c = lin_coefficients.mean(axis=0)
+    for ax in [ax_lin, ax_gbrt]:
+        ax.set_xlim(-1, len(features) + 1)
+        ax.grid(True)
+        ax.set_xticks(range(len(features)))
+    ax_gbrt.set_xticklabels([])
+    ax_lin.set_xticklabels(features, rotation=90, fontsize=8)
+    ax_gbrt.set_title('GBRT feature importance')
+    ax_lin.set_title(r'Normalized linear regression $\log(|w_i|)$')
+    #fig.subplots_adjust(bottom=0.2) # for vertical xtick labels
 
 # For each given value of n_estimators, peforms ncenters rounds of cross
 # validation with given radius and ROI density. Plots the average bias and
@@ -596,11 +619,11 @@ def exp_bias_variance(data):
 
 def exp_feature_importance(data):
     radius = GREENLAND_RADIUS
-    ncenters = 200
+    ncenters = 50
     roi_density = 11.3 # Greenland
-    n_estimators = 200
+    n_estimators = 1000
     plot_feature_importance_analysis(data, roi_density, radius, ncenters, n_estimators=n_estimators)
-    save_cur_fig('feature-importance.png', title='GBRT feature importances')
+    save_cur_fig('feature-importance.png')
 
 def exp_feature_selection(data):
     # plot performance by varying number of features
