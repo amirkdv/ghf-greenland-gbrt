@@ -78,16 +78,20 @@ def load_global_gris_data(plot_projections_to=None):
 
     if plot_projections_to:
         fig = plt.figure(figsize=(16, 20))
+        center = (28.67, 45.5)
+        data_roi, data_nonroi = split_by_distance(data, center, GREENLAND_RADIUS)
         for idx, f in enumerate(list(data)):
             if f == 'GHF':
                 continue
             ax = fig.add_subplot(6, 4, idx + 1)
-            ax.scatter(data[f], data['GHF'], c='k', s=2, alpha=.4, label=f)
+            ax.scatter(data_nonroi[f], data_nonroi['GHF'], c='g', lw=0, s=2, alpha=.4, label='outside ROI')
+            ax.scatter(data_roi[f], data_roi['GHF'], c='r', lw=0, s=2, alpha=.7, label='inside ROI')
+            ax.set_title(f)
             ax.tick_params(labelsize=6)
             ax.grid(True)
             ax.legend(fontsize=12)
 
-        fig.savefig(plot_projections_to, dpi=300)
+        save_cur_fig(plot_projections_to)
 
     data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES)
 
@@ -366,7 +370,7 @@ def error_summary(y_test, y_pred):
 
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
-def plot_test_pred_linregress(y_test, y_pred, label, color='blue'):
+def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
     # first x=y line, then dumb predictor (average), then the
     # correlation between y_test and y_pred
     fig = plt.figure()
@@ -394,7 +398,6 @@ def plot_test_pred_linregress(y_test, y_pred, label, color='blue'):
 
     ax.set_title('$r^2=%.2f, RMSE=%.2f$' % (r2, rmse))
     ax.legend(loc=2)
-    fig.tight_layout()
 
 # plots the histogram of given GHF values
 def plot_GHF_histogram(values):
