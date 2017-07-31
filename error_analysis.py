@@ -203,14 +203,9 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
 # the perturbation in prediction caused by noise.
 def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
                               replot=False, dumpfile=None):
-    fig = plt.figure(figsize=(6, 6))
-    ax = fig.add_subplot(1, 1, 1)
-    #fig.suptitle('sensitivity of GBRT predictions to noise in training GHF')
-    ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=12)
-    ax.set_ylabel('Normalized RMSE difference in $\widehat{\\mathrm{GHF}}$', fontsize=12)
-    ax.set_xlim(0, max(noise_amps) * 1.1)
-    ax.set_aspect('equal')
-    ax.grid(True)
+    fig = plt.figure(figsize=(10, 5))
+    ax_gbrt = fig.add_subplot(1, 2, 1)
+    ax_lin = fig.add_subplot(1, 2, 2)
 
     def _predict(X_train, y_train, X_test, noise_amp):
         # If noise ~ N(0, s^2), then mean(|noise|) = s * sqrt(2/pi),
@@ -219,20 +214,24 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
         # have noise ~ N(0, s*^2) with s* = mean(y) * noise_ampl * sqrt(pi/2).
         noise = np.mean(y_train) * noise_amp * sqrt(pi / 2) * np.random.randn(len(y_train))
         gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                              y_train + noise)
-        return gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+                          y_train + noise)
+        lin_reg = train_linear(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                               y_train + noise)
+        gbrt_pred = gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+        lin_pred = lin_reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+        return gbrt_pred, lin_pred
 
     if replot:
         res = pickle_load(dumpfile)
-        rmses = res['rmses']
+        rmses_gbrt, rmses_lin = res['rmses_gbrt'], res['rmses_lin']
         noise_amps = res['noise_amps']
-        noise_amps = np.append([0], noise_amps)
     else:
         centers = [random_prediction_ctr(data, radius, min_density=roi_density)
                    for _ in range(ncenters)]
         y0 = []
         centers = [None] + centers # one extra "center" (Greenland)
-        rmses = np.zeros((len(centers), len(noise_amps)))
+        rmses_gbrt = np.zeros((len(centers), len(noise_amps)))
+        rmses_lin = np.zeros((len(centers), len(noise_amps)))
         for idx_ctr, center in enumerate(centers):
             if center is None:
                 # Greenland case
@@ -241,34 +240,49 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
                 X_train, y_train, X_test, _ = \
                     split_with_circle(data, center, roi_density=roi_density, radius=radius)
             sys.stderr.write('(ctr %d) noise_amp = 0.00 ' % (idx_ctr + 1))
-            y0 = _predict(X_train, y_train, X_test, 0)
+            y0_gbrt, y0_lin = _predict(X_train, y_train, X_test, 0)
             for idx_noise, noise_amp in enumerate(noise_amps):
                 sys.stderr.write('(ctr %d) noise_amp = %.2f ' % (idx_ctr + 1, noise_amp))
-                y_pred = _predict(X_train, y_train, X_test, noise_amp)
-                rmse = sqrt(mean_squared_error(y0, y_pred)) / np.mean(y0)
-                rmses[idx_ctr][idx_noise] = rmse
+                y_gbrt, y_lin = _predict(X_train, y_train, X_test, noise_amp)
+                rmse_gbrt = sqrt(mean_squared_error(y0_gbrt, y_gbrt)) / np.mean(y0_gbrt)
+                rmse_lin = sqrt(mean_squared_error(y0_lin, y_lin)) / np.mean(y0_lin)
+                rmses_gbrt[idx_ctr][idx_noise] = rmse_gbrt
+                rmses_lin[idx_ctr][idx_noise] = rmse_lin
 
         if dumpfile:
-            res = {'rmses': rmses, 'noise_amps': noise_amps}
+            res = {'rmses_lin': rmses_lin, 'rmses_gbrt': rmses_gbrt, 'noise_amps': noise_amps}
             pickle_dump(dumpfile, res, 'sensitivity analysis')
 
+    noise_amps = np.append([0], noise_amps)
     for idx in range(ncenters+1):
         if idx == 0:
             # Greenland case
-            ax.plot(noise_amps, np.append([0], rmses[0]), color='g',
-                    alpha=.5, lw=2.5, marker='o', markeredgewidth=0.0,
-                    label='Greenland')
+            kw = dict(color='g', alpha=.5, lw=2.5, marker='o',
+                      markeredgewidth=0.0, label='Greenland')
+            ax_lin.plot(noise_amps, np.append([0], rmses_lin[0]), **kw)
+            ax_gbrt.plot(noise_amps, np.append([0], rmses_gbrt[0]), **kw)
         else:
-            ax.plot(noise_amps, np.append([0], rmses[idx]), color='k',
-                    alpha=.2, lw=1)
+            kw = dict(color='k', alpha=.2, lw=1)
+            ax_lin.plot(noise_amps, np.append([0], rmses_lin[idx]), **kw)
+            ax_gbrt.plot(noise_amps, np.append([0], rmses_gbrt[idx]), **kw)
 
-    ax.plot(noise_amps, np.append([0], rmses[1:].mean(axis=0)),
-            alpha=.9, lw=2.5, marker='o', color='k', label='global average')
-    ax.set_xticks(np.arange(0, .35, .05))
-    ax.set_yticks(np.arange(0, .35, .05))
-    ax.set_xlim(-.025, .325)
-    ax.set_ylim(-.025, .325)
-    ax.legend(loc=1, fontsize=12)
+    kw = dict(alpha=.9, lw=2.5, marker='o', color='k', label='global average')
+    ax_lin.plot(noise_amps, np.append([0], rmses_lin[1:].mean(axis=0)), **kw)
+    ax_gbrt.plot(noise_amps, np.append([0], rmses_gbrt[1:].mean(axis=0)), **kw)
+
+    for ax in [ax_gbrt, ax_lin]:
+        ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=12)
+        ax.set_xlim(0, max(noise_amps) * 1.1)
+        ax.set_aspect('equal')
+        ax.grid(True)
+        ax.set_xticks(np.arange(0, .35, .05))
+        ax.set_yticks(np.arange(0, .35, .05))
+        ax.set_xlim(-.025, .325)
+        ax.set_ylim(-.025, .325)
+        ax.legend(loc=1, fontsize=12)
+    ax_gbrt.set_ylabel(r'Normalized RMSE difference in $\widehat{GHF}_{\mathrm{GBRT}}$', fontsize=12)
+    ax_lin.set_ylabel(r'Normalized RMSE difference in $\widehat{GHF}_{\mathrm{lin}}$', fontsize=12)
+
     fig.tight_layout()
 
 
