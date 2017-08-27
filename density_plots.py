@@ -28,7 +28,7 @@ data.dropna(inplace=True)
 # if the random_prediction_ctr is chosen, occasionally errors
 # may occur if that random center does not have the density of
 # 50. If so, simply re-run
-roi_densities = [50, 0, 20, 10]
+roi_densities = [50, 0, 20, 10, 5]
 #center = random_prediction_ctr(data, GREENLAND_RADIUS)
 center = (28.67, 45.5)
 
@@ -49,9 +49,16 @@ for roi_density in roi_densities:
                 llcrnrlon=0, llcrnrlat=25,
                 urcrnrlon=60, urcrnrlat=61)
 
+    m.drawlsmask(land_color = "#ffffff", 
+                   ocean_color="#fafafa",
+                   resolution = 'l')
+
+    x,y = m(X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix())
+    m.scatter(x,y,marker='o', s=5, color='#7a7a7a')
+
     diff_cmap = plt.get_cmap('PiYG', 20)
-    scatter_args = {'marker': 'o', 's': 25, 'lw': 0.25, 'cmap': diff_cmap,'edgecolor': 'k'}
-    colorbar_args = {'location': 'bottom', 'pad': '10%'}
+    scatter_args = {'marker': 'o', 's': 35, 'lw': 0.25, 'cmap': diff_cmap,'edgecolor': 'k'}
+    colorbar_args = {'location': 'bottom', 'pad': '5%'}
     plot_GHF_on_map(m,
                     X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
                     y_test - y_pred,
@@ -59,6 +66,7 @@ for roi_density in roi_densities:
                     parallel_step=10., meridian_step=10.,
                     colorbar_args=colorbar_args,
                     scatter_args=scatter_args)
+
     equi(m, center[0], center[1], GREENLAND_RADIUS,
          lw=2, linestyle='-', color='black', alpha=.5)
     title = r'$GHF - \widehat{GHF}$ on validation set with ' + \
