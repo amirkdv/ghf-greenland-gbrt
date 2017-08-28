@@ -50,7 +50,7 @@ for roi_density in roi_densities:
                 urcrnrlon=60, urcrnrlat=61)
 
     m.drawlsmask(land_color = "#ffffff", 
-                   ocean_color="#fafafa",
+                   ocean_color="#d4ebf2",
                    resolution = 'l')
 
     x,y = m(X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix())
