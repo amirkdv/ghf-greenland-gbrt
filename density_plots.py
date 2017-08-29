@@ -90,6 +90,10 @@ y_pred_gbrt = reg_gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1
 
 plt.clf()
 m = Basemap(projection='robin',lon_0=0,resolution='c')
+m.drawlsmask(land_color = "#ffffff", 
+               ocean_color="#e8f4f8",
+               resolution = 'l')
+
 diff_cmap = plt.get_cmap('PiYG', 20)
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0.25, 'edgecolor':'black','cmap': diff_cmap}
 colorbar_args = {'location': 'bottom', 'pad': '10%'}
@@ -145,6 +149,10 @@ y_pred_linear = reg_linear.predict(X_test.drop(['Latitude_1', 'Longitude_1'], ax
 
 #plt.clf()
 m = Basemap(projection='robin',lon_0=0,resolution='c')
+m.drawlsmask(land_color = "#ffffff", 
+               ocean_color="#e8f4f8",
+               resolution = 'l')
+
 diff_cmap = plt.get_cmap('PiYG', 20)
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0.25, 'edgecolor':'black','cmap': diff_cmap}
 colorbar_args = {'location': 'bottom', 'pad': '10%'}
@@ -197,6 +205,10 @@ save_cur_fig('linear_random_linear_correlation.png')
 ## global GHF and its histogram
 plt.clf()
 m = Basemap(projection='robin',lon_0=0,resolution='c')
+m.drawlsmask(land_color = "#ffffff", 
+               ocean_color="#e8f4f8",
+               resolution = 'l')
+
 spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
@@ -214,3 +226,4 @@ save_cur_fig('global_ghf.png', title='Global GHF measurements')
 plt.clf()
 plot_GHF_histogram(y)
 save_cur_fig('global_ghf_histogram.png')
+
