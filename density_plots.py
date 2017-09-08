@@ -139,7 +139,7 @@ plot_GHF_on_map(m,
 save_cur_fig('gbrt_random_train.png', title='GHF at training set')
 
 plt.clf()
-plot_test_pred_linregress(y_test, y_pred_gbrt, label='GBRT', color='black')
+plot_test_pred_linregress(y_test, y_pred_gbrt, label='GBRT', color='b')
 save_cur_fig('gbrt_random_linear_correlation.png')
 
 ## linear regression
