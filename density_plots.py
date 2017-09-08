@@ -49,7 +49,7 @@ for roi_density in roi_densities:
                 llcrnrlon=0, llcrnrlat=25,
                 urcrnrlon=60, urcrnrlat=61)
 
-    m.drawlsmask(land_color = "#ffffff", 
+    m.drawlsmask(land_color = "#ffffff",
                    ocean_color="#e8f4f8",
                    resolution = 'l')
 
@@ -73,7 +73,7 @@ for roi_density in roi_densities:
             r'$\rho_{ROI}$ = %d'%roi_density
     save_cur_fig('%d-diff-map.png' % roi_density, title=title)
 
-    plot_test_pred_linregress(y_test, y_pred, label='GBRT', color='black')
+    plot_test_pred_linregress(y_test, y_pred, label='GBRT', color='b')
     save_cur_fig('%d_linear_correlation.png' % roi_density,
                  title=r'$\rho_{ROI}$ = %i, $r^2=%.2f, RMSE=%.2f$' % (roi_density,r2, rmse))
 
@@ -90,7 +90,7 @@ y_pred_gbrt = reg_gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1
 
 plt.clf()
 m = Basemap(projection='robin',lon_0=0,resolution='c')
-m.drawlsmask(land_color = "#ffffff", 
+m.drawlsmask(land_color = "#ffffff",
                ocean_color="#e8f4f8",
                resolution = 'l')
 
@@ -149,7 +149,7 @@ y_pred_linear = reg_linear.predict(X_test.drop(['Latitude_1', 'Longitude_1'], ax
 
 #plt.clf()
 m = Basemap(projection='robin',lon_0=0,resolution='c')
-m.drawlsmask(land_color = "#ffffff", 
+m.drawlsmask(land_color = "#ffffff",
                ocean_color="#e8f4f8",
                resolution = 'l')
 
@@ -199,13 +199,13 @@ save_cur_fig('linear_random_train.png',
      title='GHF at training set')
 
 plt.clf()
-plot_test_pred_linregress(y_test, y_pred_linear, label='linear predictor', color='blue')
+plot_test_pred_linregress(y_test, y_pred_linear, label='linear predictor', color='r')
 save_cur_fig('linear_random_linear_correlation.png')
 
 ## global GHF and its histogram
 plt.clf()
 m = Basemap(projection='robin',lon_0=0,resolution='c')
-m.drawlsmask(land_color = "#ffffff", 
+m.drawlsmask(land_color = "#ffffff",
                ocean_color="#e8f4f8",
                resolution = 'l')
 

@@ -376,14 +376,14 @@ def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ghf_range = np.linspace(0,MAX_GHF,50)
-    ax.plot(ghf_range, ghf_range, 'k--', alpha=0.7, lw=1, label='ideal predictor')
+    ax.plot(ghf_range, ghf_range, 'g', alpha=0.5, lw=2, label='ideal predictor')
 
     data = load_global_gris_data()
     data.loc[data.GHF == 135.0, 'GHF'] = 0
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
 
-    ax.plot(ghf_range, np.ones([50,1]) * data.GHF.mean(),'r--', lw=1, alpha=0.7,
+    ax.plot(ghf_range, np.ones([50,1]) * data.GHF.mean(),'k--', lw=1, alpha=0.7,
             label='constant predictor')
     r2, rmse = error_summary(y_test, y_pred)
 

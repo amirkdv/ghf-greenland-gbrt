@@ -74,11 +74,23 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
     errors = results['errors']
     roi_densities = results['roi_densities']
     ncenters = results['ncenters']
+    num_sigma = 2
 
     # Plot GBRT results
-    kw = {'alpha': .9, 'lw': 2, 'marker': 'o', 'markersize': 5, 'color': 'k'}
-    ax_rmse.plot(roi_densities, errors['gbrt']['rmse'].mean(axis=0), label='GBRT', **kw)
+    kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'color': 'b'}
+    mean_rmse = errors['gbrt']['rmse'].mean(axis=0)
+    sd_rmse = np.sqrt(errors['gbrt']['rmse'].var(axis=0))
+    lower_rmse = mean_rmse - num_sigma * sd_rmse
+    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    ax_rmse.plot(roi_densities, mean_rmse, label='GBRT', **kw)
+    ax_rmse.fill_between(roi_densities, lower_rmse, higher_rmse, facecolor='b', edgecolor='b', alpha=.3)
+
+    mean_r2 = errors['gbrt']['r2'].mean(axis=0)
+    sd_r2 = np.sqrt(errors['gbrt']['r2'].var(axis=0))
+    lower_r2 = mean_r2 - num_sigma * sd_r2
+    higher_r2 = mean_r2 + num_sigma * sd_r2
     ax_r2.plot(roi_densities, errors['gbrt']['r2'].mean(axis=0), **kw)
+    ax_r2.fill_between(roi_densities, lower_r2, higher_r2, facecolor='b', edgecolor='b', alpha=.2)
 
     # Plot GBRT individual results (thin lines)
     #kw = {'alpha': .2, 'lw': .5, 'color': 'k'}
@@ -87,12 +99,23 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
         #ax_r2.plot(roi_densities, errors['gbrt']['r2'][idx_ctr], **kw)
 
     # Plot Linear Regression results
-    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'markeredgecolor': 'b', 'color': 'b'}
-    ax_rmse.plot(roi_densities, errors['linear']['rmse'].mean(axis=0), label='linear regression', **kw)
+    kw = {'alpha': .7, 'lw': 1, 'marker': 'o', 'markersize': 4, 'markeredgecolor': 'r', 'color': 'r'}
+    mean_rmse = errors['linear']['rmse'].mean(axis=0)
+    sd_rmse = np.sqrt(errors['linear']['rmse'].var(axis=0))
+    lower_rmse = mean_rmse - num_sigma * sd_rmse
+    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    ax_rmse.plot(roi_densities, mean_rmse, label='linear regression', **kw)
+    ax_rmse.fill_between(roi_densities, lower_rmse, higher_rmse, facecolor='r', edgecolor='r', alpha=.3)
+
+    mean_r2 = errors['linear']['r2'].mean(axis=0)
+    sd_r2 = np.sqrt(errors['linear']['r2'].var(axis=0))
+    lower_r2 = mean_r2 - num_sigma * sd_r2
+    higher_r2 = mean_r2 + num_sigma * sd_r2
     ax_r2.plot(roi_densities, errors['linear']['r2'].mean(axis=0), **kw)
+    ax_r2.fill_between(roi_densities, lower_r2, higher_r2, facecolor='r', edgecolor='r', alpha=.2)
 
     # Plot constant predictor results
-    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'color': 'r', 'markeredgecolor': 'r'}
+    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'color': 'k', 'markeredgecolor': 'k'}
     ax_rmse.plot(roi_densities, errors['constant']['rmse'].mean(axis=0), label='constant predictor', **kw)
     ax_r2.plot(roi_densities, errors['constant']['r2'].mean(axis=0), **kw)
 
@@ -160,24 +183,42 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
     radii = results['radii']
     ncenters = results['ncenters']
 
-    # Plot GBRT results
-    kw = {'alpha': .9, 'lw': 2, 'marker': 'o', 'markersize': 5, 'color': 'k'}
-    ax_rmse.plot(radii, errors['gbrt']['rmse'].mean(axis=0), label='GBRT', **kw)
-    ax_r2.plot(radii, errors['gbrt']['r2'].mean(axis=0), **kw)
+    num_sigma = 2
 
-    # Plot GBRT individual results (thin lines)
-    #kw = {'alpha': .2, 'lw': .5, 'color': 'k'}
-    #for idx_ctr in range(ncenters):
-        #ax_rmse.plot(radii, errors['gbrt']['rmse'][idx_ctr], **kw)
-        #ax_r2.plot(radii, errors['gbrt']['r2'][idx_ctr], **kw)
+    # Plot GBRT results
+    kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'color': 'b'}
+    mean_rmse = errors['gbrt']['rmse'].mean(axis=0)
+    sd_rmse = np.sqrt(errors['gbrt']['rmse'].var(axis=0))
+    lower_rmse = mean_rmse - num_sigma * sd_rmse
+    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    ax_rmse.plot(radii, mean_rmse, label='GBRT', **kw)
+    ax_rmse.fill_between(radii, lower_rmse, higher_rmse, facecolor='b', edgecolor='b', alpha=.3)
+
+    mean_r2 = errors['gbrt']['r2'].mean(axis=0)
+    sd_r2 = np.sqrt(errors['gbrt']['r2'].var(axis=0))
+    lower_r2 = mean_r2 - num_sigma * sd_r2
+    higher_r2 = mean_r2 + num_sigma * sd_r2
+    ax_r2.plot(radii, errors['gbrt']['r2'].mean(axis=0), **kw)
+    ax_r2.fill_between(radii, lower_r2, higher_r2, facecolor='b', edgecolor='b', alpha=.2)
 
     # Plot Linear Regression results
-    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'markeredgecolor': 'b', 'color': 'b'}
-    ax_rmse.plot(radii, errors['linear']['rmse'].mean(axis=0), label='linear regression', **kw)
+    kw = {'alpha': .7, 'lw': 1, 'marker': 'o', 'markersize': 4, 'markeredgecolor': 'r', 'color': 'r'}
+    mean_rmse = errors['linear']['rmse'].mean(axis=0)
+    sd_rmse = np.sqrt(errors['linear']['rmse'].var(axis=0))
+    lower_rmse = mean_rmse - num_sigma * sd_rmse
+    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    ax_rmse.plot(radii, mean_rmse, label='linear regression', **kw)
+    ax_rmse.fill_between(radii, lower_rmse, higher_rmse, facecolor='r', edgecolor='r', alpha=.3)
+
+    mean_r2 = errors['linear']['r2'].mean(axis=0)
+    sd_r2 = np.sqrt(errors['linear']['r2'].var(axis=0))
+    lower_r2 = mean_r2 - num_sigma * sd_r2
+    higher_r2 = mean_r2 + num_sigma * sd_r2
     ax_r2.plot(radii, errors['linear']['r2'].mean(axis=0), **kw)
+    ax_r2.fill_between(radii, lower_r2, higher_r2, facecolor='r', edgecolor='r', alpha=.2)
 
     # Plot constant predictor results
-    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'color': 'r', 'markeredgecolor': 'r'}
+    kw = {'alpha': .7, 'lw': 1, 'ls': '--', 'marker': 'o', 'markersize': 4, 'color': 'k', 'markeredgecolor': 'k'}
     ax_rmse.plot(radii, errors['constant']['rmse'].mean(axis=0), label='constant predictor', **kw)
     ax_r2.plot(radii, errors['constant']['r2'].mean(axis=0), **kw)
 
