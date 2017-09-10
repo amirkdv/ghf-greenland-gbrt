@@ -268,7 +268,9 @@ plot_GHF_on_map(m,
                 parallel_step=5., meridian_step=10.,
                 colorbar_args=colorbar_args,
                 scatter_args=scatter_args)
-
+m.drawparallels(np.arange(-80., 81., 5.), labels=[1, 0, 0, 0], fontsize=10, color='grey')
+m.drawmeridians(np.arange(-180., 181., 10.), labels=[0, 0, 0, 1], fontsize=10, color='grey')
+m.drawmapboundary(color='grey')
 save_cur_fig('greenland_predicted_interpolated.png',
              title='GHF predicted for Greenland (mW m$^{-2}$)')
 
