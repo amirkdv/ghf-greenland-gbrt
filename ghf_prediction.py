@@ -1,7 +1,7 @@
+import os
 import sys
 import scipy
 import random
-import os.path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -20,8 +20,9 @@ plt.rc('font', family='TeX Gyre Schola')
 MAX_GHF  = 150   # max limit of ghf considered
 GREENLAND_RADIUS = 1300
 
-OUT_DIR = 'plots/'
-OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
+OUT_DIR = os.getenv('OUT_DIR', 'plots/')
+if not os.path.isabs(OUT_DIR):
+    OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
 
 GLOBAL_CSV = '1deg_all_resampled_w_missing_from_goutorbe.csv'
 GRIS_CSV = '1deg_greenland_GHF_added2.csv' # FIXME remove old csv file from repo?
@@ -376,7 +377,7 @@ def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ghf_range = np.linspace(0,MAX_GHF,50)
-    ax.plot(ghf_range, ghf_range, 'g', alpha=0.5, lw=2, label='ideal predictor')
+    ax.plot(ghf_range, ghf_range, 'k', alpha=0.5, lw=2, label='ideal predictor')
 
     data = load_global_gris_data()
     data.loc[data.GHF == 135.0, 'GHF'] = 0

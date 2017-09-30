@@ -5,8 +5,7 @@ from ghf_prediction import haversine_distance, load_global_gris_data
 MAX_ICE_CORE_DIST = 150.
 
 # The only existing data points for Greenland are at the following ice
-# cores: data_points[X] contains info for data point at ice core X. 'rad'
-# is the radius used for Gaussian estimates from each point.
+# cores. 'rad' is the radius used for Gaussian estimates from each point.
 GREENLAND = pd.DataFrame({
     'lat':  [ 72.58,  72.60,   65.18,  75.10,   77.18,   61.40,   60.98,   60.73,      66.50],
     'lon':  [-37.64, -38.50,  -43.82, -42.32,  -61.13,  -48.18,  -45.98,  -45.75,     -50.33],
