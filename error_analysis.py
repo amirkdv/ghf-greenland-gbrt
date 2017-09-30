@@ -74,7 +74,7 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
     errors = results['errors']
     roi_densities = results['roi_densities']
     ncenters = results['ncenters']
-    num_sigma = 2
+    num_sigma = 1
 
     # Plot GBRT results
     kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'color': 'b'}
@@ -183,7 +183,7 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
     radii = results['radii']
     ncenters = results['ncenters']
 
-    num_sigma = 2
+    num_sigma = 1
 
     # Plot GBRT results
     kw = {'alpha': .9, 'lw': 1, 'marker': 'o', 'markersize': 4, 'color': 'b'}
