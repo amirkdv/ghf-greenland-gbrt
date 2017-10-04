@@ -133,7 +133,7 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
         ax.set_xlabel('density of training points in ROI ($10^{-6}$ km $^{-2}$)',
                       fontsize=14)
         ax.grid(True)
-    ax_rmse.legend(prop={'size':12}, numpoints=1)
+    ax_rmse.legend(prop={'size':15}, numpoints=1)
     fig.tight_layout()
 
 # ncenters random centers are picked and over all given radii
@@ -236,7 +236,7 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
         ax.set_xlabel('radius of ROI (km)',
                       fontsize=14)
         ax.grid(True)
-    ax_rmse.legend(prop={'size':12}, numpoints=1)
+    ax_rmse.legend(prop={'size':15}, numpoints=1)
     fig.tight_layout()
 
 # For each given noise amplitude, performs cross-validation on ncenters with
