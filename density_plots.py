@@ -18,6 +18,8 @@ from ghf_greenland  import greenland_train_test_sets
 from mpl_toolkits.basemap import Basemap
 from circles import equi
 
+plt.rc('font', size=15)
+
 data = load_global_gris_data()
 # FIXME artificially forced to 135.0 in source
 data.loc[data.GHF == 135.0, 'GHF'] = 0

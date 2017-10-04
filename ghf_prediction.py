@@ -17,7 +17,7 @@ pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
 plt.rc('font', family='TeX Gyre Schola')
 
-MAX_GHF  = 150   # max limit of ghf considered
+MAX_GHF  = 150   # max limit of ghf considered for plotting only
 GREENLAND_RADIUS = 1300
 
 OUT_DIR = os.getenv('OUT_DIR', 'plots/')
