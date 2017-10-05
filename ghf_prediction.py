@@ -112,9 +112,24 @@ def process_greenland_data(data):
     return data
 
 # Returns a random longitude-latitude pair that serves as the center of
-# validation circle.
-def random_prediction_ctr(data, radius, min_density=0):
-    cands = data.loc[(data.Latitude_1 > 45) & (data.Longitude_1 > -100) & (data.Longitude_1 < 50)]
+# validation circle. The region argument specifies a spatial constraint on
+# the latitude and longitude of the center:
+#   1. None: no constraint
+#   2. 'NA' (North America): 45 < lat, -100 < lon < -45
+#   3. 'WE' (Western Europe): 45 < lat, -45 < lon < 50
+#   4. 'NA-WE' (both of the above): 45 < lat, -100 < lon < 50
+def random_prediction_ctr(data, radius, min_density=0, region='NA-WE'):
+    if region is None:
+        cands = data
+    elif region == 'NA':
+        cands = data.loc[(45 < data.Latitude_1) & (-100 < data.Longitude_1) & (data.Longitude_1 < -45)]
+    elif region == 'WE':
+        cands = data.loc[(45 < data.Latitude_1) & ( -45 < data.Longitude_1) & (data.Longitude_1 <  50)]
+    elif region == 'NA-WE':
+        cands = data.loc[(45 < data.Latitude_1) & (-100 < data.Longitude_1) & (data.Longitude_1 <  50)]
+    else:
+        raise Exception('Invalid value for region given ("%s")' % str(region))
+
     while True:
         center = cands.sample(n=1)
         center = center.Longitude_1, center.Latitude_1

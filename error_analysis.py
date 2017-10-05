@@ -34,8 +34,8 @@ def compare_models(data, roi_density, radius, center, **gdr_params):
 
 # ncenters random centers are picked and over all given ROI densities
 # cross-validation error (normalized RMSE and r2) are averaged
-def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
-                          dumpfile=None, **gdr_params):
+def plot_error_by_density(data, roi_densities, radius, ncenters, region='NA-WE',
+                          replot=False, dumpfile=None, **gdr_params):
     fig = plt.figure(figsize=(11,5))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
@@ -43,7 +43,7 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
         results = pickle_load(dumpfile)
     else:
         centers = [
-            random_prediction_ctr(data, radius, min_density=max(roi_densities))
+            random_prediction_ctr(data, radius, region=region, min_density=max(roi_densities))
             for _ in range(ncenters)
         ]
         shape = (ncenters, len(roi_densities))
@@ -138,8 +138,8 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, replot=False,
 
 # ncenters random centers are picked and over all given radii
 # cross-validation error (normalized RMSE and r2) are averaged
-def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
-                         dumpfile=None, **gdr_params):
+def plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE',
+                         replot=False, dumpfile=None, **gdr_params):
     fig = plt.figure(figsize=(11,5))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
@@ -151,7 +151,7 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, replot=False,
             # demanded density is attainable for circles of all desired radii.
             # Ask for twice the density we need on the largest radius and hope
             # for the best!
-            random_prediction_ctr(data, max(radii), min_density=2*roi_density)
+            random_prediction_ctr(data, max(radii), region=region, min_density=2*roi_density)
             for _ in range(ncenters)
         ]
         shape = (ncenters, len(radii))
@@ -634,7 +634,7 @@ def exp_error_by_density(data):
     radius = GREENLAND_RADIUS
     ncenters = 50
     dumpfile = 'error_by_density.txt'
-    plot_error_by_density(data, densities, radius, ncenters, dumpfile=dumpfile)#, replot=True)
+    plot_error_by_density(data, densities, radius, ncenters, region='NA-WE', dumpfile=dumpfile, replot=False)
     save_cur_fig('GB_error_by_density.png')
 
 def exp_error_by_radius(data):
@@ -643,7 +643,7 @@ def exp_error_by_radius(data):
     ncenters = 50
     radii = np.arange(500, 4001, 500)
     dumpfile = 'error_by_radius.txt'
-    plot_error_by_radius(data, roi_density, radii, ncenters, dumpfile=dumpfile)#, replot=True)
+    plot_error_by_density(data, densities, radius, ncenters, region='NA-WE', dumpfile=dumpfile, replot=False)
     save_cur_fig('GB_error_by_radius.png')
 
 def exp_sensitivity(data):
