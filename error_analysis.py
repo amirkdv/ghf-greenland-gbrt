@@ -391,14 +391,11 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
 
 # Plot feature importance results for ncenters rounds of cross validation for
 # given ROI training density and radius.
-def plot_feature_importance_analysis(data, roi_density, radius, ncenters, **gdr_params):
+def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
+                                     dumpfile=None, replot=False, **gdr_params):
     raw_features = list(data)
     for f in ['Latitude_1', 'Longitude_1', 'GHF']:
         raw_features.pop(raw_features.index(f))
-
-    for f in raw_features + ['GHF']:
-        data[f] = (data[f] - data[f].min()) / (data[f].max() - data[f].min())
-        #print f, round(data[f].min(), 2), round(data[f].max(), 2), round(data[f].mean(), 2)
 
     # collapse categorical dummies for feature importances
     decat_by_raw_idx = {}
@@ -417,55 +414,96 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters, **gdr_
         features.append(f)
         decat_by_raw_idx[idx] = len(features) - 1
 
-    # at this point features contains original feature names and raw_features
-    # contains categorical dummies, in each round we map
-    # feature_importances_, which has the same size as raw_features, to feature
-    # importances for original features by adding the importances of each
-    # categorical dummy.
+    if replot:
+        res = pickle_load(dumpfile)
+        gbrt_importances = res['gbrt_importances']
+    else:
+        # at this point features contains original feature names and raw_features
+        # contains categorical dummies, in each round we map
+        # feature_importances_, which has the same size as raw_features, to feature
+        # importances for original features by adding the importances of each
+        # categorical dummy.
 
-    centers = [random_prediction_ctr(data, radius, min_density=roi_density) for _ in range(ncenters)]
+        centers = [random_prediction_ctr(data, radius, min_density=roi_density) for _ in range(ncenters)]
+        gbrt_importances = np.zeros([ncenters, len(features)])
+        for center_idx, center in enumerate(centers):
+            sys.stderr.write('%d / %d ' % (center_idx + 1, ncenters))
+            X_train, y_train, X_test, y_test = \
+                split_with_circle(data, center, roi_density=roi_density, radius=radius)
+            X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+            X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+            assert not X_test.empty
+
+            gbrt = train_gbrt(X_train, y_train, **gdr_params)
+            raw_importances = gbrt.feature_importances_
+            for idx, value in enumerate(raw_importances):
+                gbrt_importances[center_idx][decat_by_raw_idx[idx]] += value
+
+        if dumpfile:
+            res = {'gbrt_importances': gbrt_importances}
+            pickle_dump(dumpfile, res, 'feature importances')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+
+
+    means = gbrt_importances.mean(axis=0)
+    sds = np.sqrt(gbrt_importances.var(axis=0))
+    sort_order = list(reversed(np.argsort(means)))
+    means, sds = [means[i] for i in sort_order], [sds[i] for i in sort_order]
+    ax.bar(range(len(features)), means, color='k', ecolor='k', alpha=.5, yerr=sds)
+    ax.set_xlim(-1, len(features) + 1)
+    ax.grid(True)
+    ax.set_xticks(range(len(features)))
+    ax.set_xticklabels(features, rotation=90, fontsize=8)
+    ax.set_title('GBRT feature importances')
+    fig.subplots_adjust(bottom=0.2) # for vertical xtick labels
+
+
+# TODO
+def plot_space_leakage(data, num_samples, normalize=False, features=None, dumpfile=None, replot=False):
+    raw_features = list(data)
+    if replot:
+        res = pickle_load(dumpfile)
+        distances = res['distances']
+    else:
+        distance_features = ['Latitude_1', 'Longitude_1']
+        if normalize:
+            # normalize all features to [0, 1]
+            for f in list(data):
+                if f in distance_features:
+                    continue
+                data[f] = (data[f] - data[f].min()) / (data[f].max() - data[f].min())
+
+        if features is None:
+            non_features = distance_features + ['GHF']
+            features = [x for x in list(data) if x not in non_features]
+
+        distances = []
+        sys.stderr.write('Sampling %d pairs of points: \n' % num_samples)
+        for i in range(num_samples):
+            if (i+1) % 100 == 0:
+                sys.stderr.write('%d...\n' % (i+1))
+            p1, p2 = np.random.randint(0, len(data), 2)
+            p1, p2 = data.iloc[p1], data.iloc[p2]
+            feature_d = np.linalg.norm(p1[features] - p2[features])
+            spatial_d = np.linalg.norm([p1['Latitude_1'] - p2['Latitude_1'],
+                                        p1['Longitude_1'] - p2['Longitude_1']])
+            distances.append((spatial_d, feature_d))
+        if dumpfile:
+            res = {'distances': distances}
+            pickle_dump(dumpfile, res, 'space leakage')
+
     fig = plt.figure(figsize=(8, 10))
-    ax_gbrt = fig.add_subplot(2, 1, 1)
-    ax_lin = fig.add_subplot(2, 1, 2)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.scatter([x[0] for x in distances], [x[1] for x in distances],
+               edgecolor=None, facecolor='k', alpha=.5)
+    ax.set_xlabel('Distance in latitude-longitude')
+    ax.set_ylabel('Distance in feature space')
+    ax.grid(True)
+    ax.set_title('Opacity of selected features with respect to spatial coordinates')
 
-    gbrt_importances = np.zeros([ncenters, len(features)])
-    lin_coefficients = np.zeros([ncenters, len(features)])
-    lin_intercepts = np.zeros(ncenters)
-    for center_idx, center in enumerate(centers):
-        sys.stderr.write('%d / %d ' % (center_idx + 1, ncenters))
-        X_train, y_train, X_test, y_test = \
-            split_with_circle(data, center, roi_density=roi_density, radius=radius)
-        X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
-        X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
-        assert not X_test.empty
-
-        gbrt = train_gbrt(X_train, y_train, **gdr_params)
-        raw_importances = gbrt.feature_importances_
-        for idx, value in enumerate(raw_importances):
-            gbrt_importances[center_idx][decat_by_raw_idx[idx]] += value
-
-        lin_reg = train_linear(X_train, y_train)
-        raw_coefficients = lin_reg.coef_
-        lin_intercepts[center_idx] = lin_reg.intercept_
-
-        for idx, value in enumerate(raw_coefficients):
-            lin_coefficients[center_idx][decat_by_raw_idx[idx]] += value
-
-        ax_gbrt.plot(range(len(features)), gbrt_importances[center_idx], 'k', alpha=.2, lw=1)
-        ax_lin.plot(range(len(features)), np.log(np.abs(lin_coefficients[center_idx])), 'b', alpha=.2, lw=1)
-
-    ax_gbrt.plot(range(len(features)), gbrt_importances.mean(axis=0), 'k', alpha=.4, lw=3)
-    ax_lin.plot(range(len(features)), np.log(np.abs(lin_coefficients.mean(axis=0))), 'b', alpha=.4, lw=3)
-    c = lin_coefficients.mean(axis=0)
-    for ax in [ax_lin, ax_gbrt]:
-        ax.set_xlim(-1, len(features) + 1)
-        ax.grid(True)
-        ax.set_xticks(range(len(features)))
-    ax_gbrt.set_xticklabels([])
-    ax_lin.set_xticklabels(features, rotation=90, fontsize=8)
-    ax_gbrt.set_title('GBRT feature importance')
-    ax_lin.set_title(r'Normalized linear regression $\log(|w_i|)$')
-    #fig.subplots_adjust(bottom=0.2) # for vertical xtick labels
+    fig.tight_layout()
 
 # For each given value of n_estimators, peforms ncenters rounds of cross
 # validation with given radius and ROI density. Plots the average bias and
@@ -676,8 +714,8 @@ def exp_feature_importance(data):
     radius = GREENLAND_RADIUS
     ncenters = 50
     roi_density = 11.3 # Greenland
-    n_estimators = 1000
-    plot_feature_importance_analysis(data, roi_density, radius, ncenters, n_estimators=n_estimators)
+    dumpfile = 'feature_importances.txt'
+    plot_feature_importance_analysis(data, roi_density, radius, ncenters, dumpfile=dumpfile, replot=False)
     save_cur_fig('feature-importance.png')
 
 def exp_feature_selection(data):
