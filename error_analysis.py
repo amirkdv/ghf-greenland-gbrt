@@ -718,7 +718,7 @@ def exp_feature_selection(data):
     plot_feature_selection_analysis(data, roi_density, radius, ncenters, features, **_gdr_params)
     save_cur_fig('feature-selection-t=1-stochastic.png', 'Stochastic GBRT performance, whole circles as test set')
 
-def exp_tune_params():
+def exp_tune_params(data):
     param_grid = {
         'n_estimators': [200],
         'criterion': ['friedman_mse', 'mse'],
@@ -730,6 +730,14 @@ def exp_tune_params():
         'max_features': [.1, .3, .7]
     }
     tune_params(data, param_grid, cv_fold=10)
+
+def exp_space_leakage(data):
+    dumpfile = 'space_leakage.txt'
+    num_samples = 20000
+    features = ['d2_transfo', 'd_2hotspot', 'd_2ridge', 'd_2trench', 'd_2volcano']
+    plot_space_leakage(data, num_samples, features=features, dumpfile=dumpfile, replot=False)
+    save_cur_fig('space-leakage.png')
+
 
 if __name__ == '__main__':
     data = load_global_gris_data()
@@ -744,5 +752,6 @@ if __name__ == '__main__':
     #exp_generalization(data)
     #exp_bias_variance(data)
     #exp_feature_importance(data)
+    #exp_space_leakage(data)
     #exp_feature_selection(data)
-    #exp_tune_params()
+    #exp_tune_params(data)
