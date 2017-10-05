@@ -451,18 +451,31 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
     for feature in features:
         correct_names.append(dict_names[feature])
 
+#    means = gbrt_importances.mean(axis=0)
+#    sds = np.sqrt(gbrt_importances.var(axis=0))
+#    sort_order = list(reversed(np.argsort(means)))
+#    means, sds = [means[i] for i in sort_order], [sds[i] for i in sort_order]
+#    _xrange = [i-0.4 for i in range(len(features))] # labels in the middle of bars
+#    ax.bar(_xrange, means, color='k', ecolor='k', alpha=.5, yerr=sds)
+#    ax.set_xlim(-1, len(features) + 1)
+#    ax.grid(True)
+#    ax.set_xticks(range(len(features)))
+#    ax.set_xticklabels(correct_names, rotation=90, fontsize=8)
+#    ax.set_title('GBRT feature importances')
+#    fig.subplots_adjust(bottom=0.3) # for vertical xtick labels
+
     means = gbrt_importances.mean(axis=0)
     sds = np.sqrt(gbrt_importances.var(axis=0))
-    sort_order = list(reversed(np.argsort(means)))
+    sort_order = list((np.argsort(means)))
     means, sds = [means[i] for i in sort_order], [sds[i] for i in sort_order]
-    _xrange = [i-0.4 for i in range(len(features))] # labels in the middle of bars
-    ax.bar(_xrange, means, color='k', ecolor='k', alpha=.5, yerr=sds)
-    ax.set_xlim(-1, len(features) + 1)
+    _yrange = [i-0.4 for i in range(len(features))] # labels in the middle of bars
+    ax.barh(_yrange[::-1], means[::-1], color='k', ecolor='k', alpha=.5, xerr=sds[::-1])
+    ax.set_ylim(-1, len(features) + 1)
     ax.grid(True)
-    ax.set_xticks(range(len(features)))
-    ax.set_xticklabels(correct_names, rotation=90, fontsize=8)
+    ax.set_yticks(range(len(features)))
+    ax.set_yticklabels(correct_names[::-1], rotation=0, fontsize=10)
     ax.set_title('GBRT feature importances')
-    fig.subplots_adjust(bottom=0.3) # for vertical xtick labels
+    fig.subplots_adjust(left=0.3) # for vertical xtick labels
 
 
 # TODO
