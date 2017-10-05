@@ -9,6 +9,7 @@ from ghf_prediction import (
     CATEGORICAL_FEATURES, GREENLAND_RADIUS
 )
 from ghf_greenland import greenland_train_test_sets
+from feature_names import dict_names
 
 # for a fixed center, t, and radius, returns r2 and normalized rmse
 def compare_models(data, roi_density, radius, center, **gdr_params):
@@ -446,18 +447,22 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
+    correct_names = []
+    for feature in features:
+        correct_names.append(dict_names[feature])
 
     means = gbrt_importances.mean(axis=0)
     sds = np.sqrt(gbrt_importances.var(axis=0))
     sort_order = list(reversed(np.argsort(means)))
     means, sds = [means[i] for i in sort_order], [sds[i] for i in sort_order]
-    ax.bar(range(len(features)), means, color='k', ecolor='k', alpha=.5, yerr=sds)
+    _xrange = [i-0.4 for i in range(len(features))] # labels in the middle of bars
+    ax.bar(_xrange, means, color='k', ecolor='k', alpha=.5, yerr=sds)
     ax.set_xlim(-1, len(features) + 1)
     ax.grid(True)
     ax.set_xticks(range(len(features)))
-    ax.set_xticklabels(features, rotation=90, fontsize=8)
+    ax.set_xticklabels(correct_names, rotation=90, fontsize=8)
     ax.set_title('GBRT feature importances')
-    fig.subplots_adjust(bottom=0.2) # for vertical xtick labels
+    fig.subplots_adjust(bottom=0.3) # for vertical xtick labels
 
 
 # TODO
@@ -784,12 +789,12 @@ if __name__ == '__main__':
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
 
-    exp_error_by_density(data)
+    #exp_error_by_density(data)
     #exp_error_by_radius(data)
     #exp_sensitivity(data)
     #exp_generalization(data)
     #exp_bias_variance(data)
-    #exp_feature_importance(data)
+    exp_feature_importance(data)
     #exp_space_leakage(data)
     #exp_feature_selection(data)
     #exp_tune_params(data)
