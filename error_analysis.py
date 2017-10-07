@@ -689,18 +689,24 @@ def exp_error_by_density(data):
     densities = np.append(np.array([1]), np.arange(5, 51, 5))
     radius = GREENLAND_RADIUS
     ncenters = 50
-    dumpfile = 'error_by_density.txt'
-    plot_error_by_density(data, densities, radius, ncenters, region='NA-WE', dumpfile=dumpfile, replot=False)
-    save_cur_fig('GB_error_by_density.png')
+    # region constraints: 'NA-WE', 'NA', 'WE', or None (i.e all)
+    region = 'NA-WE'
+    dumpfile = 'error_by_density[%s].txt' % region
+    plotfile = 'GB_error_by_density[%s].png' % region
+    plot_error_by_density(data, densities, radius, ncenters, region='NA-WE', dumpfile=dumpfile, replot=True)
+    save_cur_fig(plotfile)
 
 def exp_error_by_radius(data):
     radius = GREENLAND_RADIUS
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ncenters = 50
     radii = np.arange(500, 4001, 500)
-    dumpfile = 'error_by_radius.txt'
-    plot_error_by_density(data, densities, radius, ncenters, region='NA-WE', dumpfile=dumpfile, replot=False)
-    save_cur_fig('GB_error_by_radius.png')
+    # region constraints: 'NA-WE', 'NA', 'WE', or None (i.e all)
+    region = 'NA-WE'
+    dumpfile = 'error_by_radius[%s].txt' % region
+    plotfile = 'GB_error_by_radius[%s].png' % region
+    plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE', dumpfile=dumpfile, replot=True)
+    save_cur_fig(plotfile)
 
 def exp_sensitivity(data):
     radius = GREENLAND_RADIUS
