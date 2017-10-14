@@ -120,6 +120,16 @@ def load_global_gris_data(plot_projections_to=None):
 
     data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES)
 
+
+    # NOTE to test what happens to error plots if only a certain subset of
+    # features are given to GBRT:
+    # 1. drop distance columns
+    # data = data.drop(DISTANCE_FEATURES, axis=1)
+    # 2. only keep distance columns
+    # data = data.drop([f for f in list(data) if f not in DISTANCE_FEATURES and f not in ['GHF', 'Latitude_1', 'Longitude_1']], axis=1)
+    # 3. only keep lat/lon
+    # data = data.drop([f for f in list(data) if f not in ['GHF', 'Latitude_1', 'Longitude_1']], axis=1)
+
     return data
 
 # GRIS specific filters

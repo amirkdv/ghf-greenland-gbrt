@@ -8,6 +8,8 @@ from ghf_prediction import (
     train_gbrt, train_linear, error_summary, random_prediction_ctr,
     CATEGORICAL_FEATURES, GREENLAND_RADIUS, FEATURE_NAMES, DISTANCE_FEATURES,
 )
+from itertools import combinations
+from sklearn.ensemble import partial_dependence
 from ghf_greenland import greenland_train_test_sets
 
 # for a fixed center, t, and radius, returns r2 and normalized rmse
@@ -669,6 +671,46 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features,
 
     fig.subplots_adjust(bottom=0.25)
 
+# Plots one-way or two-way partial dependencies (cf. Friedman 2001 or ESL). If
+# include_features is given, only those features will be considered, otherwise
+# all non-categorical features will be included.
+def plot_partial_dependence(X_train, y_train, include_features=None, n_ways=1):
+    raw_features = list(X_train)
+    features, feature_names = [], []
+    for i in range(len(raw_features)):
+        if raw_features[i] in FEATURE_NAMES: # everything but categoricals
+            # feature_name indexes match those of full training data column no.
+            feature_names.append(FEATURE_NAMES[raw_features[i]])
+            if include_features is None or raw_features[i] in include_features:
+                features.append(i)
+        else:
+            # will never be used because categoricals are excluded but we
+            # should keep track of indices nevertheless
+            feature_names.append('Some categorical')
+    assert len(feature_names) == len(raw_features)
+    sys.stderr.write('Plotting %d-way partial depdnence for %d features\n' %
+                     (n_ways, len(features)))
+
+    if n_ways == 1:
+        target_features = features # one-way pdp
+    elif n_ways == 2:
+        target_features = list(combinations(features, 2)) # two-way pdp
+    else:
+        raise Exception('only one-way and two-way partial dependence plots allowed, %d given' % int(n_ways))
+
+    reg = train_gbrt(X_train, y_train)
+    fig, axs = partial_dependence.plot_partial_dependence(
+        reg, X_train, target_features, figsize=(22, 12),
+        feature_names=feature_names, n_jobs=3, grid_resolution=50
+    )
+    for ax in axs:
+        ax.yaxis.label.set_size(8)
+        ax.grid(True)
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label.set_fontsize(8)
+    fig.tight_layout()
+
+
 # ================================================= #
 # Experiment functions
 # --------------------
@@ -789,6 +831,16 @@ def exp_space_leakage(data):
     plot_space_leakage(data, num_samples, features=DISTANCE_FEATURES, dumpfile=dumpfile, replot=False)
     save_cur_fig('space-leakage.png', title='Spatial information leakage through proximity features', set_title_for=None)
 
+def exp_partial_dependence():
+    X_train, y_train, _ = greenland_train_test_sets()
+    X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+
+    plot_partial_dependence(X_train, y_train, n_ways=1, include_features=None)
+    save_cur_fig('partial-dependence-one-way.png', title='One way partial dependences', set_title_for=None)
+
+    top_features = ['age', 'G_d_2yng_r', 'd_2trench', 'litho_asth', 'ETOPO_1deg', 'moho_GReD']
+    plot_partial_dependence(X_train, y_train, n_ways=2, include_features=top_features)
+    save_cur_fig('partial-dependence-two-way.png', title='Two way partial dependences', set_title_for=None)
 
 if __name__ == '__main__':
     data = load_global_gris_data()
@@ -806,3 +858,4 @@ if __name__ == '__main__':
     #exp_space_leakage(data)
     #exp_feature_selection(data)
     #exp_tune_params(data)
+    #exp_partial_dependence()
