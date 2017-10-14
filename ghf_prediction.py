@@ -33,6 +33,8 @@ IGNORED_COLS = [
     #'d_2trench', 'G_d_2yng_r', 'd_2ridge', 'd2_transfo'
     ]
 CATEGORICAL_FEATURES = ['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age']
+DISTANCE_FEATURES = ['G_d_2yng_r', 'd2_transfo', 'd_2hotspot',
+                     'd_2ridge', 'd_2trench', 'd_2volcano']
 GDR_PARAMS = {
     'loss': 'ls',
     'learning_rate': 0.05,

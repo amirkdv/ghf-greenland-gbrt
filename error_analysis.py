@@ -6,7 +6,7 @@ from ghf_prediction import (
     load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
     split_with_circle, split_by_distance, tune_params,
     train_gbrt, train_linear, error_summary, random_prediction_ctr,
-    CATEGORICAL_FEATURES, GREENLAND_RADIUS, FEATURE_NAMES,
+    CATEGORICAL_FEATURES, GREENLAND_RADIUS, FEATURE_NAMES, DISTANCE_FEATURES,
 )
 from ghf_greenland import greenland_train_test_sets
 
@@ -466,7 +466,9 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
     ax.set_title('GBRT feature importances')
     fig.subplots_adjust(left=0.3) # for vertical xtick labels
 
-# TODO
+# Scatter plot spatial distance vs euclidean distance in feature space for
+# specified features. If features is None all features excluding
+# latitude/longitude are included.
 def plot_space_leakage(data, num_samples, normalize=False, features=None, dumpfile=None, replot=False):
     raw_features = list(data)
     if replot:
@@ -681,7 +683,7 @@ def exp_error_by_density(data):
     region = 'NA-WE'
     dumpfile = 'error_by_density[%s].txt' % region
     plotfile = 'GB_error_by_density[%s].png' % region
-    plot_error_by_density(data, densities, radius, ncenters, region='NA-WE', dumpfile=dumpfile, replot=True)
+    plot_error_by_density(data, densities, radius, ncenters, region=region, dumpfile=dumpfile, replot=False)
     save_cur_fig(plotfile)
 
 def exp_error_by_radius(data):
@@ -689,11 +691,11 @@ def exp_error_by_radius(data):
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ncenters = 50
     radii = np.arange(500, 4001, 500)
-    # region constraints: 'NA-WE', 'NA', 'WE', or None (i.e all)
-    region = 'NA-WE'
-    dumpfile = 'error_by_radius[%s].txt' % region
-    plotfile = 'GB_error_by_radius[%s].png' % region
-    plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE', dumpfile=dumpfile, replot=True)
+    dumpfile = 'error_by_radius.txt' % region
+    plotfile = 'GB_error_by_radius.png' % region
+
+    sys.stderr.write('=> Experiment: Error by Radius (region: %s, no. centers: %d, no. radii: %d)\n' % (region, ncenters, len(radii)))
+    plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE', dumpfile=dumpfile, replot=False)
     save_cur_fig(plotfile)
 
 def exp_sensitivity(data):
@@ -784,9 +786,8 @@ def exp_tune_params(data):
 def exp_space_leakage(data):
     dumpfile = 'space_leakage.txt'
     num_samples = 20000
-    features = ['d2_transfo', 'd_2hotspot', 'd_2ridge', 'd_2trench', 'd_2volcano']
-    plot_space_leakage(data, num_samples, features=features, dumpfile=dumpfile, replot=False)
-    save_cur_fig('space-leakage.png')
+    plot_space_leakage(data, num_samples, features=DISTANCE_FEATURES, dumpfile=dumpfile, replot=False)
+    save_cur_fig('space-leakage.png', title='Spatial information leakage through proximity features', set_title_for=None)
 
 
 if __name__ == '__main__':
