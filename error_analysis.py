@@ -704,8 +704,8 @@ def exp_sensitivity(data):
     noise_amps = np.arange(0.025, .31, .025)
     ncenters = 50
     dumpfile = 'sensitivity.txt'
-    plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters, dumpfile=dumpfile)#, replot=True)
-    save_cur_fig('GB_sensitivity.png')
+    plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters, dumpfile=dumpfile, replot=False)
+    save_cur_fig('GB_sensitivity.png', title='GBRT prediction sensitivity to noise in training GHF', set_title_for=None)
 
 def exp_generalization(data):
     radius = GREENLAND_RADIUS
@@ -713,8 +713,8 @@ def exp_generalization(data):
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ns_estimators = range(50, 750, 100) + range(750, 3001, 750)
     dumpfile = 'generalization.txt'
-    plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators, dumpfile=dumpfile)#, replot=True)
-    save_cur_fig('generalization.png')
+    plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators, dumpfile=dumpfile, replot=False)
+    save_cur_fig('generalization.png', title='GBRT generalization power', set_title_for=None)
 
 def exp_bias_variance(data):
     radius = GREENLAND_RADIUS
@@ -730,7 +730,7 @@ def exp_feature_importance(data):
     roi_density = 11.3 # Greenland
     dumpfile = 'feature_importances.txt'
     plot_feature_importance_analysis(data, roi_density, radius, ncenters, dumpfile=dumpfile, replot=False)
-    save_cur_fig('feature-importance.png')
+    save_cur_fig('feature-importance.png', title='Relative feature importances in GBRT', set_title_for=None)
 
 def exp_feature_selection(data):
     # plot performance by varying number of features

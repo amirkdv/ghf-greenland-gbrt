@@ -351,11 +351,13 @@ def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
     plt.clim(*clim)
 
 # saves current matplotlib plot to given filename in OUT_DIR
-def save_cur_fig(filename, title=None):
+def save_cur_fig(filename, title=None, set_title_for='ax'):
     if title:
-        ax = plt.gcf().add_subplot(111)
-        ax.set_title(title)
-#        plt.gcf().suptitle(title)
+        fig = plt.gcf()
+        if set_title_for == 'fig':
+            fig.suptitle(title)
+        elif set_title_for == 'ax':
+            fig.get_axes()[0].set_title(title)
     plt.savefig(os.path.join(OUT_DIR, filename), dpi=400)
     sys.stderr.write('Saved %s to %s.\n' % (repr(title), filename))
     plt.clf()
