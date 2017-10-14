@@ -6,10 +6,9 @@ from ghf_prediction import (
     load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
     split_with_circle, split_by_distance, tune_params,
     train_gbrt, train_linear, error_summary, random_prediction_ctr,
-    CATEGORICAL_FEATURES, GREENLAND_RADIUS
+    CATEGORICAL_FEATURES, GREENLAND_RADIUS, FEATURE_NAMES,
 )
 from ghf_greenland import greenland_train_test_sets
-from feature_names import dict_names
 
 # for a fixed center, t, and radius, returns r2 and normalized rmse
 def compare_models(data, roi_density, radius, center, **gdr_params):
@@ -37,6 +36,8 @@ def compare_models(data, roi_density, radius, center, **gdr_params):
 # cross-validation error (normalized RMSE and r2) are averaged
 def plot_error_by_density(data, roi_densities, radius, ncenters, region='NA-WE',
                           replot=False, dumpfile=None, **gdr_params):
+    sys.stderr.write('=> Experiment: Error by Density (region: %s, no. centers: %d, no. densities: %d)\n' %
+                     (region, ncenters, len(roi_densities)))
     fig = plt.figure(figsize=(11,5))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
@@ -398,7 +399,8 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
     for f in ['Latitude_1', 'Longitude_1', 'GHF']:
         raw_features.pop(raw_features.index(f))
 
-    # collapse categorical dummies for feature importances
+    # a map to collapse categorical dummies for feature importances. The dict
+    # has keys in `raw_features` indices, and values in `features` indices.
     decat_by_raw_idx = {}
     features = []
     for idx, f in enumerate(raw_features):
@@ -439,44 +441,30 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
             raw_importances = gbrt.feature_importances_
             for idx, value in enumerate(raw_importances):
                 gbrt_importances[center_idx][decat_by_raw_idx[idx]] += value
+            #print '\n'.join('%s - %s: %.3f' % (features[i], gbrt_importances[center_idx][i]) for i in range(len(features)))
 
         if dumpfile:
-            res = {'gbrt_importances': gbrt_importances}
+            res = {'gbrt_importances': gbrt_importances, 'features': features}
             pickle_dump(dumpfile, res, 'feature importances')
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
-    correct_names = []
-    for feature in features:
-        correct_names.append(dict_names[feature])
-
-#    means = gbrt_importances.mean(axis=0)
-#    sds = np.sqrt(gbrt_importances.var(axis=0))
-#    sort_order = list(reversed(np.argsort(means)))
-#    means, sds = [means[i] for i in sort_order], [sds[i] for i in sort_order]
-#    _xrange = [i-0.4 for i in range(len(features))] # labels in the middle of bars
-#    ax.bar(_xrange, means, color='k', ecolor='k', alpha=.5, yerr=sds)
-#    ax.set_xlim(-1, len(features) + 1)
-#    ax.grid(True)
-#    ax.set_xticks(range(len(features)))
-#    ax.set_xticklabels(correct_names, rotation=90, fontsize=8)
-#    ax.set_title('GBRT feature importances')
-#    fig.subplots_adjust(bottom=0.3) # for vertical xtick labels
-
     means = gbrt_importances.mean(axis=0)
     sds = np.sqrt(gbrt_importances.var(axis=0))
-    sort_order = list((np.argsort(means)))
+    sort_order = list(np.argsort(means))
+
+    feature_names = [FEATURE_NAMES[features[i]] for i in sort_order]
+
     means, sds = [means[i] for i in sort_order], [sds[i] for i in sort_order]
     _yrange = [i-0.4 for i in range(len(features))] # labels in the middle of bars
-    ax.barh(_yrange[::-1], means[::-1], color='k', ecolor='k', alpha=.5, xerr=sds[::-1])
+    ax.barh(_yrange, means, color='k', ecolor='k', alpha=.5, xerr=sds[::-1])
     ax.set_ylim(-1, len(features) + 1)
     ax.grid(True)
     ax.set_yticks(range(len(features)))
-    ax.set_yticklabels(correct_names[::-1], rotation=0, fontsize=10)
+    ax.set_yticklabels(feature_names, rotation=0, fontsize=10)
     ax.set_title('GBRT feature importances')
     fig.subplots_adjust(left=0.3) # for vertical xtick labels
-
 
 # TODO
 def plot_space_leakage(data, num_samples, normalize=False, features=None, dumpfile=None, replot=False):
