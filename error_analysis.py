@@ -255,7 +255,7 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
     def _predict(X_train, y_train, X_test, noise_amp):
         # If noise ~ N(0, s^2), then mean(|noise|) = s * sqrt(2/pi),
         # cf. https://en.wikipedia.org/wiki/Half-normal_distribution
-        # So to get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
+        # To get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
         # have noise ~ N(0, s*^2) with s* = mean(y) * noise_ampl * sqrt(pi/2).
         noise = np.mean(y_train) * noise_amp * sqrt(pi / 2) * np.random.randn(len(y_train))
         gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
