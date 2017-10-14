@@ -387,6 +387,11 @@ def train_linear(X_train, y_train):
     reg.fit(X_train, y_train)
     return reg
 
+def get_gbrt(**gdr_params):
+    _gdr_params = GDR_PARAMS.copy()
+    _gdr_params.update(gdr_params)
+    return GradientBoostingRegressor(**_gdr_params)
+
 # Trains and returns a GradientBoostingRegressor over the given training
 # feature and value vectors. Feature importance values are stored in
 # OUTDIR/logfile
@@ -394,9 +399,7 @@ def train_gbrt(X_train, y_train, logfile=None, **gdr_params):
     sys.stderr.write('-> Training ...')
     start = time()
     # allow keyword arguments to override default GDR parameters
-    _gdr_params = GDR_PARAMS.copy()
-    _gdr_params.update(gdr_params)
-    reg = GradientBoostingRegressor(**_gdr_params)
+    reg = get_gbrt(**gdr_params)
     reg.fit(X_train, y_train)
     sys.stderr.write(' (%.2f secs)\n' % (time() - start))
 

@@ -5,12 +5,15 @@ from ghf_prediction import (
     plt, np, mean_squared_error,
     load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
     split_with_circle, split_by_distance, tune_params,
-    train_gbrt, train_linear, error_summary, random_prediction_ctr,
+    train_gbrt, get_gbrt, train_linear, error_summary, random_prediction_ctr,
     CATEGORICAL_FEATURES, GREENLAND_RADIUS, FEATURE_NAMES, DISTANCE_FEATURES,
 )
+from ghf_greenland import greenland_train_test_sets
+
+from itertools import compress
 from itertools import combinations
 from sklearn.ensemble import partial_dependence
-from ghf_greenland import greenland_train_test_sets
+from sklearn.feature_selection import RFE
 
 # for a fixed center, t, and radius, returns r2 and normalized rmse
 def compare_models(data, roi_density, radius, center, **gdr_params):
@@ -711,6 +714,19 @@ def plot_partial_dependence(X_train, y_train, include_features=None, n_ways=1):
     fig.tight_layout()
 
 
+def run_reverse_feature_elimination(X_train, y_train, n_features_to_select, step=1):
+    sys.stderr.write('Reverse feature elimination down to %d features ...\n' % n_features_to_select)
+    gbrt = get_gbrt()
+    rfe = RFE(gbrt, n_features_to_select=n_features_to_select, verbose=3, step=step)
+    selector = rfe.fit(X_train, y_train)
+    support = list(selector.support_)
+    features = list(X_train)
+    sys.stdout.write('--> Selected %d features:\n   * ' % n_features_to_select)
+    sys.stdout.write('\n   * '.join(
+        FEATURE_NAMES.get(f, f) for f in compress(features, support)
+    ) + '\n')
+    sys.stdout.flush()
+
 # ================================================= #
 # Experiment functions
 # --------------------
@@ -842,6 +858,12 @@ def exp_partial_dependence():
     plot_partial_dependence(X_train, y_train, n_ways=2, include_features=top_features)
     save_cur_fig('partial-dependence-two-way.png', title='Two way partial dependences', set_title_for=None)
 
+def exp_reverse_feature_elimination():
+    X_train, y_train, _ = greenland_train_test_sets()
+    X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+    run_reverse_feature_elimination(X_train, y_train, 5)
+    run_reverse_feature_elimination(X_train, y_train, 10)
+
 if __name__ == '__main__':
     data = load_global_gris_data()
     # FIXME artificially forced to 135.0 in source
@@ -859,3 +881,4 @@ if __name__ == '__main__':
     #exp_feature_selection(data)
     #exp_tune_params(data)
     #exp_partial_dependence()
+    #exp_reverse_feature_elimination()
