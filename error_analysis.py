@@ -29,7 +29,7 @@ from util import (
 )
 
 # for a fixed center, t, and radius, returns r2 and normalized rmse
-def compare_models(data, roi_density, radius, center, **gdr_params):
+def compare_models(data, roi_density, radius, center, **gbrt_params):
     X_train, y_train, X_test, y_test = \
         split_with_circle(data, center, roi_density=roi_density, radius=radius)
     assert not X_test.empty
@@ -38,7 +38,7 @@ def compare_models(data, roi_density, radius, center, **gdr_params):
     X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
 
     # consider 3 predictors: GBRT, linear regression, and a constant predictor
-    gbrt = train_gbrt(X_train, y_train, **gdr_params)
+    gbrt = train_gbrt(X_train, y_train, **gbrt_params)
     y_gbrt = gbrt.predict(X_test)
 
     lin_reg = train_linear(X_train, y_train)
@@ -53,7 +53,7 @@ def compare_models(data, roi_density, radius, center, **gdr_params):
 # ncenters random centers are picked and over all given ROI densities
 # cross-validation error (normalized RMSE and r2) are averaged
 def plot_error_by_density(data, roi_densities, radius, ncenters, region='NA-WE',
-                          replot=False, dumpfile=None, **gdr_params):
+                          replot=False, dumpfile=None, **gbrt_params):
     sys.stderr.write('=> Experiment: Error by Density (region: %s, no. centers: %d, no. densities: %d)\n' %
                      (region, ncenters, len(roi_densities)))
     fig = plt.figure(figsize=(11,5))
@@ -83,7 +83,7 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, region='NA-WE',
         for idx_density, roi_density in enumerate(roi_densities):
             for idx_ctr, center in enumerate(centers):
                 sys.stderr.write('# density = %.2f, center %d/%d ' % (roi_density, idx_ctr + 1, ncenters))
-                comp = compare_models(data, roi_density, radius, center, **gdr_params)
+                comp = compare_models(data, roi_density, radius, center, **gbrt_params)
                 for k in results['errors'].keys():
                     # k is one of gbrt, linear, or constant
                     results['errors'][k]['r2'][idx_ctr][idx_density] = comp[k][0]
@@ -159,7 +159,7 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, region='NA-WE',
 # ncenters random centers are picked and over all given radii
 # cross-validation error (normalized RMSE and r2) are averaged
 def plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE',
-                         replot=False, dumpfile=None, **gdr_params):
+                         replot=False, dumpfile=None, **gbrt_params):
     fig = plt.figure(figsize=(11,5))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
@@ -191,7 +191,7 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE',
         for idx_radius, radius in enumerate(radii):
             for idx_ctr, center in enumerate(centers):
                 sys.stderr.write('# radius = %.0f, center %d/%d ' % (radius, idx_ctr + 1, ncenters))
-                comp = compare_models(data, roi_density, radius, center, **gdr_params)
+                comp = compare_models(data, roi_density, radius, center, **gbrt_params)
                 for k in results['errors'].keys():
                     # k is one of gbrt, linear, or constant
                     results['errors'][k]['r2'][idx_ctr][idx_radius] = comp[k][0]
@@ -412,7 +412,7 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
 # Plot feature importance results for ncenters rounds of cross validation for
 # given ROI training density and radius.
 def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
-                                     dumpfile=None, replot=False, **gdr_params):
+                                     dumpfile=None, replot=False, **gbrt_params):
     raw_features = list(data)
     for f in ['Latitude_1', 'Longitude_1', 'GHF']:
         raw_features.pop(raw_features.index(f))
@@ -455,7 +455,7 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
             X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
             assert not X_test.empty
 
-            gbrt = train_gbrt(X_train, y_train, **gdr_params)
+            gbrt = train_gbrt(X_train, y_train, **gbrt_params)
             raw_importances = gbrt.feature_importances_
             for idx, value in enumerate(raw_importances):
                 gbrt_importances[center_idx][decat_by_raw_idx[idx]] += value
@@ -606,7 +606,7 @@ def plot_bias_variance_analysis(data, roi_density, radius, ncenters, ns_estimato
 # of the number of features used for prediction. The features list is assumed
 # to be in decreasing order of importance.
 def plot_feature_selection_analysis(data, t, radius, ncenters, features,
-                                    **gdr_params):
+                                    **gbrt_params):
     data = data.copy()
     non_features = ['Latitude_1', 'Longitude_1', 'GHF']
     noise_cols = [f + '_noise' for f in list(data) if f not in non_features]
@@ -649,7 +649,7 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features,
             X_train_ = X_train.loc[:, cols]
             X_test_ = X_test.loc[:, cols]
             gbrt = train_gbrt(X_train_.drop(non_features, axis=1),
-                                  y_train, **gdr_params)
+                                  y_train, **gbrt_params)
             y_pred = gbrt.predict(X_test_.drop(non_features, axis=1))
             rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
             #print 'error', rmses[idx_ctr][idx_n]
@@ -658,7 +658,7 @@ def plot_feature_selection_analysis(data, t, radius, ncenters, features,
             X_train_ = X_train.loc[:, cols_noise]
             X_test_ = X_test.loc[:, cols_noise]
             gbrt = train_gbrt(X_train_.drop(non_features, axis=1),
-                                  y_train, **gdr_params)
+                                  y_train, **gbrt_params)
             y_pred = gbrt.predict(X_test_.drop(non_features, axis=1))
             junk_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
             #print 'on noise', junk_rmses[idx_ctr][idx_n]
@@ -804,9 +804,9 @@ def exp_feature_importance(data):
     plot_feature_importance_analysis(data, roi_density, radius, ncenters, dumpfile=dumpfile, max_depth=max_depth, replot=False)
     save_cur_fig('feature-importance.png', title='Relative feature importances in GBRT', set_title_for=None)
 
+# plot performance by varying number of features
+# features in decreasing order of importance:
 def exp_feature_selection(data):
-    # plot performance by varying number of features
-    # features in decreasing order of importance:
     features = [
         'd_2trench',
         'd_2hotspot',
@@ -833,14 +833,14 @@ def exp_feature_selection(data):
     roi_density = 11.3 # Greenland
 
     radius = GREENLAND_RADIUS
-    _gdr_params = {
+    _gbrt_params = {
         #'learning_rate': 0.1, # shrinkage
         'n_estimators': 200, # no of weak learners
         'subsample': 0.5, # stochastic GBRT
         'max_depth': 10, # max depth of individual (weak) learners
     }
-    plot_feature_selection_analysis(data, roi_density, radius, ncenters, features, **_gdr_params)
-    save_cur_fig('feature-selection-t=1-stochastic.png', 'Stochastic GBRT performance, whole circles as test set')
+    plot_feature_selection_analysis(data, roi_density, radius, ncenters, features, **_gbrt_params)
+    save_cur_fig('feature-selection.png', 'Stochastic GBRT performance, whole circles as test set')
 
 def exp_tune_params(data):
     param_grid = {
