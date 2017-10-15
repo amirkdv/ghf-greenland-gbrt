@@ -1,13 +1,14 @@
 Geothermal Heat Flux Prediction
 -------------------------------
-Usage:
-
+To install the requirements, ensure that `numpy`, `matpltolib`, and `basemap`
+are already installed and then use:
 ```
-$ ls
-1deg_all_resampled_w_missing_from_goutorbe.csv # Global data
-1deg_greenland_GHF_added.csv               # Greenland data
-global_learning_gb_circles_gaussian.py     # main script
-global_learning_plots_gb_circles_gaussian/ # output directory
+$ pip install -r requirements.txt
+```
 
-$ python global_learning_gb_circles_gaussian.py
+To produce figures in the paper:
+```
+$ python density_plots # Figures 1 and 2
+$ python greenland.py # Figures 4, S5, S6
+$ python error_analysis # Figures 3, 5, S2, S3, S4
 ```

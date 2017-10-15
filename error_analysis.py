@@ -21,7 +21,7 @@ from util import (
     train_linear,
     error_summary,
     random_prediction_ctr,
-    greenland_train_test_sets
+    greenland_train_test_sets,
     CATEGORICAL_FEATURES,
     GREENLAND_RADIUS,
     FEATURE_NAMES,
@@ -753,7 +753,7 @@ def exp_error_by_density(data):
     # region constraints: 'NA-WE', 'NA', 'WE', or None (i.e all)
     region = 'NA-WE'
     dumpfile = 'error_by_density[%s].txt' % region
-    plotfile = 'GB_error_by_density[%s].png' % region
+    plotfile = 'error_by_density[%s].png' % region
     plot_error_by_density(data, densities, radius, ncenters, region=region, dumpfile=dumpfile, replot=False)
     save_cur_fig(plotfile)
 
@@ -762,11 +762,12 @@ def exp_error_by_radius(data):
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ncenters = 50
     radii = np.arange(500, 4001, 500)
-    dumpfile = 'error_by_radius.txt' % region
-    plotfile = 'GB_error_by_radius.png' % region
+    region = 'NA-WE'
+    dumpfile = 'error_by_radius[%s].txt' % region
+    plotfile = 'error_by_radius[%s].png' % region
 
     sys.stderr.write('=> Experiment: Error by Radius (region: %s, no. centers: %d, no. radii: %d)\n' % (region, ncenters, len(radii)))
-    plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE', dumpfile=dumpfile, replot=False)
+    plot_error_by_radius(data, roi_density, radii, ncenters, region=region, dumpfile=dumpfile, replot=False)
     save_cur_fig(plotfile)
 
 def exp_sensitivity(data):
@@ -776,7 +777,7 @@ def exp_sensitivity(data):
     ncenters = 50
     dumpfile = 'sensitivity.txt'
     plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters, dumpfile=dumpfile, replot=False)
-    save_cur_fig('GB_sensitivity.png', title='GBRT prediction sensitivity to noise in training GHF', set_title_for=None)
+    save_cur_fig('sensitivity.png', title='GBRT prediction sensitivity to noise in training GHF', set_title_for=None)
 
 def exp_generalization(data):
     radius = GREENLAND_RADIUS
@@ -885,12 +886,12 @@ if __name__ == '__main__':
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
 
-    #exp_error_by_density(data)
-    #exp_error_by_radius(data)
-    #exp_sensitivity(data)
-    #exp_generalization(data)
-    #exp_bias_variance(data)
+    exp_error_by_density(data)
+    exp_error_by_radius(data)
+    exp_sensitivity(data)
+    exp_generalization(data)
     exp_feature_importance(data)
+    #exp_bias_variance(data)
     #exp_space_leakage(data)
     #exp_feature_selection(data)
     #exp_tune_params(data)

@@ -142,37 +142,38 @@ def plot_interpolated_predictions(X_train, X_test, y_train, y_pred):
     m.drawmapboundary(color='grey')
 
 
-X_TRAIN, Y_TRAIN, X_TEST = greenland_train_test_sets()
-reg = train_gbrt(X_TRAIN.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                      Y_TRAIN, logfile='GHF_1deg_averaged_logfile.txt')
-Y_PRED = reg.predict(X_TEST.drop(['Latitude_1', 'Longitude_1'], axis=1))
+if __name__ == '__main__':
+    X_TRAIN, Y_TRAIN, X_TEST = greenland_train_test_sets()
+    reg = train_gbrt(X_TRAIN.drop(['Latitude_1', 'Longitude_1'], axis=1),
+                          Y_TRAIN, logfile='GHF_1deg_averaged_logfile.txt')
+    Y_PRED = reg.predict(X_TEST.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
-# -------------------- Plot training data  -------------------------
-plot_known_GHF(X_TRAIN, Y_TRAIN, X_TEST)
-save_cur_fig('greenland_training_w_gris.png', title='GHF at training set')
+    # -------------------- Plot training data  -------------------------
+    plot_known_GHF(X_TRAIN, Y_TRAIN, X_TEST)
+    save_cur_fig('greenland_training_w_gris.png', title='GHF at training set')
 
-plot_prescribed_GHF(X_TRAIN, X_TEST, Y_TRAIN)
-save_cur_fig('greenland_prescribed_GHF.png',
-             title='Points with prescribed GHF \n around GHF measurements (mW m$^{-2}$)')
+    plot_prescribed_GHF(X_TRAIN, X_TEST, Y_TRAIN)
+    save_cur_fig('greenland_prescribed_GHF.png',
+                 title='Points with prescribed GHF \n around GHF measurements (mW m$^{-2}$)')
 
-# -------------------- Plot predicted results ----------------------
-plot_predicted_points(X_TRAIN, X_TEST, Y_TRAIN, Y_PRED)
-save_cur_fig('greenland_predicted_points.png',
-             title='GHF predicted for Greenland (mW m$^{-2}$)')
+    # -------------------- Plot predicted results ----------------------
+    plot_predicted_points(X_TRAIN, X_TEST, Y_TRAIN, Y_PRED)
+    save_cur_fig('greenland_predicted_points.png',
+                 title='GHF predicted for Greenland (mW m$^{-2}$)')
 
-plot_predictions(X_TRAIN, X_TEST, Y_TRAIN, Y_PRED)
-save_cur_fig('greenland_predicted.png',
-             title='GHF predicted for Greenland (mW m$^{-2}$)')
+    plot_predictions(X_TRAIN, X_TEST, Y_TRAIN, Y_PRED)
+    save_cur_fig('greenland_predicted.png',
+                 title='GHF predicted for Greenland (mW m$^{-2}$)')
 
-plot_interpolated_predictions(X_TRAIN, X_TEST, Y_TRAIN, Y_PRED)
-save_cur_fig('greenland_predicted_interpolated.png',
-             title='GHF predicted for Greenland (mW m$^{-2}$)')
+    plot_interpolated_predictions(X_TRAIN, X_TEST, Y_TRAIN, Y_PRED)
+    save_cur_fig('greenland_predicted_interpolated.png',
+                 title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 
-# --------------------- Plot GHF histograms --------------------------
-# FIXME plot the histogram for all Greenland not just predicted values
-plot_GHF_histogram(Y_PRED)
-save_cur_fig('hist_greenland.png', title='GHF predicted in Greenland')
+    # --------------------- Plot GHF histograms --------------------------
+    # FIXME plot the histogram for all Greenland not just predicted values
+    plot_GHF_histogram(Y_PRED)
+    save_cur_fig('hist_greenland.png', title='GHF predicted in Greenland')
 
-plot_GHF_histogram(Y_TRAIN)
-save_cur_fig('hist_global.png', title='GHF global measurement')
+    plot_GHF_histogram(Y_TRAIN)
+    save_cur_fig('hist_global.png', title='GHF global measurement')

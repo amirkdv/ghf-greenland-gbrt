@@ -1,8 +1,8 @@
 import sys
-import circles.equi
 from random import randint
 from math import sqrt, pi
 from mpl_toolkits.basemap import Basemap
+from circles import equi
 from util import (
     plot_GHF_on_map,
     plt,
@@ -72,7 +72,7 @@ for roi_density in roi_densities:
                     colorbar_args=colorbar_args,
                     scatter_args=scatter_args)
 
-    circles.equi(m, center[0], center[1], GREENLAND_RADIUS,
+    equi(m, center[0], center[1], GREENLAND_RADIUS,
          lw=2, linestyle='-', color='black', alpha=.5)
     title = r'$GHF - \widehat{GHF}$ on validation set with ' + \
             r'$\rho_{ROI}$ = %d'%roi_density
