@@ -786,8 +786,9 @@ def exp_feature_importance(data):
     radius = GREENLAND_RADIUS
     ncenters = 50
     roi_density = 11.3 # Greenland
+    max_depth = 8
     dumpfile = 'feature_importances.txt'
-    plot_feature_importance_analysis(data, roi_density, radius, ncenters, dumpfile=dumpfile, replot=False)
+    plot_feature_importance_analysis(data, roi_density, radius, ncenters, dumpfile=dumpfile, max_depth=max_depth, replot=False)
     save_cur_fig('feature-importance.png', title='Relative feature importances in GBRT', set_title_for=None)
 
 def exp_feature_selection(data):
