@@ -35,7 +35,7 @@ IGNORED_COLS = [
 CATEGORICAL_FEATURES = ['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age']
 DISTANCE_FEATURES = ['G_d_2yng_r', 'd2_transfo', 'd_2hotspot',
                      'd_2ridge', 'd_2trench', 'd_2volcano']
-GDR_PARAMS = {
+GBRT_PARAMS = {
     'loss': 'ls',
     'learning_rate': 0.05,
     'n_estimators': 1000,
@@ -78,6 +78,18 @@ FEATURE_NAMES = {
     'lthlgy_mod': 'rock type',
     'G_ther_age': 'last thermo-tectonic event'
 }
+MAX_ICE_CORE_DIST = 150. # radius of gaussian paddings in Greenland
+
+# The only existing data points for Greenland are at the following ice
+# cores. 'rad' is the radius used for Gaussian estimates from each point.
+GREENLAND = pd.DataFrame({
+    'lat':  [ 72.58,  72.60,   65.18,  75.10,   77.18,   61.40,   60.98,   60.73,      66.50],
+    'lon':  [-37.64, -38.50,  -43.82, -42.32,  -61.13,  -48.18,  -45.98,  -45.75,     -50.33],
+    'ghf':  [ 51.3,   60.,     20.,    135.,    50.,     43.,     32.,     51.,        31.05],  # NOTE: GHF at NGRIP is questionable
+    'rad':  [ 1000.,  1000.,   1000.,  200.,    1000.,   1000.,   1000.,   1000.,      1000.],  # NOTE: rad at NGRIP is subject to change
+    'core': ['GRIP', 'GISP2', 'DYE3', 'NGRIP', 'CC',    'SASS1', 'SASS2', 'LANGSETH', 'GAP'],
+})
+GREENLAND.set_index('core')
 
 # Reads csv source and applies general filters.
 def read_csv(path):
@@ -144,6 +156,55 @@ def process_greenland_data(data):
         axis=1
     )
     return data
+
+# Approximates GHF values at rows with unknown GHF according to a Gaussian
+# decay formula based on known GHF values in GREENLAND.
+def fill_in_greenland_GHF(data):
+    def gauss(amp, dist, rad):
+        return amp * np.exp(- dist ** 2. / rad ** 2)
+
+    dist_cols = []
+    ghf_cols = []
+    for _, point in GREENLAND.iterrows():
+        # distance from each existing data point used to find gaussian
+        # estimates for GHF: data['distance_X'] is the distance of each row to
+        # data point X.
+        dist_col = 'distance_' + point.core
+        dist_cols.append(dist_col)
+        data[dist_col] = haversine_distance(data, (point.lon, point.lat))
+        # GHF estimates from gaussians centered at each existing data
+        # point: data['GHF_radial_X'] is the GHF estimate corresponding to
+        # data point point X.
+        ghf_col = 'GHF_radial_' + point.core
+        ghf_cols.append(ghf_col)
+        data[ghf_col] = data.apply(
+            lambda row: gauss(point.ghf, row[dist_col], point.rad),
+            axis=1
+        )
+        data.loc[data[dist_col] > MAX_ICE_CORE_DIST, ghf_col] = np.nan
+
+    data['GHF'] = data[ghf_cols + ['GHF']].mean(skipna=True, axis=1)
+    data = data.drop(dist_cols + ghf_cols, axis=1)
+
+    # FIXME artificially forced to 135.0 in source
+    data.loc[data.GHF == 135.0, 'GHF'] = 0
+    # The gris data set has many rows with feature values but no GHF
+    # measurements. We want to predict GHF for these.
+    gris_unknown = data[data.GHF.isnull()]
+    data.loc[data.GHF == 0, 'GHF'] = np.nan
+    data.dropna(inplace=True)
+    return data, gris_unknown
+
+# Put together X_train, y_train, X_test (y_test is unknown) for Greenland GHF
+# prediction using global dataset.
+def greenland_train_test_sets():
+    data = load_global_gris_data()
+    gris_known, gris_unknown = fill_in_greenland_GHF(data)
+    X_train = gris_known.drop(['GHF'], axis=1)
+    y_train = gris_known.GHF
+    X_test = gris_unknown.drop(['GHF'], axis=1)
+    return X_train, y_train, X_test
+
 
 # Returns a random longitude-latitude pair that serves as the center of
 # validation circle. The region argument specifies a spatial constraint on
@@ -237,7 +298,7 @@ def tune_params(data, param_grid, cv_fold=10):
         y_pred = reg.predict(X_test)
         return sqrt(mean_squared_error(y_test, y_pred)) / np.mean(y_test)
 
-    gbm = GradientBoostingRegressor(**GDR_PARAMS)
+    gbm = GradientBoostingRegressor(**GBRT_PARAMS)
     search = GridSearchCV(gbm, param_grid, scoring=_score, cv=cv_fold, n_jobs=1, verbose=10)
     search.fit(data.drop(['Latitude_1', 'Longitude_1', 'GHF'], axis=1), data['GHF'])
     print search.best_params_
@@ -387,19 +448,19 @@ def train_linear(X_train, y_train):
     reg.fit(X_train, y_train)
     return reg
 
-def get_gbrt(**gdr_params):
-    _gdr_params = GDR_PARAMS.copy()
-    _gdr_params.update(gdr_params)
-    return GradientBoostingRegressor(**_gdr_params)
+def get_gbrt(**gbrt_params):
+    _gbrt_params = GBRT_PARAMS.copy()
+    _gbrt_params.update(gbrt_params)
+    return GradientBoostingRegressor(**_gbrt_params)
 
 # Trains and returns a GradientBoostingRegressor over the given training
 # feature and value vectors. Feature importance values are stored in
 # OUTDIR/logfile
-def train_gbrt(X_train, y_train, logfile=None, **gdr_params):
+def train_gbrt(X_train, y_train, logfile=None, **gbrt_params):
     sys.stderr.write('-> Training ...')
     start = time()
     # allow keyword arguments to override default GDR parameters
-    reg = get_gbrt(**gdr_params)
+    reg = get_gbrt(**gbrt_params)
     reg.fit(X_train, y_train)
     sys.stderr.write(' (%.2f secs)\n' % (time() - start))
 
