@@ -1,19 +1,32 @@
 import sys
 from random import randint
 from math import sqrt, pi
-from ghf_prediction import (
-    plt, np, mean_squared_error,
-    load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
-    split_with_circle, split_by_distance, tune_params,
-    train_gbrt, get_gbrt, train_linear, error_summary, random_prediction_ctr,
-    CATEGORICAL_FEATURES, GREENLAND_RADIUS, FEATURE_NAMES, DISTANCE_FEATURES,
-)
-from ghf_greenland import greenland_train_test_sets
-
 from itertools import compress
 from itertools import combinations
 from sklearn.ensemble import partial_dependence
 from sklearn.feature_selection import RFE
+from util import (
+    plt,
+    np,
+    mean_squared_error,
+    load_global_gris_data,
+    save_cur_fig,
+    pickle_dump,
+    pickle_load,
+    split_with_circle,
+    split_by_distance,
+    tune_params,
+    train_gbrt,
+    get_gbrt,
+    train_linear,
+    error_summary,
+    random_prediction_ctr,
+    greenland_train_test_sets
+    CATEGORICAL_FEATURES,
+    GREENLAND_RADIUS,
+    FEATURE_NAMES,
+    DISTANCE_FEATURES,
+)
 
 # for a fixed center, t, and radius, returns r2 and normalized rmse
 def compare_models(data, roi_density, radius, center, **gdr_params):

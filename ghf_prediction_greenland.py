@@ -1,6 +1,6 @@
 from mpl_toolkits.basemap import Basemap
 from circles import equi
-from ghf_prediction import (
+from util import (
     plt, pd, np,
     load_global_gris_data, save_cur_fig,
     train_gbrt, train_linear,
@@ -9,16 +9,16 @@ from ghf_prediction import (
     plot_GHF_on_map_pcolormesh_interp,
     plot_test_pred_linregress,
     plot_GHF_histogram,
-)
-from ghf_greenland import (
-    GREENLAND,
     fill_in_greenland_GHF,
     MAX_ICE_CORE_DIST,
     greenland_train_test_sets,
+    GREENLAND,
 )
+
 SPECTRAL_CMAP = plt.get_cmap('spectral', 13)
 SPECTRAL_CMAP.set_under('black')
 SPECTRAL_CMAP.set_over('grey')
+
 
 def plot_known_GHF(X_train, y_train, X_test):
     m = Basemap(projection='aeqd',
@@ -42,6 +42,7 @@ def plot_known_GHF(X_train, y_train, X_test):
         centerlat = GREENLAND[GREENLAND['core'] == core].lat.as_matrix()
         equi(m, centerlon, centerlat, MAX_ICE_CORE_DIST,
              lw=1, linestyle='-', color='black', alpha=.3)
+
 
 def plot_prescribed_GHF(X_train, X_test, y_train):
     m = Basemap(width=1600000, height=2800000, resolution='l',

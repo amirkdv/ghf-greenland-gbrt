@@ -1,22 +1,25 @@
 import sys
+import circles.equi
 from random import randint
 from math import sqrt, pi
-from ghf_prediction import (
-    plot_GHF_on_map,
-    plot_GHF_on_map_pcolormesh,
-    plot_GHF_on_map_pcolormesh_interp,
-    plt, np, mean_squared_error,
-    load_global_gris_data, save_cur_fig, pickle_dump, pickle_load,
-    split_with_circle, split_by_distance, tune_params,
-    train_gbrt, train_linear,
-    error_summary, random_prediction_ctr,
-    CATEGORICAL_FEATURES, GREENLAND_RADIUS,
-    plot_test_pred_linregress, plot_GHF_histogram,
-    train_test_split
-)
-from ghf_greenland  import greenland_train_test_sets
 from mpl_toolkits.basemap import Basemap
-from circles import equi
+from util import (
+    plot_GHF_on_map,
+    plt,
+    np,
+    load_global_gris_data,
+    save_cur_fig,
+    split_with_circle,
+    train_gbrt,
+    train_linear,
+    error_summary,
+    random_prediction_ctr,
+    plot_test_pred_linregress,
+    plot_GHF_histogram,
+    train_test_split,
+    greenland_train_test_sets,
+    GREENLAND_RADIUS,
+)
 
 plt.rc('font', size=15)
 
@@ -69,7 +72,7 @@ for roi_density in roi_densities:
                     colorbar_args=colorbar_args,
                     scatter_args=scatter_args)
 
-    equi(m, center[0], center[1], GREENLAND_RADIUS,
+    circles.equi(m, center[0], center[1], GREENLAND_RADIUS,
          lw=2, linestyle='-', color='black', alpha=.5)
     title = r'$GHF - \widehat{GHF}$ on validation set with ' + \
             r'$\rho_{ROI}$ = %d'%roi_density
