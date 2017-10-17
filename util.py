@@ -20,12 +20,14 @@ plt.rc('font', family='TeX Gyre Schola')
 MAX_GHF  = 150   # max limit of ghf considered for plotting only
 GREENLAND_RADIUS = 1300
 
-OUT_DIR = os.getenv('OUT_DIR', 'plots/')
-if not os.path.isabs(OUT_DIR):
-    OUT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUT_DIR)
+def _make_absolute(path):
+    if not os.path.isabs(path):
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
+    return path
 
-GLOBAL_CSV = '1deg_all_resampled_w_missing_from_goutorbe.csv'
-GRIS_CSV = '1deg_greenland_GHF_added2.csv' # FIXME remove old csv file from repo?
+OUT_DIR = _make_absolute(os.getenv('OUT_DIR', 'plots/'))
+GLOBAL_CSV = _make_absolute(os.getenv('GLOBAL_CSV', 'global.csv'))
+GRIS_CSV = _make_absolute(os.getenv('GRIS_CSV', 'greenland.csv'))
 IGNORED_COLS = [
     'OBJECTID_1', 'continent', 'lthlgy_all', 'num_in_cel', 'num_in_con',
      'WGM2012_Ai', 'depthmoho', 'moho_Pasya', 'lithk_cona',
