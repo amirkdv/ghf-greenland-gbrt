@@ -1,3 +1,34 @@
+"""This module provides common utilities used in main scripts. Its main
+responsibilities are loading and filtering data sets and handling plots and
+dump files.
+
+    Two data sets must be provided: a global data set (cf GLOBAL_CSV below)
+    containing all features of interest and GHF measurements, and a data set
+    corresponding to a region of interest with scarce data (Greenland, cf.
+    GREENLAND_CSV) containing only feature measurements and no GHF values.
+
+    * CONSTANTS -- paths
+
+    All paths below can be either relative (taken with respect to repo root)
+    or absolute and can be overriden by an environment variable with the same name.
+
+    FIXME
+    ** GLOBAL_CSV: path to global data set csv, default: `global_1deg.csv`.
+    ** GREENLAND_FEATURES: path to Greenland data set csv, default: `greenland_1deg.csv`
+    ** OUT_DIR: path to directory in which plots and dump files are saved,
+        default: `plots/`.
+
+    * CONSTANTS -- features
+
+    Each feature has a human readable name and a column name used in csv data
+    files (i.e GLOBAL_CSV and GREENLAND_FEATURES).
+
+    ** FEATURE_NAMES: a dict mapping column names in data files to human
+        readable names.
+    ** CATEGORICAL_FEATURES: columns that correspond to categorical features.
+    ** PROXIMITY_FEATURES: columns that correspond to proximity features
+
+"""
 import os
 import sys
 import scipy
@@ -19,6 +50,7 @@ plt.rc('font', family='TeX Gyre Schola')
 
 MAX_GHF  = 150   # max limit of ghf considered for plotting only
 GREENLAND_RADIUS = 1300
+MAX_ICE_CORE_DIST = 150. # radius of gaussian paddings in Greenland
 
 def _make_absolute(path):
     if not os.path.isabs(path):
@@ -38,23 +70,22 @@ CATEGORICAL_FEATURES = ['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age']
 DISTANCE_FEATURES = ['G_d_2yng_r', 'd2_transfo', 'd_2hotspot',
                      'd_2ridge', 'd_2trench', 'd_2volcano']
 GBRT_PARAMS = {
-    'loss': 'ls',
-    'learning_rate': 0.05,
-    'n_estimators': 1000,
+    'loss': 'ls', # 'ls' refers to sum of squares loss (i.e least squares regression)
+    'learning_rate': 0.05, # ν, shrinkage factor
+    'n_estimators': 1000, # M, no. of total trees
     'subsample': 1., # less than 1 values would lead to stochastic GBRT
     'criterion': 'friedman_mse',
-    'min_samples_split': 2,
-    'min_samples_leaf': 9,
-    'min_weight_fraction_leaf': 0.0,
-    'max_depth': 4,
-    'min_impurity_split': 1e-07,
-    'init': None,
-    'random_state': 0,
-    'max_features': 0.3,
-    'alpha': 0.9,
+    'min_samples_split': 2, #FIXME this is default
+    'min_samples_leaf': 9, #FIXME why?
+    'min_weight_fraction_leaf': 0.0, # FIXME this is default
+    'max_depth': 4, # J, individual tree depth
+    'min_impurity_split': 1e-07, # FIXME deprecated
+    'init': None, # FIXME this is the default
+    'random_state': 0, # FIXME ???
+    'max_features': 0.3, # proportion of all features used in each tree
+    'alpha': 0.9, # FIXME remove, this is only needed when loss='huber'/'quantile'
+                  # http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
     'verbose': 0,
-    #'verbose': 10,
-    'max_leaf_nodes': None,
     'warm_start': False,
     'presort': 'auto',
 }
@@ -80,7 +111,6 @@ FEATURE_NAMES = {
     'lthlgy_mod': 'rock type',
     'G_ther_age': 'last thermo-tectonic event'
 }
-MAX_ICE_CORE_DIST = 150. # radius of gaussian paddings in Greenland
 
 # The only existing data points for Greenland are at the following ice
 # cores. 'rad' is the radius used for Gaussian estimates from each point.
@@ -115,8 +145,10 @@ def load_global_gris_data(plot_projections_to=None):
 
     data = pd.concat([data_global, data_gris])
 
+    #FIXME pull this out into separate function
     if plot_projections_to:
         fig = plt.figure(figsize=(16, 20))
+        # FIXME make this a constant GREENLAND_CENTER and use in density_plots
         center = (28.67, 45.5)
         data_roi, data_nonroi = split_by_distance(data, center, GREENLAND_RADIUS)
         for idx, f in enumerate(list(data)):
@@ -133,20 +165,23 @@ def load_global_gris_data(plot_projections_to=None):
         save_cur_fig(plot_projections_to)
 
     data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES)
+    return data
 
+    # FIXME expose this parameterically
 
     # NOTE to test what happens to error plots if only a certain subset of
     # features are given to GBRT:
     # 1. drop distance columns
-    # data = data.drop(DISTANCE_FEATURES, axis=1)
+    # data = data.drop(PROXIMITY_FEATURES, axis=1)
     # 2. only keep distance columns
-    # data = data.drop([f for f in list(data) if f not in DISTANCE_FEATURES and f not in ['GHF', 'Latitude_1', 'Longitude_1']], axis=1)
+    # data = data.drop([f for f in list(data) if f not in PROXIMITY_FEATURES and f not in ['GHF', 'Latitude_1', 'Longitude_1']], axis=1)
     # 3. only keep lat/lon
     # data = data.drop([f for f in list(data) if f not in ['GHF', 'Latitude_1', 'Longitude_1']], axis=1)
 
     return data
 
 # GRIS specific filters
+# FIXME copy this somewhere Legend: volcanic=1, metamorphic=2, sedimentary=3
 def process_greenland_data(data):
     # mapping from old to new values of lthlgy_mod
     # Legend: volcanic=1, metamorphic=2, sedimentary=3
@@ -188,6 +223,7 @@ def fill_in_greenland_GHF(data):
     data['GHF'] = data[ghf_cols + ['GHF']].mean(skipna=True, axis=1)
     data = data.drop(dist_cols + ghf_cols, axis=1)
 
+    # FIXME clean this up!!!
     # FIXME artificially forced to 135.0 in source
     data.loc[data.GHF == 135.0, 'GHF'] = 0
     # The gris data set has many rows with feature values but no GHF
@@ -328,6 +364,7 @@ def plot_GHF_on_map(m, lons, lats, values,
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
+    # FIXME do I need plt.clim? or m.clim would work?
     plt.clim(*clim)
 
 # plots a series of GHF values at given latitude and longitude positions in
@@ -372,6 +409,7 @@ def plot_GHF_on_map_pcolormesh(m, lons, lats, values,
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
+    # FIXME do I need plt.clim? or m.clim would work?
     plt.clim(*clim)
 
 # plots a series of GHF values at given latitude and longitude positions in
@@ -421,6 +459,7 @@ def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
+    # FIXME do I need plt.clim? or m.clim would work?
     plt.clim(*clim)
 
 # saves current matplotlib plot to given filename in OUT_DIR
@@ -458,6 +497,7 @@ def get_gbrt(**gbrt_params):
 # Trains and returns a GradientBoostingRegressor over the given training
 # feature and value vectors. Feature importance values are stored in
 # OUTDIR/logfile
+# FIXME get rid of logfile
 def train_gbrt(X_train, y_train, logfile=None, **gbrt_params):
     sys.stderr.write('-> Training ...')
     start = time()
@@ -497,6 +537,8 @@ def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
     ax.plot(ghf_range, ghf_range, 'k', alpha=0.5, lw=2, label='ideal predictor')
 
     data = load_global_gris_data()
+    # FIXME is the following necessary? we are already cleaning some things in
+    # process_greenland_data.
     data.loc[data.GHF == 135.0, 'GHF'] = 0
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
