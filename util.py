@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """This module provides common utilities used in main scripts. Its main
 responsibilities are loading and filtering data sets and handling plots and
 dump files.

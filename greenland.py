@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from mpl_toolkits.basemap import Basemap
 from circles import equi
 from util import (
