@@ -70,7 +70,7 @@ FEATURE_NAMES = {
     'd_2ridge'  : 'dist. to ridge',
     'd_2trench' : 'dist. to trench',
     'd_2volcano': 'dist. to volcano',
-    'litho_asth': 'lithos.-aesthenos. boundary',
+    'litho_asth': 'lithos.-asthenos. boundary',
     'magnetic_M': 'magnetic anom.',
     'moho_GReD' : 'depth to Moho',
     'thk_mid_cr': 'thickness of middle crust',
