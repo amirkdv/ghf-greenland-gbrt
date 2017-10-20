@@ -1,9 +1,11 @@
 from mpl_toolkits.basemap import Basemap
 from circles import equi
 from util import (
-    plt, pd, np,
-    load_global_gris_data, save_cur_fig,
-    train_gbrt, train_linear,
+    plt,
+    np,
+    save_cur_fig,
+    train_gbrt,
+    train_linear,
     plot_GHF_on_map,
     plot_GHF_on_map_pcolormesh,
     plot_GHF_on_map_pcolormesh_interp,
