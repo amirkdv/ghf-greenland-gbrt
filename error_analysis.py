@@ -25,7 +25,7 @@ from util import (
     CATEGORICAL_FEATURES,
     GREENLAND_RADIUS,
     FEATURE_NAMES,
-    DISTANCE_FEATURES,
+    PROXIMITY_FEATURES,
 )
 
 # for a fixed center, t, and radius, returns r2 and normalized rmse
@@ -859,7 +859,7 @@ def exp_tune_params(data):
 def exp_space_leakage(data):
     dumpfile = 'space_leakage.txt'
     num_samples = 20000
-    plot_space_leakage(data, num_samples, features=DISTANCE_FEATURES, dumpfile=dumpfile, replot=False)
+    plot_space_leakage(data, num_samples, features=PROXIMITY_FEATURES, dumpfile=dumpfile, replot=False)
     save_cur_fig('space-leakage.png', title='Spatial information leakage through proximity features', set_title_for=None)
 
 def exp_partial_dependence():
