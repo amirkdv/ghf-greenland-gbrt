@@ -208,7 +208,7 @@ def fill_in_greenland_GHF(data):
         # data point X.
         dist_col = 'distance_' + point.core
         dist_cols.append(dist_col)
-        data[dist_col] = haversine_distance(data, (point.lon, point.lat))
+        data[dist_col] = haversine_distances(data, (point.lon, point.lat))
         # GHF estimates from gaussians centered at each existing data
         # point: data['GHF_radial_X'] is the GHF estimate corresponding to
         # data point point X.
@@ -276,25 +276,33 @@ def random_prediction_ctr(data, radius, min_density=0, region='NA-WE'):
 # than radius to center, and those that are not.
 def split_by_distance(data, center, radius):
     # store distances in a temporary column '_distance'
-    data['_distance'] = haversine_distance(data, center)
+    data['_distance'] = haversine_distances(data, center)
     within = data[data._distance < radius].drop('_distance', axis=1)
     beyond = data[data._distance > radius].drop('_distance', axis=1)
     data.drop('_distance', axis=1, inplace=True)
 
     return within, beyond
 
+# calculates the haversine distance (in km) between two longitutde-latitude
+# pairs. Each argument is an iterable with two entries: the longitude and the
+# latitude of the corresponding point
+def haversine_distance(p1, p2):
+    lon1, lat1 = p1
+    lon2, lat2 = p2
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a))
+    km = 6367 * c
+    return km
+
+
 # returns a column containing distances of each row of data from center
-def haversine_distance(data, center):
+def haversine_distances(data, center):
     def _haversine(row):
-        lon1, lat1 = center
-        lon2, lat2 = row['Longitude_1'], row['Latitude_1']
-        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * asin(sqrt(a))
-        km = 6367 * c
-        return km
+        p = row[['Longitude_1', 'Latitude_1']].as_matrix()
+        return haversine_distance(p, center)
 
     return data.apply(_haversine, axis=1)
 
@@ -538,7 +546,7 @@ def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
 
     data = load_global_gris_data()
     # FIXME is the following necessary? we are already cleaning some things in
-    # process_greenland_data.
+    # fill_in_greenland_GHF()?
     data.loc[data.GHF == 135.0, 'GHF'] = 0
     data.loc[data.GHF == 0, 'GHF'] = np.nan
     data.dropna(inplace=True)
