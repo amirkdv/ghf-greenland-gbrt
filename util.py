@@ -61,15 +61,18 @@ def _make_absolute(path):
 
 OUT_DIR = _make_absolute(os.getenv('OUT_DIR', 'plots/'))
 GLOBAL_CSV = _make_absolute(os.getenv('GLOBAL_CSV', 'global.csv'))
-GRIS_CSV = _make_absolute(os.getenv('GRIS_CSV', 'greenland.csv'))
-IGNORED_COLS = [
-    'OBJECTID_1', 'continent', 'lthlgy_all', 'num_in_cel', 'num_in_con',
-     'WGM2012_Ai', 'depthmoho', 'moho_Pasya', 'lithk_cona',
-    #'G_heat_pro', 'd_2hotspots', 'd_2volcano', 'crusthk_cr', 'litho_asth',
-    #'d_2trench', 'G_d_2yng_r', 'd_2ridge', 'd2_transfo'
-    ]
-CATEGORICAL_FEATURES = ['G_u_m_vel_', 'lthlgy_mod', 'G_ther_age']
+GRIS_CSV = _make_absolute(os.getenv('GRIS_CSV', 'gris_features.csv'))
+
+# dict from categorical feature name to its anticipated values
+CATEGORICAL_FEATURES = {
+    'G_u_m_vel_': range(1, 13),
+    'lthlgy_mod': [1, 2, 3],
+    'G_ther_age': range(1, 7),
+}
 PROXIMITY_FEATURES = ['G_d_2yng_r', 'd2_transfo', 'd_2hotspot', 'd_2ridge', 'd_2trench', 'd_2volcano']
+# features included in this list are dropped as soon as csv source is loaded
+IGNORED_COLS = []
+
 GBRT_PARAMS = {
     'loss': 'ls', # 'ls' refers to sum of squares loss (i.e least squares regression)
     'learning_rate': 0.05, # ν, shrinkage factor
@@ -124,75 +127,37 @@ GREENLAND = pd.DataFrame({
 })
 GREENLAND.set_index('core')
 
-# Reads csv source and applies general filters.
-def read_csv(path):
-    data = pd.read_csv(path, index_col=0, na_values=-999999)
-
-    data[data['lthlgy_mod'] == 0] = np.nan
-    data[data['lthlgy_mod'] == -9999] = np.nan
-    data.dropna(inplace=True)
-
-    # drop rows with out of range GHF
+def _load_data_set(path):
+    data = pd.read_csv(path, index_col=0)
     data = data.drop(IGNORED_COLS, axis=1)
+    for categorical, categories in CATEGORICAL_FEATURES.items():
+        unknown_categories = set(data[categorical]).difference(categories)
+        assert not unknown_categories, \
+               'categorical feature %s in %s has unexpected value(s):\n%s' % \
+               (categorical, path, ', '.join(str(x) for x in unknown_categories))
+        # mark all categorical features as dtype=categorical in pandas data
+        # frame (cf. https://pandas.pydata.org/pandas-docs/stable/categorical.html).
+        # We need to do this because otherwise when get_dummies() is invoked
+        # on separate data sets the resulting columns (and hence the shape of
+        # data frame) depends on the values observed in that specific data set.
+        # The categories argument forces the choice of dummy variables
+        # produced below.
+        data[categorical] = data[categorical].astype('category', categories=categories)
+    data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES.keys())
+
+    # sort columns alphabetically
+    data = data[sorted(list(data), key=lambda s: s.lower())]
 
     return data
 
-# Plots scatter plots between GHF and all features in data set
-def plot_GHF_feature_projections(data):
-    fig = plt.figure(figsize=(16, 20))
-    # FIXME make this a constant GREENLAND_CENTER and use in density_plots
-    center = (28.67, 45.5)
-    data_roi, data_nonroi = split_by_distance(data, center, GREENLAND_RADIUS)
-    for idx, f in enumerate(list(data)):
-        if f == 'GHF':
-            continue
-        ax = fig.add_subplot(6, 4, idx + 1)
-        ax.scatter(data_nonroi[f], data_nonroi['GHF'], c='g', lw=0, s=2, alpha=.4, label='outside ROI')
-        ax.scatter(data_roi[f], data_roi['GHF'], c='r', lw=0, s=2, alpha=.7, label='inside ROI')
-        ax.set_title(f)
-        ax.tick_params(labelsize=6)
-        ax.grid(True)
-        ax.legend(fontsize=12)
+
+def load_global_data():
+    return _load_data_set(GLOBAL_CSV)
 
 
-# loads GLOBAL_CSV and GRIS_CSV, performs GRIS specific filters, and returns a
-# single DataFrame.
-def load_global_gris_data(plot_projections_to=None):
-    data_global = read_csv(GLOBAL_CSV)
-    data_gris = read_csv(GRIS_CSV)
-    data_gris = process_greenland_data(data_gris)
+def load_gris_data():
+    return _load_data_set(GRIS_CSV)
 
-    data = pd.concat([data_global, data_gris])
-
-    data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES)
-    return data
-
-    # FIXME expose this parameterically
-
-    # NOTE to test what happens to error plots if only a certain subset of
-    # features are given to GBRT:
-    # 1. drop distance columns
-    # data = data.drop(PROXIMITY_FEATURES, axis=1)
-    # 2. only keep distance columns
-    # data = data.drop([f for f in list(data) if f not in PROXIMITY_FEATURES and f not in ['GHF', 'Latitude_1', 'Longitude_1']], axis=1)
-    # 3. only keep lat/lon
-    # data = data.drop([f for f in list(data) if f not in ['GHF', 'Latitude_1', 'Longitude_1']], axis=1)
-
-    return data
-
-# GRIS specific filters
-# FIXME copy this somewhere Legend: volcanic=1, metamorphic=2, sedimentary=3
-def process_greenland_data(data):
-    # mapping from old to new values of lthlgy_mod
-    # Legend: volcanic=1, metamorphic=2, sedimentary=3
-    lthlgy_mod_rewrites = {
-        1: 2, 2: 3, 3: 3, 4: 3, 5: 1, 6: 2, 7: 1, 8: 3, 9: 2, 10: 2
-    }
-    data['lthlgy_mod'] = data.apply(
-        lambda row: lthlgy_mod_rewrites[row['lthlgy_mod']],
-        axis=1
-    )
-    return data
 
 # Approximates GHF values at rows with unknown GHF according to a Gaussian
 # decay formula based on known GHF values in GREENLAND.
@@ -215,33 +180,27 @@ def fill_in_greenland_GHF(data):
         ghf_col = 'GHF_radial_' + point.core
         ghf_cols.append(ghf_col)
         data[ghf_col] = data.apply(
+            # FIXME we have two one liners for a simple function!
             lambda row: gauss(point.ghf, row[dist_col], point.rad),
             axis=1
         )
         data.loc[data[dist_col] > MAX_ICE_CORE_DIST, ghf_col] = np.nan
 
-    data['GHF'] = data[ghf_cols + ['GHF']].mean(skipna=True, axis=1)
+    data['GHF'] = data[ghf_cols].mean(skipna=True, axis=1)
     data = data.drop(dist_cols + ghf_cols, axis=1)
 
-    # FIXME clean this up!!!
-    # FIXME artificially forced to 135.0 in source
-    data.loc[data.GHF == 135.0, 'GHF'] = 0
-    # The gris data set has many rows with feature values but no GHF
-    # measurements. We want to predict GHF for these.
-    gris_unknown = data[data.GHF.isnull()]
-    data.loc[data.GHF == 0, 'GHF'] = np.nan
-    data.dropna(inplace=True)
-    return data, gris_unknown
+    # sort columns alphabetically
+    data = data[sorted(list(data), key=lambda s: s.lower())]
+
+    return data[data.GHF.notnull()], data[data.GHF.isnull()].drop('GHF', axis=1)
 
 # Put together X_train, y_train, X_test (y_test is unknown) for Greenland GHF
 # prediction using global dataset.
 def greenland_train_test_sets():
-    data = load_global_gris_data()
-    gris_known, gris_unknown = fill_in_greenland_GHF(data)
-    X_train = gris_known.drop(['GHF'], axis=1)
-    y_train = gris_known.GHF
-    X_test = gris_unknown.drop(['GHF'], axis=1)
-    return X_train, y_train, X_test
+    data_global, data_gris = load_global_data(), load_gris_data()
+    gris_known, X_test = fill_in_greenland_GHF(data_gris)
+    gris_known = pd.concat([data_global, gris_known])
+    return gris_known.drop(['GHF'], axis=1), gris_known['GHF'], X_test
 
 
 # Returns a random longitude-latitude pair that serves as the center of
@@ -251,6 +210,7 @@ def greenland_train_test_sets():
 #   2. 'NA' (North America): 45 < lat, -100 < lon < -45
 #   3. 'WE' (Western Europe): 45 < lat, -45 < lon < 50
 #   4. 'NA-WE' (both of the above): 45 < lat, -100 < lon < 50
+# FIXME document units of density (samples per million km^2), distance (km)
 def random_prediction_ctr(data, radius, min_density=0, region='NA-WE'):
     if region is None:
         cands = data
@@ -470,6 +430,24 @@ def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
     # FIXME do I need plt.clim? or m.clim would work?
     plt.clim(*clim)
 
+
+# Plots scatter plots between GHF and all features in data set
+def plot_GHF_feature_projections(data):
+    fig = plt.figure(figsize=(16, 20))
+    center = (28.67, 45.5)
+    data_roi, data_nonroi = split_by_distance(data, center, GREENLAND_RADIUS)
+    for idx, f in enumerate(list(data)):
+        if f == 'GHF':
+            continue
+        ax = fig.add_subplot(6, 4, idx + 1)
+        ax.scatter(data_nonroi[f], data_nonroi['GHF'], c='g', lw=0, s=2, alpha=.4, label='outside ROI')
+        ax.scatter(data_roi[f], data_roi['GHF'], c='r', lw=0, s=2, alpha=.7, label='inside ROI')
+        ax.set_title(f)
+        ax.tick_params(labelsize=6)
+        ax.grid(True)
+        ax.legend(fontsize=12)
+
+
 # saves current matplotlib plot to given filename in OUT_DIR
 def save_cur_fig(filename, title=None, set_title_for='ax'):
     if title:
@@ -544,13 +522,7 @@ def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
     ghf_range = np.linspace(0,MAX_GHF,50)
     ax.plot(ghf_range, ghf_range, 'k', alpha=0.5, lw=2, label='ideal predictor')
 
-    data = load_global_gris_data()
-    # FIXME is the following necessary? we are already cleaning some things in
-    # fill_in_greenland_GHF()?
-    data.loc[data.GHF == 135.0, 'GHF'] = 0
-    data.loc[data.GHF == 0, 'GHF'] = np.nan
-    data.dropna(inplace=True)
-
+    data = load_global_data() # FIXME pass in mean_ghf as argument
     ax.plot(ghf_range, np.ones([50,1]) * data.GHF.mean(),'k--', lw=1, alpha=0.7,
             label='constant predictor')
     r2, rmse = error_summary(y_test, y_pred)

@@ -12,7 +12,7 @@ from util import (
     plt,
     np,
     mean_squared_error,
-    load_global_gris_data,
+    load_global_data,
     save_cur_fig,
     pickle_dump,
     pickle_load,
@@ -883,11 +883,7 @@ def exp_reverse_feature_elimination():
     run_reverse_feature_elimination(X_train, y_train, 10)
 
 if __name__ == '__main__':
-    data = load_global_gris_data()
-    # FIXME artificially forced to 135.0 in source
-    data.loc[data.GHF == 135.0, 'GHF'] = 0
-    data.loc[data.GHF == 0, 'GHF'] = np.nan
-    data.dropna(inplace=True)
+    data = load_global_data()
 
     exp_error_by_density(data)
     exp_error_by_radius(data)

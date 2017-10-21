@@ -7,7 +7,7 @@ from util import (
     plot_GHF_on_map,
     plt,
     np,
-    load_global_gris_data,
+    load_global_data,
     save_cur_fig,
     split_with_circle,
     train_gbrt,
@@ -23,11 +23,7 @@ from util import (
 
 plt.rc('font', size=15)
 
-data = load_global_gris_data()
-# FIXME artificially forced to 135.0 in source
-data.loc[data.GHF == 135.0, 'GHF'] = 0
-data.loc[data.GHF == 0, 'GHF'] = np.nan
-data.dropna(inplace=True)
+data = load_global_data()
 
 # Supplementary Figure 4
 # if the random_prediction_ctr is chosen, occasionally errors
