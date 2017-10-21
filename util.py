@@ -137,6 +137,24 @@ def read_csv(path):
 
     return data
 
+# Plots scatter plots between GHF and all features in data set
+def plot_GHF_feature_projections(data):
+    fig = plt.figure(figsize=(16, 20))
+    # FIXME make this a constant GREENLAND_CENTER and use in density_plots
+    center = (28.67, 45.5)
+    data_roi, data_nonroi = split_by_distance(data, center, GREENLAND_RADIUS)
+    for idx, f in enumerate(list(data)):
+        if f == 'GHF':
+            continue
+        ax = fig.add_subplot(6, 4, idx + 1)
+        ax.scatter(data_nonroi[f], data_nonroi['GHF'], c='g', lw=0, s=2, alpha=.4, label='outside ROI')
+        ax.scatter(data_roi[f], data_roi['GHF'], c='r', lw=0, s=2, alpha=.7, label='inside ROI')
+        ax.set_title(f)
+        ax.tick_params(labelsize=6)
+        ax.grid(True)
+        ax.legend(fontsize=12)
+
+
 # loads GLOBAL_CSV and GRIS_CSV, performs GRIS specific filters, and returns a
 # single DataFrame.
 def load_global_gris_data(plot_projections_to=None):
@@ -145,25 +163,6 @@ def load_global_gris_data(plot_projections_to=None):
     data_gris = process_greenland_data(data_gris)
 
     data = pd.concat([data_global, data_gris])
-
-    #FIXME pull this out into separate function
-    if plot_projections_to:
-        fig = plt.figure(figsize=(16, 20))
-        # FIXME make this a constant GREENLAND_CENTER and use in density_plots
-        center = (28.67, 45.5)
-        data_roi, data_nonroi = split_by_distance(data, center, GREENLAND_RADIUS)
-        for idx, f in enumerate(list(data)):
-            if f == 'GHF':
-                continue
-            ax = fig.add_subplot(6, 4, idx + 1)
-            ax.scatter(data_nonroi[f], data_nonroi['GHF'], c='g', lw=0, s=2, alpha=.4, label='outside ROI')
-            ax.scatter(data_roi[f], data_roi['GHF'], c='r', lw=0, s=2, alpha=.7, label='inside ROI')
-            ax.set_title(f)
-            ax.tick_params(labelsize=6)
-            ax.grid(True)
-            ax.legend(fontsize=12)
-
-        save_cur_fig(plot_projections_to)
 
     data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES)
     return data
