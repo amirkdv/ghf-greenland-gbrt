@@ -226,10 +226,10 @@ def random_prediction_ctr(data, radius, min_density=0, region='NA-WE'):
     while True:
         center = cands.sample(n=1)
         center = center.Longitude_1, center.Latitude_1
-        test, train = split_by_distance(data, center, radius)
+        roi, non_roi = split_by_distance(data, center, radius)
         area = np.pi * (radius / 1000.) ** 2
         # FIXME this can loop infinitely if a large enough min_density is given
-        if len(test) / area >= min_density:
+        if len(roi) / area >= min_density:
             return round(center[0], 2), round(center[1], 2)
 
 # returns a pair of DataFrames: one containing rows in data that are closer
@@ -310,6 +310,8 @@ def tune_params(data, param_grid, cv_fold=10):
     print search.best_params_
 
 # plots a series of GHF values at given latitude and longitude positions
+# FIXME this can plot anything! same with all other ones below!!
+# FIXME pull out SPECTRAL_CMAP out of greenland, fix usage in density_plots
 def plot_GHF_on_map(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,

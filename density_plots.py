@@ -172,6 +172,7 @@ spectral_cmap = plt.get_cmap('spectral', 13)
 spectral_cmap.set_under('black')
 spectral_cmap.set_over('grey')
 colorbar_args = {'location': 'bottom', 'pad': '10%'}
+# FIXME use SPECTRAL_CMAP from greenland.py
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': spectral_cmap}
 plot_GHF_on_map(m,
                 X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
