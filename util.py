@@ -167,9 +167,6 @@ def load_gris_data():
 # Approximates GHF values at rows with unknown GHF according to a Gaussian
 # decay formula based on known GHF values in GREENLAND.
 def fill_in_greenland_GHF(data):
-    def gauss(amp, dist, rad):
-        return amp * np.exp(- dist ** 2. / rad ** 2)
-
     dist_cols = []
     ghf_cols = []
     for _, point in GREENLAND.iterrows():
@@ -185,8 +182,7 @@ def fill_in_greenland_GHF(data):
         ghf_col = 'GHF_radial_' + point.core
         ghf_cols.append(ghf_col)
         data[ghf_col] = data.apply(
-            # FIXME we have two one liners for a simple function!
-            lambda row: gauss(point.ghf, row[dist_col], point.rad),
+            lambda row: point.ghf * np.exp(- row[dist_col] ** 2. / point.rad ** 2),
             axis=1
         )
         data.loc[data[dist_col] > MAX_ICE_CORE_DIST, ghf_col] = np.nan

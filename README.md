@@ -48,23 +48,21 @@ The
 Date Files
 ----------
 
-1. *Global data (features and GHF)*: All global data can be found at
-   `global_original.csv` which contains ...  [TODO SRB]. The subset of this
-   file that is used in code can be found at `global.csv` which excludes the
-   following:
-
+- *Global data (features and GHF)*: All global data can be found at
+  `global_original.csv` which contains ...  [TODO SRB]. The subset of this
+  file that is used in code can be found at `global.csv` which excludes the
+  following:
     * two rows with unknown rock type (i.e `lthlgy_mod == -9999`),
     * dropped columns [TODO SRB]
-1. *GrIS data (features)*: All feature values for GrIS can be found at
-   `gris_features_original.csv` which contains ... [TODO SRB]. The
-   corresponding subset of this file that is used in code can be found at
-   `gris_features.csv` which contains the following modifications:
-
+- *GrIS data (features)*: All feature values for GrIS can be found at
+  `gris_features_original.csv` which contains ... [TODO SRB]. The
+  corresponding subset of this file that is used in code can be found at
+  `gris_features.csv` which contains the following modifications:
     * translate rock types (`lthlgy_mod`) from the 10 categories of *Dowe
       (2009)* to the three categories of *Hartmann and Moosdorf (2012)* used
       in the global data set.
     * dropped columns similar to global data.
-1. *GrIS ice cores (GHF)*: Latitude, longitude, and GHF measurements from ice
+- *GrIS ice cores (GHF)*: Latitude, longitude, and GHF measurements from ice
    cores in Greenland.
 
 *Note*: Only `global.csv`, `gris_features.csv`, and `gris_ice_cores.csv` are used in
