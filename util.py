@@ -62,6 +62,7 @@ def _make_absolute(path):
 OUT_DIR = _make_absolute(os.getenv('OUT_DIR', 'plots/'))
 GLOBAL_CSV = _make_absolute(os.getenv('GLOBAL_CSV', 'global.csv'))
 GRIS_CSV = _make_absolute(os.getenv('GRIS_CSV', 'gris_features.csv'))
+GRIS_ICE_CORE_CSV = _make_absolute(os.getenv('GRIS_ICE_CORE_CSV', 'gris_ice_cores.csv'))
 
 # dict from categorical feature name to its anticipated values
 CATEGORICAL_FEATURES = {
@@ -116,16 +117,7 @@ FEATURE_NAMES = {
     'G_ther_age': 'last thermo-tectonic event'
 }
 
-# The only existing data points for Greenland are at the following ice
-# cores. 'rad' is the radius used for Gaussian estimates from each point.
-GREENLAND = pd.DataFrame({
-    'lat':  [ 72.58,  72.60,   65.18,  75.10,   77.18,   61.40,   60.98,   60.73,      66.50],
-    'lon':  [-37.64, -38.50,  -43.82, -42.32,  -61.13,  -48.18,  -45.98,  -45.75,     -50.33],
-    'ghf':  [ 51.3,   60.,     20.,    135.,    50.,     43.,     32.,     51.,        31.05],  # NOTE: GHF at NGRIP is questionable
-    'rad':  [ 1000.,  1000.,   1000.,  200.,    1000.,   1000.,   1000.,   1000.,      1000.],  # NOTE: rad at NGRIP is subject to change
-    'core': ['GRIP', 'GISP2', 'DYE3', 'NGRIP', 'CC',    'SASS1', 'SASS2', 'LANGSETH', 'GAP'],
-})
-GREENLAND.set_index('core')
+GREENLAND = pd.read_csv(GRIS_ICE_CORE_CSV)
 
 SPECTRAL_CMAP = plt.get_cmap('spectral', 13)
 SPECTRAL_CMAP.set_under('black')
