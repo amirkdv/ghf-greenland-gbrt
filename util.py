@@ -481,7 +481,7 @@ def get_gbrt(**gbrt_params):
 
 # Trains and returns a GradientBoostingRegressor over the given training
 # feature and value vectors.
-def train_gbrt(X_train, y_train, logfile=None, **gbrt_params):
+def train_gbrt(X_train, y_train, **gbrt_params):
     sys.stderr.write('-> Training ...')
     start = time()
     # allow keyword arguments to override default GDR parameters

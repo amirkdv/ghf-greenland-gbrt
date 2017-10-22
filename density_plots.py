@@ -41,8 +41,7 @@ for roi_density in roi_densities:
     print 'center: ', center
     X_train, y_train, X_test, y_test = split_with_circle(data, center,
                                        roi_density=roi_density, radius=GREENLAND_RADIUS)
-    reg = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                          y_train, logfile='%i_rho_logfile.txt'%roi_density)
+    reg = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1), y_train)
     y_pred = reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
     r2, rmse = error_summary(y_test, y_pred)
@@ -87,8 +86,7 @@ y = data.GHF
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=11, test_size=0.10)
 
-reg_gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
-                      y_train, logfile='gbrt_random_logfile.txt')
+reg_gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1), y_train)
 y_pred_gbrt = reg_gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
 
 plt.clf()

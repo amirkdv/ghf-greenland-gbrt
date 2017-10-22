@@ -129,7 +129,7 @@ if __name__ == '__main__':
                  title='Points with prescribed GHF \n around GHF measurements (mW m$^{-2}$)')
 
     # -------------------- Plot predicted results ----------------------
-    reg = train_gbrt(X_train, y_train, logfile='GHF_1deg_averaged_logfile.txt')
+    reg = train_gbrt(X_train, y_train)
     y_pred = reg.predict(X_test)
 
     plot_greenland_prediction_points(test_lons, test_lats, y_pred)
