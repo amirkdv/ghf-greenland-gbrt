@@ -16,12 +16,8 @@ from util import (
     MAX_ICE_CORE_DIST,
     greenland_train_test_sets,
     GREENLAND,
+    SPECTRAL_CMAP,
 )
-
-SPECTRAL_CMAP = plt.get_cmap('spectral', 13)
-SPECTRAL_CMAP.set_under('black')
-SPECTRAL_CMAP.set_over('grey')
-
 GREENLAND_BASEMAP_ARGS = {
     'lon_0': -41.5,
     'lat_0': 72,
@@ -116,14 +112,6 @@ def plot_greenland_prediction_interpolated(lons, lats, ghfs):
 
 if __name__ == '__main__':
     X_train, y_train, X_test = greenland_train_test_sets()
-    #from hashlib import md5
-    #def checksum(d):
-        #print len(d)
-        #return md5(d.sort(axis=0).sort(axis=1).to_csv()).hexdigest()
-    #print 'GrIS X_train', checksum(X_train)
-    #print 'GrIS y_train', checksum(y_train)
-    #print 'GrIS X_test', checksum(X_test)
-    #raise
 
     train_lons = X_train.Longitude_1.as_matrix()
     train_lats = X_train.Latitude_1.as_matrix()

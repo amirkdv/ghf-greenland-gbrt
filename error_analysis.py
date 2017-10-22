@@ -462,7 +462,6 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
             raw_importances = gbrt.feature_importances_
             for idx, value in enumerate(raw_importances):
                 gbrt_importances[center_idx][decat_by_raw_idx[idx]] += value
-            #print '\n'.join('%s - %s: %.3f' % (features[i], gbrt_importances[center_idx][i]) for i in range(len(features)))
 
         if dumpfile:
             res = {'gbrt_importances': gbrt_importances, 'features': features}

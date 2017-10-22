@@ -127,6 +127,11 @@ GREENLAND = pd.DataFrame({
 })
 GREENLAND.set_index('core')
 
+SPECTRAL_CMAP = plt.get_cmap('spectral', 13)
+SPECTRAL_CMAP.set_under('black')
+SPECTRAL_CMAP.set_over('grey')
+
+
 def _load_data_set(path):
     data = pd.read_csv(path, index_col=0)
     data = data.drop(IGNORED_COLS, axis=1)
