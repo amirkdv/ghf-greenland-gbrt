@@ -787,6 +787,7 @@ def exp_generalization(data):
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ns_estimators = range(50, 750, 100) + range(750, 3001, 750)
     dumpfile = 'generalization.txt'
+    # FIXME does not respect densities
     plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators, dumpfile=dumpfile, replot=False)
     save_cur_fig('generalization.png', title='GBRT generalization power', set_title_for=None)
 
