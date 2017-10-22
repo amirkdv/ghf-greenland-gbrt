@@ -123,10 +123,10 @@ if __name__ == '__main__':
 
     # -------------------- Plot training data  -------------------------
     plot_training_GHF_mark_greenland(train_lons, train_lats, y_train)
-    save_cur_fig('greenland_training_GHF_debug.png', title='GHF at training set')
+    save_cur_fig('greenland_training_GHF.png', title='GHF at training set')
 
     plot_greenland_gaussian_prescribed_GHF(train_lons, train_lats, y_train)
-    save_cur_fig('greenland_prescribed_GHF_debug.png',
+    save_cur_fig('greenland_prescribed_GHF.png',
                  title='Points with prescribed GHF \n around GHF measurements (mW m$^{-2}$)')
 
     # -------------------- Plot predicted results ----------------------
@@ -134,18 +134,18 @@ if __name__ == '__main__':
     y_pred = reg.predict(X_test)
 
     plot_greenland_prediction_points(test_lons, test_lats, y_pred)
-    save_cur_fig('greenland_prediction_points_debug.png',
+    save_cur_fig('greenland_prediction_points.png',
                  title='GHF predicted for Greenland (mW m$^{-2}$)')
 
     plot_greenland_prediction(test_lons, test_lats, y_pred)
-    save_cur_fig('greenland_prediction_debug.png',
+    save_cur_fig('greenland_prediction.png',
                  title='GHF predicted for Greenland (mW m$^{-2}$)')
 
     lons = np.hstack([train_lons, test_lons])
     lats = np.hstack([train_lats, test_lats])
-    ghfs = np.hstack([y_train, y_pred]),
+    ghfs = np.hstack([y_train, y_pred])
     plot_greenland_prediction_interpolated(lons, lats, ghfs)
-    save_cur_fig('greenland_prediction_interpolated_debug.png',
+    save_cur_fig('greenland_prediction_interpolated.png',
                  title='GHF predicted for Greenland (mW m$^{-2}$)')
 
 
