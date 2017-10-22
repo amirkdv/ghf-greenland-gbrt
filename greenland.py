@@ -8,11 +8,11 @@ from util import (
     save_cur_fig,
     train_gbrt,
     train_linear,
-    plot_GHF_on_map,
-    plot_GHF_on_map_pcolormesh,
-    plot_GHF_on_map_pcolormesh_interp,
+    plot_values_on_map,
+    plot_values_on_map_pcolormesh,
+    plot_values_on_map_pcolormesh_interp,
     plot_test_pred_linregress,
-    plot_GHF_histogram,
+    plot_values_histogram,
     MAX_ICE_CORE_DIST,
     greenland_train_test_sets,
     GREENLAND,
@@ -31,10 +31,9 @@ GREENLAND_BASEMAP_ARGS = {
 def _mark_ice_cores(m, lons, lats, ghfs):
     colorbar_args = {'location': 'right', 'pad': '5%'}
     scatter_args = {'marker': 's', 's': 45, 'lw': 1, 'cmap': SPECTRAL_CMAP, 'edgecolor':'white'}
-    plot_GHF_on_map(m, lons, lats, ghfs,
-                    parallel_step=5., meridian_step=10.,
-                    colorbar_args=colorbar_args,
-                    scatter_args=scatter_args)
+    plot_values_on_map(m, lons, lats, ghfs,
+                       parallel_step=5., meridian_step=10.,
+                       colorbar_args=colorbar_args, scatter_args=scatter_args)
 
 def _mark_ice_core_gaussians(m, cores):
     for _, core in cores.iterrows():
@@ -49,10 +48,9 @@ def plot_training_GHF_mark_greenland(train_lons, train_lats, train_ghfs):
     # plot all known GHF values
     colorbar_args = {'location': 'bottom', 'pad': '10%'}
     scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
-    plot_GHF_on_map(m, train_lons, train_lats, train_ghfs,
-                    parallel_step=5., meridian_step=15.,
-                    colorbar_args=colorbar_args,
-                    scatter_args=scatter_args)
+    plot_values_on_map(m, train_lons, train_lats, train_ghfs,
+                       parallel_step=5., meridian_step=15.,
+                       colorbar_args=colorbar_args, scatter_args=scatter_args)
 
 
 def plot_greenland_gaussian_prescribed_GHF(lons, lats, ghfs):
@@ -69,8 +67,8 @@ def plot_greenland_gaussian_prescribed_GHF(lons, lats, ghfs):
     # the frame defined by GREENLAND_BASEMAP_ARGS.
     colorbar_args = {'location': 'right', 'pad': '5%'}
     scatter_args = {'marker': 'o', 's': 18, 'lw': 0, 'cmap': SPECTRAL_CMAP}
-    plot_GHF_on_map(m, lons, lats, ghfs, parallel_step=5., meridian_step=10.,
-                    colorbar_args=colorbar_args, scatter_args=scatter_args)
+    plot_values_on_map(m, lons, lats, ghfs, parallel_step=5., meridian_step=10.,
+                       colorbar_args=colorbar_args, scatter_args=scatter_args)
 
 
 def plot_greenland_prediction_points(lons, lats, ghfs):
@@ -78,18 +76,18 @@ def plot_greenland_prediction_points(lons, lats, ghfs):
     seismic_cmap = plt.get_cmap('seismic', 20)
     scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': SPECTRAL_CMAP}
     colorbar_args = {'location': 'right', 'pad': '5%'}
-    plot_GHF_on_map(m, lons, lats, ghfs, parallel_step=5., meridian_step=10.,
-                    colorbar_args=colorbar_args, scatter_args=scatter_args)
+    plot_values_on_map(m, lons, lats, ghfs, parallel_step=5., meridian_step=10.,
+                       colorbar_args=colorbar_args, scatter_args=scatter_args)
 
 
 def plot_greenland_prediction(lons, lats, ghfs):
     m = Basemap(**GREENLAND_BASEMAP_ARGS)
     pcolor_args = {'cmap': SPECTRAL_CMAP}
     colorbar_args = {'location': 'right', 'pad': '5%'}
-    plot_GHF_on_map_pcolormesh(m, lons, lats, ghfs,
-                               parallel_step=5., meridian_step=10.,
-                               colorbar_args=colorbar_args,
-                               pcolor_args=pcolor_args)
+    plot_values_on_map_pcolormesh(m, lons, lats, ghfs,
+                                  parallel_step=5., meridian_step=10.,
+                                  colorbar_args=colorbar_args,
+                                  pcolor_args=pcolor_args)
 
 
 def plot_greenland_prediction_interpolated(lons, lats, ghfs):
@@ -98,9 +96,10 @@ def plot_greenland_prediction_interpolated(lons, lats, ghfs):
                     GREENLAND.ghf.as_matrix())
     pcolor_args = {'cmap': SPECTRAL_CMAP}
     colorbar_args = {'location': 'right', 'pad': '5%'}
-    plot_GHF_on_map_pcolormesh_interp(m, lons, lats, ghfs,
-                    parallel_step=5., meridian_step=10.,
-                    colorbar_args=colorbar_args, pcolor_args=pcolor_args)
+    plot_values_on_map_pcolormesh_interp(m, lons, lats, ghfs,
+                                         parallel_step=5., meridian_step=10.,
+                                         colorbar_args=colorbar_args,
+                                         pcolor_args=pcolor_args)
 
 
     m.drawparallels(np.arange(-80., 81., 5.), labels=[1, 0, 0, 0], fontsize=10, color='#c6c6c6')
@@ -150,8 +149,8 @@ if __name__ == '__main__':
 
 
     # --------------------- Plot GHF histograms --------------------------
-    plot_GHF_histogram(y_pred)
+    plot_values_histogram(y_pred)
     save_cur_fig('hist_greenland.png', title='GHF predicted in Greenland')
 
-    plot_GHF_histogram(y_train)
+    plot_values_histogram(y_train)
     save_cur_fig('hist_global.png', title='GHF global measurement')

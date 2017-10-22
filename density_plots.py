@@ -4,7 +4,6 @@ from math import sqrt, pi
 from mpl_toolkits.basemap import Basemap
 from circles import equi
 from util import (
-    plot_GHF_on_map,
     plt,
     np,
     load_global_data,
@@ -15,7 +14,8 @@ from util import (
     error_summary,
     random_prediction_ctr,
     plot_test_pred_linregress,
-    plot_GHF_histogram,
+    plot_values_on_map,
+    plot_values_histogram,
     train_test_split,
     greenland_train_test_sets,
     GREENLAND_RADIUS,
@@ -62,13 +62,13 @@ for roi_density in roi_densities:
     diff_cmap = plt.get_cmap('PiYG', 20)
     scatter_args = {'marker': 'o', 's': 35, 'lw': 0.25, 'cmap': diff_cmap,'edgecolor': 'k'}
     colorbar_args = {'location': 'bottom', 'pad': '5%'}
-    plot_GHF_on_map(m,
-                    X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                    y_test - y_pred,
-                    clim=(-10, 10), clim_step=2,
-                    parallel_step=10., meridian_step=10.,
-                    colorbar_args=COLORBAR_ARGS,
-                    scatter_args=scatter_args)
+    plot_values_on_map(m,
+                       X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+                       y_test - y_pred,
+                       clim=(-10, 10), clim_step=2,
+                       parallel_step=10., meridian_step=10.,
+                       colorbar_args=COLORBAR_ARGS,
+                       scatter_args=scatter_args)
 
     equi(m, center[0], center[1], GREENLAND_RADIUS,
          lw=2, linestyle='-', color='black', alpha=.5)
@@ -99,19 +99,19 @@ m.drawlsmask(land_color = "#ffffff",
 
 diff_cmap = plt.get_cmap('PiYG', 20)
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0.25, 'edgecolor':'black','cmap': diff_cmap}
-plot_GHF_on_map(m,
-                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                y_test - y_pred_gbrt,
-                clim=(-10, 10), clim_step=2,
-                parallel_step=20., meridian_step=60.,
-                colorbar_args=COLORBAR_ARGS,
-                scatter_args=scatter_args)
+plot_values_on_map(m,
+                   X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+                   y_test - y_pred_gbrt,
+                   clim=(-10, 10), clim_step=2,
+                   parallel_step=20., meridian_step=60.,
+                   colorbar_args=COLORBAR_ARGS,
+                   scatter_args=scatter_args)
 save_cur_fig('gbrt_random_difference.png',
      title='$GHF - \widehat{GHF}_{\mathrm{GBRT}}$ on validation set')
 
 plt.clf()
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
-plot_GHF_on_map(m,
+plot_values_on_map(m,
                 X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
                 y_test,
                 clim=(20, 150), clim_step=10,
@@ -123,7 +123,7 @@ save_cur_fig('gbrt_random_test.png',
 
 plt.clf()
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
-plot_GHF_on_map(m,
+plot_values_on_map(m,
                 X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
                 y_train,
                 clim=(20, 150), clim_step=10,
@@ -148,7 +148,7 @@ m.drawlsmask(land_color = "#ffffff",
 
 diff_cmap = plt.get_cmap('PiYG', 20)
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0.25, 'edgecolor':'black','cmap': diff_cmap}
-plot_GHF_on_map(m,
+plot_values_on_map(m,
                 X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
                 y_test - y_pred_linear,
                 clim=(-10, 10), clim_step=2,
@@ -160,7 +160,7 @@ save_cur_fig('linear_random_difference.png',
 
 plt.clf()
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
-plot_GHF_on_map(m,
+plot_values_on_map(m,
                 X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
                 y_test,
                 clim=(20, 150), clim_step=10,
@@ -172,7 +172,7 @@ save_cur_fig('linear_random_test.png',
 
 plt.clf()
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
-plot_GHF_on_map(m,
+plot_values_on_map(m,
                 X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
                 y_train,
                 clim=(20, 150), clim_step=10,
@@ -194,7 +194,7 @@ m.drawlsmask(land_color = "#ffffff",
                resolution = 'l')
 
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
-plot_GHF_on_map(m,
+plot_values_on_map(m,
                 X.Longitude_1.as_matrix(), X.Latitude_1.as_matrix(),
                 y,
                 clim=(20, 150), clim_step=10,
@@ -204,6 +204,6 @@ plot_GHF_on_map(m,
 save_cur_fig('global_ghf.png', title='Global GHF measurements')
 
 plt.clf()
-plot_GHF_histogram(y)
+plot_values_histogram(y)
 save_cur_fig('global_ghf_histogram.png')
 

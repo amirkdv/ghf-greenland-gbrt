@@ -305,7 +305,7 @@ def tune_params(data, param_grid, cv_fold=10):
 # plots a series of GHF values at given latitude and longitude positions
 # FIXME this can plot anything! same with all other ones below!!
 # FIXME pull out SPECTRAL_CMAP out of greenland, fix usage in density_plots
-def plot_GHF_on_map(m, lons, lats, values,
+def plot_values_on_map(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, scatter_args={}):
@@ -332,7 +332,7 @@ def plot_GHF_on_map(m, lons, lats, values,
 
 # plots a series of GHF values at given latitude and longitude positions in
 # ascii format
-def plot_GHF_on_map_pcolormesh(m, lons, lats, values,
+def plot_values_on_map_pcolormesh(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, pcolor_args={}):
@@ -377,7 +377,7 @@ def plot_GHF_on_map_pcolormesh(m, lons, lats, values,
 
 # plots a series of GHF values at given latitude and longitude positions in
 # ascii format interpolated using basemap transform_scalar functions
-def plot_GHF_on_map_pcolormesh_interp(m, lons, lats, values,
+def plot_values_on_map_pcolormesh_interp(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, pcolor_args={}):
@@ -535,7 +535,7 @@ def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
     ax.legend(loc=2)
 
 # plots the histogram of given GHF values
-def plot_GHF_histogram(values):
+def plot_values_histogram(values):
     hist, _, _ = plt.hist(values, np.linspace(0, MAX_GHF, 61), normed=True,
                           lw=1, alpha=.7, color='k', edgecolor='k')
     plt.xlabel('GHF (mW m$^{-2}$)')
