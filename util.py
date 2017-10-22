@@ -105,7 +105,7 @@ FEATURE_NAMES = {
     'ETOPO_1deg': 'topography',
     'G_d_2yng_r': 'dist. to young rift',
     'G_heat_pro': 'heat production provinces',
-    'G_ther_age': 'last thermo-tectonic event'
+    'G_ther_age': 'last thermo-tectonic event',
     'G_u_m_vel_': 'upper mantle vel. structure',
     'litho_asth': 'lithos.-asthenos. boundary',
     'lthlgy_mod': 'rock type',
