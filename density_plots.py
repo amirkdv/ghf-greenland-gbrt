@@ -112,24 +112,24 @@ save_cur_fig('gbrt_random_difference.png',
 plt.clf()
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
 plot_values_on_map(m,
-                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                y_test,
-                clim=(20, 150), clim_step=10,
-                parallel_step=20., meridian_step=60.,
-                colorbar_args=COLORBAR_ARGS,
-                scatter_args=scatter_args)
+                   X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+                   y_test,
+                   clim=(20, 150), clim_step=10,
+                   parallel_step=20., meridian_step=60.,
+                   colorbar_args=COLORBAR_ARGS,
+                   scatter_args=scatter_args)
 save_cur_fig('gbrt_random_test.png',
      title='measured GHF at validation set')
 
 plt.clf()
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
 plot_values_on_map(m,
-                X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
-                y_train,
-                clim=(20, 150), clim_step=10,
-                parallel_step=20., meridian_step=60.,
-                colorbar_args=COLORBAR_ARGS,
-                scatter_args=scatter_args)
+                   X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
+                   y_train,
+                   clim=(20, 150), clim_step=10,
+                   parallel_step=20., meridian_step=60.,
+                   colorbar_args=COLORBAR_ARGS,
+                   scatter_args=scatter_args)
 save_cur_fig('gbrt_random_train.png', title='GHF at training set')
 
 plt.clf()
@@ -149,23 +149,23 @@ m.drawlsmask(land_color = "#ffffff",
 diff_cmap = plt.get_cmap('PiYG', 20)
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0.25, 'edgecolor':'black','cmap': diff_cmap}
 plot_values_on_map(m,
-                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                y_test - y_pred_linear,
-                clim=(-10, 10), clim_step=2,
-                parallel_step=20., meridian_step=60.,
-                colorbar_args=COLORBAR_ARGS,
-                scatter_args=scatter_args)
+                   X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+                   y_test - y_pred_linear,
+                   clim=(-10, 10), clim_step=2,
+                   parallel_step=20., meridian_step=60.,
+                   colorbar_args=COLORBAR_ARGS,
+                   scatter_args=scatter_args)
 save_cur_fig('linear_random_difference.png',
      title=r'$GHF - \widehat{GHF}_{\mathrm{linear}}$ on validation set')
 
 plt.clf()
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
 plot_values_on_map(m,
-                X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
-                y_test,
-                clim=(20, 150), clim_step=10,
-                parallel_step=20., meridian_step=60.,
-                colorbar_args=COLORBAR_ARGS,
+                   X_test.Longitude_1.as_matrix(), X_test.Latitude_1.as_matrix(),
+                   y_test,
+                   clim=(20, 150), clim_step=10,
+                   parallel_step=20., meridian_step=60.,
+                   colorbar_args=COLORBAR_ARGS,
                 scatter_args=scatter_args)
 save_cur_fig('linear_random_test.png',
      title='measured GHF at validation set')
@@ -173,12 +173,12 @@ save_cur_fig('linear_random_test.png',
 plt.clf()
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
 plot_values_on_map(m,
-                X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
-                y_train,
-                clim=(20, 150), clim_step=10,
-                parallel_step=20., meridian_step=60.,
-                colorbar_args=COLORBAR_ARGS,
-                scatter_args=scatter_args)
+                   X_train.Longitude_1.as_matrix(), X_train.Latitude_1.as_matrix(),
+                   y_train,
+                   clim=(20, 150), clim_step=10,
+                   parallel_step=20., meridian_step=60.,
+                   colorbar_args=COLORBAR_ARGS,
+                   scatter_args=scatter_args)
 save_cur_fig('linear_random_train.png',
      title='GHF at training set')
 
@@ -195,12 +195,12 @@ m.drawlsmask(land_color = "#ffffff",
 
 scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
 plot_values_on_map(m,
-                X.Longitude_1.as_matrix(), X.Latitude_1.as_matrix(),
-                y,
-                clim=(20, 150), clim_step=10,
-                parallel_step=20., meridian_step=60.,
-                colorbar_args=COLORBAR_ARGS,
-                scatter_args=scatter_args)
+                   X.Longitude_1.as_matrix(), X.Latitude_1.as_matrix(),
+                   y,
+                   clim=(20, 150), clim_step=10,
+                   parallel_step=20., meridian_step=60.,
+                   colorbar_args=COLORBAR_ARGS,
+                   scatter_args=scatter_args)
 save_cur_fig('global_ghf.png', title='Global GHF measurements')
 
 plt.clf()

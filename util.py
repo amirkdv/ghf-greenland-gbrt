@@ -225,6 +225,7 @@ def random_prediction_ctr(data, radius, min_density=0, region='NA-WE'):
         if len(roi) / area >= min_density:
             return round(center[0], 2), round(center[1], 2)
 
+
 # returns a pair of DataFrames: one containing rows in data that are closer
 # than radius to center, and those that are not.
 def split_by_distance(data, center, radius):
@@ -235,6 +236,7 @@ def split_by_distance(data, center, radius):
     data.drop('_distance', axis=1, inplace=True)
 
     return within, beyond
+
 
 # calculates the haversine distance (in km) between two longitutde-latitude
 # pairs. Each argument is an iterable with two entries: the longitude and the
@@ -259,6 +261,7 @@ def haversine_distances(data, center):
 
     return data.apply(_haversine, axis=1)
 
+
 # density in sample per 1e6 km^2, radius in km
 def roi_density_to_test_size(density, radius, num_samples):
     area = np.pi * (radius / 1000.) ** 2
@@ -267,6 +270,7 @@ def roi_density_to_test_size(density, radius, num_samples):
     assert max_density >= density, \
         'demanded density (%.2f) larger than max density in ROI (%.2f)' % (density, max_density)
     return test_size
+
 
 # splits rows in data into a training and test set according to the following
 # rule: consider a circle C with given center and radius. The training set is
@@ -281,9 +285,6 @@ def split_with_circle(data, center, roi_density=None, radius=3500):
         additional_train, reduced_data_test = train_test_split(
             data_test, random_state=0, test_size=test_size
         )
-        #print 'ROI area:', round(area, 2), \
-              #'ROI test size:', round(len(reduced_data_test) * 1. / len(data_test), 2), 'demanded test size:', round(test_size, 2), \
-              #'density:', round(len(additional_train) / area, 2), 'demanded density:', round(roi_density, 2)
         data_train = pd.concat([data_train, additional_train])
         data_test = reduced_data_test
 
@@ -291,6 +292,7 @@ def split_with_circle(data, center, roi_density=None, radius=3500):
     X_test,  y_test  = data_test.drop('GHF', axis=1),  data_test['GHF']
 
     return X_train, y_train, X_test, y_test
+
 
 def tune_params(data, param_grid, cv_fold=10):
     def _score(reg, X_test, y_test):
@@ -302,9 +304,8 @@ def tune_params(data, param_grid, cv_fold=10):
     search.fit(data.drop(['Latitude_1', 'Longitude_1', 'GHF'], axis=1), data['GHF'])
     print search.best_params_
 
-# plots a series of GHF values at given latitude and longitude positions
-# FIXME this can plot anything! same with all other ones below!!
-# FIXME pull out SPECTRAL_CMAP out of greenland, fix usage in density_plots
+
+# plots a series of values at given latitude and longitude positions
 def plot_values_on_map(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
@@ -327,8 +328,8 @@ def plot_values_on_map(m, lons, lats, values,
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
-    # FIXME do I need plt.clim? or m.clim would work?
     plt.clim(*clim)
+
 
 # plots a series of GHF values at given latitude and longitude positions in
 # ascii format
@@ -372,8 +373,8 @@ def plot_values_on_map_pcolormesh(m, lons, lats, values,
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
-    # FIXME do I need plt.clim? or m.clim would work?
     plt.clim(*clim)
+
 
 # plots a series of GHF values at given latitude and longitude positions in
 # ascii format interpolated using basemap transform_scalar functions
@@ -422,7 +423,6 @@ def plot_values_on_map_pcolormesh_interp(m, lons, lats, values,
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
-    # FIXME do I need plt.clim? or m.clim would work?
     plt.clim(*clim)
 
 
@@ -455,10 +455,12 @@ def save_cur_fig(filename, title=None, set_title_for='ax'):
     sys.stderr.write('Saved %s to %s.\n' % (repr(title), filename))
     plt.clf()
 
+
 def pickle_dump(path, obj, comment=None):
     with open(os.path.join(OUT_DIR, path), 'w') as f:
         pickle.dump(obj, f)
     sys.stderr.write('dumped %s to %s.\n' % (comment if comment else 'object', path))
+
 
 def pickle_load(path):
     with open(os.path.join(OUT_DIR, path), 'rb') as f:
@@ -470,15 +472,15 @@ def train_linear(X_train, y_train):
     reg.fit(X_train, y_train)
     return reg
 
+
 def get_gbrt(**gbrt_params):
     _gbrt_params = GBRT_PARAMS.copy()
     _gbrt_params.update(gbrt_params)
     return GradientBoostingRegressor(**_gbrt_params)
 
+
 # Trains and returns a GradientBoostingRegressor over the given training
-# feature and value vectors. Feature importance values are stored in
-# OUTDIR/logfile
-# FIXME get rid of logfile
+# feature and value vectors.
 def train_gbrt(X_train, y_train, logfile=None, **gbrt_params):
     sys.stderr.write('-> Training ...')
     start = time()
@@ -487,13 +489,8 @@ def train_gbrt(X_train, y_train, logfile=None, **gbrt_params):
     reg.fit(X_train, y_train)
     sys.stderr.write(' (%.2f secs)\n' % (time() - start))
 
-    importance = reg.feature_importances_
-    hdrs = list(X_train.columns.values)
-    logs = np.asarray(sorted(zip(hdrs, importance), key=lambda x: x[1]))
-#    if logfile:
-#        save_np_object(logfile, 'feature importances', logs, fmt="%s")
-
     return reg
+
 
 # Returns r^2 of y, y^ linear regression and RMSE of y, y^ normalized to the
 # average of y; the latter is a unitless and *scale-invariant* measure of
@@ -506,6 +503,7 @@ def error_summary(y_test, y_pred):
     _, _, r_value, _, _= scipy.stats.linregress(y_test, y_pred)
     rmse = sqrt(mean_squared_error(y_test, y_pred)) / np.mean(y_test)
     return r_value ** 2, rmse
+
 
 # plots the linear regression of two GHF value series (known test values and
 # predicted values) and saves the plot to OUT_DIR/filename.
