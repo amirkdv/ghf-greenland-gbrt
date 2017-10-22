@@ -95,10 +95,6 @@ GBRT_PARAMS = {
     'presort': 'auto',
 }
 FEATURE_NAMES = {
-    'ETOPO_1deg': 'topography',
-    'G_d_2yng_r': 'dist. to young rift',
-    'G_heat_pro': 'heat production provinces',
-    'WGM2012_Bo': 'Bougeur gravity anom.',
     'age'       : 'age',
     'crusthk_cr': 'crustal thickness',
     'd2_transfo': 'dist. to transform ridge',
@@ -106,15 +102,19 @@ FEATURE_NAMES = {
     'd_2ridge'  : 'dist. to ridge',
     'd_2trench' : 'dist. to trench',
     'd_2volcano': 'dist. to volcano',
+    'ETOPO_1deg': 'topography',
+    'G_d_2yng_r': 'dist. to young rift',
+    'G_heat_pro': 'heat production provinces',
+    'G_ther_age': 'last thermo-tectonic event'
+    'G_u_m_vel_': 'upper mantle vel. structure',
     'litho_asth': 'lithos.-asthenos. boundary',
+    'lthlgy_mod': 'rock type',
     'magnetic_M': 'magnetic anom.',
     'moho_GReD' : 'depth to Moho',
     'thk_mid_cr': 'thickness of middle crust',
     'thk_up_cru': 'thickness of upper crust',
     'upman_den_': 'upper mantle density anom.',
-    'G_u_m_vel_': 'upper mantle vel. structure',
-    'lthlgy_mod': 'rock type',
-    'G_ther_age': 'last thermo-tectonic event'
+    'WGM2012_Bo': 'Bougeur gravity anom.',
 }
 
 GREENLAND = pd.read_csv(GRIS_ICE_CORE_CSV)

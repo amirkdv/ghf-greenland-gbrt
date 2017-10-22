@@ -17,10 +17,6 @@ Features
 --------
 Each [data set](#data-files) contains the following continuous features:
 
-* `ETOPO_1deg` (topography),
-* `G_d_2yng_r` (distance to young rift),
-* `G_heat_pro` (heat production provinces),
-* `WGM2012_Bo` (Bougeur gravity anomaly),
 * `age`        (age),
 * `crusthk_cr` (crustal thickness),
 * `d2_transfo` (distance to transform ridge),
@@ -28,20 +24,24 @@ Each [data set](#data-files) contains the following continuous features:
 * `d_2ridge`   (distance to ridge),
 * `d_2trench`  (distance to trench),
 * `d_2volcano` (distance to volcano),
+* `ETOPO_1deg` (topography),
+* `G_d_2yng_r` (distance to young rift),
+* `G_heat_pro` (heat production provinces),
 * `litho_asth` (lithosphere-asthenosphere boundary),
 * `magnetic_M` (magnetic anomaly),
 * `moho_GReD`  (depth to Mohorovičić discontinuity),
 * `thk_mid_cr` (thickness of middle crust),
 * `thk_up_cru` (thickness of upper crust),
 * `upman_den_` (upper mantle density anom.),
+* `WGM2012_Bo` (Bougeur gravity anomaly),
 
 and three categorical features:
 
+* `G_ther_age` (age of last thermo-tectonic event): allowed values are [TODO SRB]
 * `G_u_m_vel_` (upper mantle velocity structure): allowed values are [TODO
   SRB]
 * `lthlgy_mod` (rock type): allowed values are (as per *Hartmann and Moosdorf (2012)*):
   **1** (volcanic), **2** (metamorphic), **3** (sedimentary).
-* `G_ther_age` (age of last thermo-tectonic event): allowed values are [TODO SRB]
 
 The
 
