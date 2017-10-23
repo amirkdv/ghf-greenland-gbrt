@@ -479,7 +479,7 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
     means, sds = [means[i] for i in sort_order], [sds[i] for i in sort_order]
     _yrange = [i-0.4 for i in range(len(features))] # labels in the middle of bars
     ax.barh(_yrange, means, color='k', ecolor='k', alpha=.3, xerr=sds[::-1])
-    ax.set_ylim(-1, len(features) + 1)
+    ax.set_ylim(-1, len(features))
     ax.grid(True)
     ax.set_yticks(range(len(features)))
     ax.set_yticklabels(feature_names, rotation=0, fontsize=10)
