@@ -1,34 +1,35 @@
-Geothermal Heat Flux Prediction
-===============================
+Geothermal Heat Flux Prediction with Gradient Boosted Regression Trees
+======================================================================
 
 Requirements
 ------------
 The following are requirements to reproduce the results:
 
 * _System wide_: Python 2.7 with developer tools, Tk with developer tools,
-  toolchain to build basemap from source.
+  build toolchain.
 * _Python packages_: see [`requirements.txt`](requirements.txt)
-* _Basemap_: build from source; for automated procedures for Linux see
-  [`Makefile`](Makefile). Note that the Makefile assumes you are using a virtual
-  environment at `env/` relative to repo root; override using `ENV` make
-  variable.
+* _Basemap_ (tested with veresions `1.0.7` and `1.1.0`), built from source. For
+  automated procedures for Linux see [`Makefile`](Makefile). Note that the
+  Makefile assumes a virtual environment at `env/` relative to repo root;
+  override using `ENV` make variable.
 
 On Debian/Linux the following installs all requirements:
 ```
 $ apt-get install python-dev build-essential tk tk-dev python-pip virtualenv
 $ ... # git clone this repo; cd to repo
-$ ... # activate environment; assumed to be at [repo]/env
-$ pip install -r requirements
-$ make basemap-install
+$ virtualenv env
+$ . env/bin/activate
+(env) $ pip install -r requirements
+(env) $ make basemap-install
 ```
 
 Usage
 -----
 To produce all figures in the paper:
 ```
-$ python density_plots # Figures 1 and 2
-$ python greenland.py # Figures 4, S5, S6
-$ python error_analysis # Figures 3, 5, S2, S3, S4
+(env) $ python density_plots # Figures 1 and 2
+(env) $ python greenland.py # Figures 4, S5, S6
+(env) $ python error_analysis # Figures 3, 5, S2, S3, S4
 ```
 
 Features
@@ -85,4 +86,4 @@ Date Files
 
 *Note*: Only `global.csv`, `gris_features.csv`, and `gris_ice_cores.csv` are used in
 in this repo (see `util.py`). The "original" data files (`global_original.csv`
-and `gris_original.csv`) are merely provided for posterity.
+and `gris_original.csv`) are only included for completeness.
