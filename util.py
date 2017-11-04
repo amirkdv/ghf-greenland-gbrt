@@ -309,7 +309,7 @@ def tune_params(data, param_grid, cv_fold=10):
 def plot_values_on_map(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
-                    colorbar_args={}, scatter_args={}):
+                    colorbar_args={}, scatter_args={}, cbar_label='mW m$^{-2}$'):
     m.drawparallels(
         np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
     )
@@ -324,7 +324,7 @@ def plot_values_on_map(m, lons, lats, values,
     cs = m.scatter(x, y, c=values, **scatter_args)
 
     cbar = m.colorbar(cs, **colorbar_args)
-    cbar.set_label('mW m$^{-2}$')
+    cbar.set_label(cbar_label)
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
@@ -336,7 +336,7 @@ def plot_values_on_map(m, lons, lats, values,
 def plot_values_on_map_pcolormesh(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
-                    colorbar_args={}, pcolor_args={}):
+                    colorbar_args={}, pcolor_args={}, cbar_label='mW m$^{-2}$'):
     m.drawparallels(
         np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
     )
@@ -369,7 +369,7 @@ def plot_values_on_map_pcolormesh(m, lons, lats, values,
     cs = m.pcolormesh(x,y,ascii,**pcolor_args)
 
     cbar = m.colorbar(cs, **colorbar_args)
-    cbar.set_label('mW m$^{-2}$')
+    cbar.set_label(cbar_label)
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
@@ -381,7 +381,7 @@ def plot_values_on_map_pcolormesh(m, lons, lats, values,
 def plot_values_on_map_pcolormesh_interp(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
-                    colorbar_args={}, pcolor_args={}):
+                    colorbar_args={}, pcolor_args={}, cbar_label='mW m$^{-2}$'):
     m.drawparallels(
         np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
     )
@@ -419,7 +419,7 @@ def plot_values_on_map_pcolormesh_interp(m, lons, lats, values,
     cs = m.pcolormesh(x,y,ascii_interp,**pcolor_args)
 
     cbar = m.colorbar(cs, **colorbar_args)
-    cbar.set_label('mW m$^{-2}$')
+    cbar.set_label(cbar_label)
     labels = range(int(clim[0]), int(clim[1]) + 1, clim_step)
     cbar.set_ticks(labels)
     cbar.set_ticklabels(labels)
