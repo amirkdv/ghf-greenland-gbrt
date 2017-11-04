@@ -1,12 +1,30 @@
 Geothermal Heat Flux Prediction
 ===============================
-To install the requirements, ensure that `numpy`, `matpltolib`, and `basemap`
-are already installed and then use:
+
+Requirements
+------------
+The following are requirements to reproduce the results:
+
+* _System wide_: Python 2.7 with developer tools, Tk with developer tools,
+  toolchain to build basemap from source.
+* _Python packages_: see [`requirements.txt`](requirements.txt)
+* _Basemap_: build from source; for automated procedures for Linux see
+  [`Makefile`](Makefile). Note that the Makefile assumes you are using a virtual
+  environment at `env/` relative to repo root; override using `ENV` make
+  variable.
+
+On Debian/Linux the following installs all requirements:
 ```
-$ pip install -r requirements.txt
+$ apt-get install python-dev build-essential tk tk-dev python-pip virtualenv
+$ ... # git clone this repo; cd to repo
+$ ... # activate environment; assumed to be at [repo]/env
+$ pip install -r requirements
+$ make basemap-install
 ```
 
-To produce figures in the paper:
+Usage
+-----
+To produce all figures in the paper:
 ```
 $ python density_plots # Figures 1 and 2
 $ python greenland.py # Figures 4, S5, S6
