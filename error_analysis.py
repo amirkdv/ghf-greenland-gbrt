@@ -695,7 +695,7 @@ def exp_error_by_radius(data):
         that of Greenland. Plot is saved to <OUT_DIR>/error_by_radius[<region>].png.
     """
     radius = GREENLAND_RADIUS
-    roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
+    roi_density = 11.3 # Greenland
     ncenters = 50
     radii = np.arange(500, 4001, 500)
     region = 'NA-WE'
@@ -762,7 +762,7 @@ def exp_tune_params(data):
         'subsample': [1, .9, .5, .1], # < 1 implies stochastic boosting
         'min_samples_leaf': [1, 3, 10, 20],
         'max_depth': [4, 10, 20],
-        'min_impurity_split': [1e-07, 1e-3, 1e-1],
+        'min_impurity_decrease': [1e-07, 1e-3, 1e-1],
         'max_features': [.1, .3, .7]
     }
     tune_params(data, param_grid, cv_fold=10)
@@ -795,11 +795,16 @@ def exp_partial_dependence():
     plot_partial_dependence(X_train, y_train, n_ways=2, include_features=top_features)
     save_cur_fig('partial-dependence-two-way.png', title='Two way partial dependences', set_title_for=None)
 
+
 def exp_reverse_feature_elimination():
+    """ Performs reverse feature elimination over the greenland training set
+        (i.e all global data and GrIS ice core padded points). The top 5
+        features and top 10 features are printed to standard output. """
     X_train, y_train, _ = greenland_train_test_sets()
     X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
     run_reverse_feature_elimination(X_train, y_train, 5)
     run_reverse_feature_elimination(X_train, y_train, 10)
+
 
 if __name__ == '__main__':
     data = load_global_data()
@@ -810,9 +815,7 @@ if __name__ == '__main__':
     exp_generalization(data)
     exp_feature_importance(data)
     # The following experiments were not used in the paper:
-    #exp_bias_variance(data)
     #exp_space_leakage(data)
-    #exp_feature_selection(data)
     #exp_tune_params(data)
     #exp_partial_dependence()
     #exp_reverse_feature_elimination()

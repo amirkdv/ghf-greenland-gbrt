@@ -1,5 +1,5 @@
-Geothermal Heat Flux Prediction with Gradient Boosted Regression Trees
-======================================================================
+Geothermal Heat Flux Prediction in Greenland with Gradient Boosted Regression Trees
+===================================================================================
 
 Requirements
 ------------
@@ -9,9 +9,8 @@ The following are requirements to reproduce the results:
   build toolchain.
 * _Python packages_: see [`requirements.txt`](requirements.txt)
 * _Basemap_ (tested with veresions `1.0.7` and `1.1.0`), built from source. For
-  automated procedures for Linux see [`Makefile`](Makefile). Note that the
-  Makefile assumes a virtual environment at `env/` relative to repo root;
-  override using `ENV` make variable.
+  automated procedures for Linux see [`Makefile`](Makefile) which automatically
+  detects the virtual environment from the `VIRTUAL_ENV` environment variable.
 
 On Debian/Linux the following installs all requirements:
 ```
@@ -19,7 +18,7 @@ $ apt-get install python-dev build-essential tk tk-dev python-pip virtualenv
 $ ... # git clone this repo; cd to repo
 $ virtualenv env
 $ . env/bin/activate
-(env) $ pip install -r requirements
+(env) $ pip install -r requirements.txt
 (env) $ make basemap-install
 ```
 
@@ -64,8 +63,6 @@ and three categorical features:
   SRB]
 * `lthlgy_mod` (rock type): allowed values are (as per *Hartmann and Moosdorf (2012)*):
   **1** (volcanic), **2** (metamorphic), **3** (sedimentary).
-
-The
 
 Date Files
 ----------
