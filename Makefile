@@ -22,7 +22,10 @@ geos-install: $(BASEMAP) $(GEOS_SO)
 
 BASEMAP_EGGINFO = $(ENV)/lib/python2.7/site-packages/basemap-$(BASEMAP_VERSION)-py2.7.egg-info
 $(BASEMAP_EGGINFO):
+	@echo 'installing basemap $(BASEMAP_VERSION)...'
 	cd $(BASEMAP) && GEOS_DIR=$(GEOS_DIR) python setup.py install
 
 basemap-install: geos-install $(BASEMAP_EGGINFO)
 	pip show basemap
+
+.PHONY: basemap-install geos-install

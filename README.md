@@ -25,8 +25,11 @@ $ . env/bin/activate
 
 Usage
 -----
+In later versions of basemap, if `geos` is installed in a virtual environment
+its lib directory must be added to the `LD_LIBRARY_PATH` environment variable.
 To produce all figures in the paper:
 ```
+(env) $ export LD_LIBRARY_PATH=env/lib:$LD_LIBRARY_PATH
 (env) $ python density_plots # Figures 1 and 2
 (env) $ python greenland.py # Figures 4, S5, S6
 (env) $ python error_analysis # Figures 3, 5, S2, S3, S4
