@@ -73,8 +73,8 @@ def compare_models(data, roi_density, radius, center, **gbrt_params):
         split_with_circle(data, center, roi_density=roi_density, radius=radius)
     assert not X_test.empty
 
-    X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
-    X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+    X_train = X_train.drop(['lat', 'lon'], axis=1)
+    X_test = X_test.drop(['lat', 'lon'], axis=1)
 
     # consider 3 predictors: GBRT, linear regression, and a constant predictor
     gbrt = train_gbrt(X_train, y_train, **gbrt_params)
@@ -290,8 +290,7 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE',
     ax_rmse.set_xlim(*ax_r2.get_xlim())
     for ax in [ax_rmse, ax_r2]:
         # FIXME force xlims to be the same
-        ax.set_xlabel('radius of ROI (km)',
-                      fontsize=14)
+        ax.set_xlabel('radius of ROI (km)', fontsize=14)
         ax.grid(True)
     ax_rmse.legend(prop={'size':15}, numpoints=1)
     fig.tight_layout()
@@ -318,12 +317,12 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
         # To get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
         # have noise ~ N(0, s*^2) with s* = mean(y) * noise_ampl * sqrt(pi/2).
         noise = np.mean(y_train) * noise_amp * np.sqrt(np.pi/ 2) * np.random.randn(len(y_train))
-        gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+        gbrt = train_gbrt(X_train.drop(['lat', 'lon'], axis=1),
                           y_train + noise)
-        lin_reg = train_linear(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
+        lin_reg = train_linear(X_train.drop(['lat', 'lon'], axis=1),
                                y_train + noise)
-        gbrt_pred = gbrt.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
-        lin_pred = lin_reg.predict(X_test.drop(['Latitude_1', 'Longitude_1'], axis=1))
+        gbrt_pred = gbrt.predict(X_test.drop(['lat', 'lon'], axis=1))
+        lin_pred = lin_reg.predict(X_test.drop(['lat', 'lon'], axis=1))
         return gbrt_pred, lin_pred
 
     if replot:
@@ -437,8 +436,8 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
             sys.stderr.write('# center %d/%d\n' % (center_idx + 1, ncenters))
             X_train, y_train, X_test, y_test = \
                 split_with_circle(data, center, roi_density=roi_density, radius=radius)
-            X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
-            X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+            X_train = X_train.drop(['lat', 'lon'], axis=1)
+            X_test = X_test.drop(['lat', 'lon'], axis=1)
             assert not X_test.empty
 
             for n_idx, n in enumerate(ns_estimators):
@@ -482,8 +481,6 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
     ax.legend(prop={'size':12.5})
     fig.tight_layout()
 
-# FIXME update names in dumpfile
-
 def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
                                      dumpfile=None, replot=False, **gbrt_params):
     """ Plots feature importance results (cf. Friedman 2001 or ESL) averaged
@@ -491,7 +488,7 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
         and radius.
     """
     raw_features = list(data)
-    for f in ['Latitude_1', 'Longitude_1', 'GHF']:
+    for f in ['lat', 'lon', 'GHF']:
         raw_features.pop(raw_features.index(f))
 
     # a map to collapse categorical dummies for feature importances. The dict
@@ -528,8 +525,8 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
             sys.stderr.write('%d / %d ' % (center_idx + 1, ncenters))
             X_train, y_train, X_test, y_test = \
                 split_with_circle(data, center, roi_density=roi_density, radius=radius)
-            X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
-            X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+            X_train = X_train.drop(['lat', 'lon'], axis=1)
+            X_test = X_test.drop(['lat', 'lon'], axis=1)
             assert not X_test.empty
 
             gbrt = train_gbrt(X_train, y_train, **gbrt_params)
@@ -574,7 +571,7 @@ def plot_space_leakage(data, num_samples, normalize=False, features=None,
         res = pickle_load(dumpfile)
         distances = res['distances']
     else:
-        distance_features = ['Latitude_1', 'Longitude_1']
+        distance_features = ['lat', 'lon']
         if normalize:
             # normalize all features to [0, 1]
             for f in list(data):
@@ -594,8 +591,8 @@ def plot_space_leakage(data, num_samples, normalize=False, features=None,
             p1, p2 = np.random.randint(0, len(data), 2)
             p1, p2 = data.iloc[p1], data.iloc[p2]
             feature_d = np.linalg.norm(p1[features] - p2[features])
-            spatial_d = np.linalg.norm([p1['Latitude_1'] - p2['Latitude_1'],
-                                        p1['Longitude_1'] - p2['Longitude_1']])
+            spatial_d = np.linalg.norm([p1['lat'] - p2['lat'],
+                                        p1['lon'] - p2['lon']])
             distances.append((spatial_d, feature_d))
         if dumpfile:
             res = {'distances': distances}
@@ -786,7 +783,7 @@ def exp_partial_dependence():
         for all non-categorical features. The two-way PPD is produced for all
         combinations of a fixed set of top 6 features."""
     X_train, y_train, _ = greenland_train_test_sets()
-    X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+    X_train = X_train.drop(['lat', 'lon'], axis=1)
 
     plot_partial_dependence(X_train, y_train, n_ways=1, include_features=None)
     save_cur_fig('partial-dependence-one-way.png', title='One way partial dependences', set_title_for=None)
@@ -801,7 +798,7 @@ def exp_reverse_feature_elimination():
         (i.e all global data and GrIS ice core padded points). The top 5
         features and top 10 features are printed to standard output. """
     X_train, y_train, _ = greenland_train_test_sets()
-    X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+    X_train = X_train.drop(['lat', 'lon'], axis=1)
     run_reverse_feature_elimination(X_train, y_train, 5)
     run_reverse_feature_elimination(X_train, y_train, 10)
 

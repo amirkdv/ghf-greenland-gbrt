@@ -90,11 +90,18 @@ GRIS_ICE_CORE_CSV = _make_absolute(os.getenv('GRIS_ICE_CORE_CSV', 'gris_ice_core
 
 # dict from categorical feature name to its anticipated values
 CATEGORICAL_FEATURES = {
-    'G_u_m_vel_': range(1, 13),
-    'lthlgy_mod': [1, 2, 3],
-    'G_ther_age': range(1, 7),
+    'upper_mantle_vel_structure': range(1, 13),
+    'rock_type': [1, 2, 3],
+    'thermo_tecto_age': range(1, 7),
 }
-PROXIMITY_FEATURES = ['G_d_2yng_r', 'd2_transfo', 'd_2hotspot', 'd_2ridge', 'd_2trench', 'd_2volcano']
+PROXIMITY_FEATURES = [
+    'd_2_hotspot',
+    'd_2_ridge',
+    'd_2_trans_ridge',
+    'd_2_trench',
+    'd_2_volcano',
+    'd_2_young_rift',
+]
 # features included in this list are dropped as soon as csv source is loaded
 IGNORED_COLS = []
 
@@ -107,27 +114,28 @@ GBRT_PARAMS = {
     'max_features': 0.3,        # proportion of all features used in each tree
     'verbose': 0,               # verbosity of reporting
 }
+
 FEATURE_NAMES = {
-    'age'       : 'age',
-    'crusthk_cr': 'crustal thickness',
-    'd2_transfo': 'dist. to transform ridge',
-    'd_2hotspot': 'dist. to hotspots',
-    'd_2ridge'  : 'dist. to ridge',
-    'd_2trench' : 'dist. to trench',
-    'd_2volcano': 'dist. to volcano',
-    'ETOPO_1deg': 'topography',
-    'G_d_2yng_r': 'dist. to young rift',
-    'G_heat_pro': 'heat production provinces',
-    'G_ther_age': 'last thermo-tectonic event',
-    'G_u_m_vel_': 'upper mantle vel. structure',
-    'litho_asth': 'lithos.-asthenos. boundary',
-    'lthlgy_mod': 'rock type',
-    'magnetic_M': 'magnetic anom.',
-    'moho_GReD' : 'depth to Moho',
-    'thk_mid_cr': 'thickness of middle crust',
-    'thk_up_cru': 'thickness of upper crust',
-    'upman_den_': 'upper mantle density anom.',
-    'WGM2012_Bo': 'Bougeur gravity anom.',
+    'age':                          'age',
+    'bougeur_gravity_anomaly':      'Bougeur gravity anom.',
+    'd_2_hotspot':                  'dist. to hotspots',
+    'd_2_ridge':                    'dist. to ridge',
+    'd_2_trans_ridge':              'dist. to transform ridge',
+    'd_2_trench':                   'dist. to trench',
+    'd_2_volcano':                  'dist. to volcano',
+    'd_2_young_rift':               'dist. to young rift',
+    'depth_to_moho':                'depth to Moho',
+    'heat_prod_provinces':          'heat production provinces',
+    'lithos_asthenos_bdry':         'lithos.-asthenos. boundary',
+    'magnetic_anomaly':             'magnetic anom.',
+    'rock_type':                    'rock type',
+    'thermo_tecto_age':             'last thermo-tectonic event',
+    'thickness_crust':              'crustal thickness',
+    'thickness_middle_crust':       'thickness of middle crust',
+    'thickness_upper_crust':        'thickness of upper crust',
+    'topography':                   'topography',
+    'upper_mantle_density_anomaly': 'upper mantle density anom.',
+    'upper_mantle_vel_structure':   'upper mantle vel. structure',
 }
 
 GREENLAND = pd.read_csv(GRIS_ICE_CORE_CSV)
@@ -242,17 +250,17 @@ def random_prediction_ctr(data, radius, min_density=0, region='NA-WE'):
     if region is None:
         cands = data
     elif region == 'NA':
-        cands = data.loc[(45 < data.Latitude_1) & (-100 < data.Longitude_1) & (data.Longitude_1 < -45)]
+        cands = data.loc[(45 < data.lat) & (-100 < data.lon) & (data.lon < -45)]
     elif region == 'WE':
-        cands = data.loc[(45 < data.Latitude_1) & ( -45 < data.Longitude_1) & (data.Longitude_1 <  50)]
+        cands = data.loc[(45 < data.lat) & ( -45 < data.lon) & (data.lon <  50)]
     elif region == 'NA-WE':
-        cands = data.loc[(45 < data.Latitude_1) & (-100 < data.Longitude_1) & (data.Longitude_1 <  50)]
+        cands = data.loc[(45 < data.lat) & (-100 < data.lon) & (data.lon <  50)]
     else:
         raise Exception('Invalid value for region given ("%s")' % str(region))
 
     while True:
         center = cands.sample(n=1)
-        center = center.Longitude_1, center.Latitude_1
+        center = center.lon, center.lat
         roi, non_roi = split_by_distance(data, center, radius)
         area = np.pi * (radius / 1000.) ** 2
         # FIXME this can loop infinitely if a large enough min_density is given
@@ -301,7 +309,7 @@ def haversine_distances(data, center):
     """ Returns a column containing distances of each row of data from center.
     """
     def _haversine(row):
-        p = row[['Longitude_1', 'Latitude_1']].as_matrix()
+        p = row[['lon', 'lat']].as_matrix()
         return haversine_distance(p, center)
 
     return data.apply(_haversine, axis=1)
@@ -373,7 +381,7 @@ def tune_params(data, param_grid, cv_fold=10):
 
     gbm = GradientBoostingRegressor(**GBRT_PARAMS)
     search = GridSearchCV(gbm, param_grid, scoring=_score, cv=cv_fold, n_jobs=1, verbose=10)
-    search.fit(data.drop(['Latitude_1', 'Longitude_1', 'GHF'], axis=1), data['GHF'])
+    search.fit(data.drop(['lat', 'lon', 'GHF'], axis=1), data['GHF'])
     print search.best_params_
 
 def plot_values_on_map(m, lons, lats, values,

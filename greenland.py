@@ -165,13 +165,13 @@ def plot_prediction_interpolated(lons, lats, ghfs):
 if __name__ == '__main__':
     X_train, y_train, X_test = greenland_train_test_sets()
 
-    train_lons = X_train.Longitude_1.as_matrix()
-    train_lats = X_train.Latitude_1.as_matrix()
-    X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
+    train_lons = X_train.lon.as_matrix()
+    train_lats = X_train.lat.as_matrix()
+    X_train = X_train.drop(['lat', 'lon'], axis=1)
 
-    test_lons = X_test.Longitude_1.as_matrix()
-    test_lats = X_test.Latitude_1.as_matrix()
-    X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
+    test_lons = X_test.lon.as_matrix()
+    test_lats = X_test.lat.as_matrix()
+    X_test = X_test.drop(['lat', 'lon'], axis=1)
 
     # -------------------- Plot training data  -------------------------
     plot_training_GHF(train_lons, train_lats, y_train)

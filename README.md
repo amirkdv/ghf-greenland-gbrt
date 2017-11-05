@@ -36,54 +36,63 @@ To produce all figures in the paper:
 
 Features
 --------
-Each [data set](#data-files) contains the following continuous features:
+Each data set below contains the following continuous features:
 
-* `age`        (age),
-* `crusthk_cr` (crustal thickness),
-* `d2_transfo` (distance to transform ridge),
-* `d_2hotspot` (distance to hotspots),
-* `d_2ridge`   (distance to ridge),
-* `d_2trench`  (distance to trench),
-* `d_2volcano` (distance to volcano),
-* `ETOPO_1deg` (topography),
-* `G_d_2yng_r` (distance to young rift),
-* `G_heat_pro` (heat production provinces),
-* `litho_asth` (lithosphere-asthenosphere boundary),
-* `magnetic_M` (magnetic anomaly),
-* `moho_GReD`  (depth to Mohorovičić discontinuity),
-* `thk_mid_cr` (thickness of middle crust),
-* `thk_up_cru` (thickness of upper crust),
-* `upman_den_` (upper mantle density anom.),
-* `WGM2012_Bo` (Bougeur gravity anomaly),
+* `age`                     (age),
+* `bougeur_gravity_anomaly` (Bougeur gravity anomaly),
+* `depth_to_moho`           (depth to Mohorovičić discontinuity),
+* `d_2_hotspot`             (distance to hotspots),
+* `d_2_ridge`               (distance to ridge),
+* `d_2_trans_ridge`         (distance to transform ridge),
+* `d_2_trench`              (distance to trench),
+* `d_2_volcano`             (distance to volcano),
+* `d_2_young_rift`          (distance to young rift),
+* `heat_prod_provinces`     (heat production provinces),
+* `lithos_asthenos_bdry`    (lithosphere-asthenosphere boundary),
+* `magnetic_anomaly`        (magnetic anomaly),
+* `thickness_crust`         (crustal thickness),
+* `thickness_middle_crust`  (thickness of middle crust),
+* `thickness_upper_crust`   (thickness of upper crust),
+* `topography`              (topography),
+* `upper_mantle_density_anomaly` (upper mantle density anom.),
 
 and three categorical features:
 
-* `G_ther_age` (age of last thermo-tectonic event): allowed values are [TODO SRB]
-* `G_u_m_vel_` (upper mantle velocity structure): allowed values are [TODO
-  SRB]
-* `lthlgy_mod` (rock type): allowed values are (as per *Hartmann and Moosdorf (2012)*):
+* `thermo_tecto_age` (age of last thermo-tectonic event): allowed values are 1-12.
+* `upper_mantle_vel_structure` (upper mantle velocity structure): allowed values are 1-6.
+* `rock_type` (rock type): allowed values are (as per *Hartmann and Moosdorf (2012)*):
   **1** (volcanic), **2** (metamorphic), **3** (sedimentary).
 
 Date Files
 ----------
 
-- *Global data (features and GHF)*: All global data can be found at
-  `global_original.csv` which contains ...  [TODO SRB]. The subset of this
-  file that is used in code can be found at `global.csv` which excludes the
-  following:
-    * two rows with unknown rock type (i.e `lthlgy_mod == -9999`),
-    * dropped columns [TODO SRB]
-- *GrIS data (features)*: All feature values for GrIS can be found at
-  `gris_features_original.csv` which contains ... [TODO SRB]. The
-  corresponding subset of this file that is used in code can be found at
-  `gris_features.csv` which contains the following modifications:
-    * translate rock types (`lthlgy_mod`) from the 10 categories of *Dowe
-      (2009)* to the three categories of *Hartmann and Moosdorf (2012)* used
-      in the global data set.
-    * dropped columns similar to global data.
+- *Global data (features and GHF)*: The global data set can be found at
+  [`global.csv`](global.csv) which contains feature values and GHF measurements
+  from points predominantly outside of GrIS.
+- *GrIS data (features)*: All GrIS data set can be found at
+  [`gris_features.csv`](gris_features.csv) which contains feature values (no
+  GHF) from points on GrIS.
 - *GrIS ice cores (GHF)*: Latitude, longitude, and GHF measurements from ice
    cores in Greenland.
-
-*Note*: Only `global.csv`, `gris_features.csv`, and `gris_ice_cores.csv` are used in
-in this repo (see `util.py`). The "original" data files (`global_original.csv`
-and `gris_original.csv`) are only included for completeness.
+- *"Original" data*: For both data sets above a more complete version is also
+  included for posterity. The global data set differs from its corresponding
+  original data set `global_original.csv` and the GrIS data set differs from
+  `gris_features_original.csv` by:
+    * For both global and GrIS data sets the following columns in original data
+      sets are excluded:
+        - `_lithk_cona`,
+        - `_num_in_cell`,
+        - `_num_in_continent`,
+        - `_lithology_HM_unmodified`,
+        - `_depth_to_moho_pasyanos`,
+        - `_depth_to_moho_?`,
+        - `_airy_gravity_anomaly`,
+        - `_continent`,
+    * The global data sets excludes two original global records with unknown rock
+      type (`lthlgy_mod == -9999`).
+    * Rock types (`rock_type` column) in original GrIS data set take values
+      between 1-10, as per *Dawes (2009)*, which are mapped in GrIS data set to
+      the three values described above, as per *Hartmann and Moosdorf (2012)*.
+    * Rock types (`rock_type` column) in original global data set are taken by
+      mapping the 16 values of `_lithology_HM_unmodified`, as per
+      *Hartmann and Moosdorf (2012)*, to the three values described above.
