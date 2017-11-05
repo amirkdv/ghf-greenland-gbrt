@@ -25,7 +25,6 @@ uncommenting their invocation.
 
 import sys
 from random import randint
-from math import sqrt, pi
 from itertools import compress
 from itertools import combinations
 from sklearn.ensemble import partial_dependence
@@ -298,7 +297,7 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
         # cf. https://en.wikipedia.org/wiki/Half-normal_distribution
         # To get noise with mean(|noise|) / mean(y) = noise_ampl, we need to
         # have noise ~ N(0, s*^2) with s* = mean(y) * noise_ampl * sqrt(pi/2).
-        noise = np.mean(y_train) * noise_amp * sqrt(pi / 2) * np.random.randn(len(y_train))
+        noise = np.mean(y_train) * noise_amp * np.sqrt(np.pi/ 2) * np.random.randn(len(y_train))
         gbrt = train_gbrt(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),
                           y_train + noise)
         lin_reg = train_linear(X_train.drop(['Latitude_1', 'Longitude_1'], axis=1),

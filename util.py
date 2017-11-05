@@ -68,7 +68,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import GradientBoostingRegressor
-from math import radians, sin, cos, asin, sqrt, floor
+import math
 
 pd.set_option('display.max_columns', 80)
 plt.ticklabel_format(useOffset=False)
@@ -257,11 +257,11 @@ def split_by_distance(data, center, radius):
 def haversine_distance(p1, p2):
     lon1, lat1 = p1
     lon2, lat2 = p2
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
     dlon = lon2 - lon1
     dlat = lat2 - lat1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a))
+    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+    c = 2 * math.asin(np.sqrt(a))
     km = 6367 * c
     return km
 
@@ -373,8 +373,8 @@ def plot_values_on_map_pcolormesh(m, lons, lats, values,
     ascii = np.where(ascii==0,np.nan,0)
 
     for item in np.vstack([lons,lats,values]).T:
-        j = np.floor(lons_array).tolist().index(floor(item[0]))
-        i = np.floor(lats_array).tolist().index(floor(item[1]))
+        j = np.floor(lons_array).tolist().index(np.floor(item[0]))
+        i = np.floor(lats_array).tolist().index(np.floor(item[1]))
         ascii[i][j] = item[2]
 
     ascii = np.ma.masked_where(np.isnan(ascii),ascii)
@@ -418,8 +418,8 @@ def plot_values_on_map_pcolormesh_interp(m, lons, lats, values,
     ascii = np.where(ascii==0,np.nan,0)
 
     for item in np.vstack([lons,lats,values]).T:
-        j = np.floor(lons_array).tolist().index(floor(item[0]))
-        i = np.floor(lats_array).tolist().index(floor(item[1]))
+        j = np.floor(lons_array).tolist().index(np.floor(item[0]))
+        i = np.floor(lats_array).tolist().index(np.floor(item[1]))
         ascii[i][j] = item[2]
 
     ascii_interp, x, y = m.transform_scalar(
@@ -514,7 +514,7 @@ def train_gbrt(X_train, y_train, **gbrt_params):
 #   r^2 is not scale-invariant.
 def error_summary(y_test, y_pred):
     _, _, r_value, _, _= scipy.stats.linregress(y_test, y_pred)
-    rmse = sqrt(mean_squared_error(y_test, y_pred)) / np.mean(y_test)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred)) / np.mean(y_test)
     return r_value ** 2, rmse
 
 
