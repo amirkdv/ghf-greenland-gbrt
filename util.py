@@ -152,7 +152,8 @@ def _load_data_set(path):
         # data frame) depends on the values observed in that specific data set.
         # The categories argument forces the choice of dummy variables
         # produced below.
-        data[categorical] = data[categorical].astype('category', categories=categories)
+        dtype = pd.api.types.CategoricalDtype(categories=categories)
+        data[categorical] = data[categorical].astype(dtype)
     data = pd.get_dummies(data, columns=CATEGORICAL_FEATURES.keys())
 
     # sort columns alphabetically
