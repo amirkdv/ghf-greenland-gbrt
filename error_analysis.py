@@ -136,12 +136,6 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, region='NA-WE',
     ax_r2.plot(roi_densities, errors['gbrt']['r2'].mean(axis=0), **kw)
     ax_r2.fill_between(roi_densities, lower_r2, higher_r2, facecolor='b', edgecolor='b', alpha=.2)
 
-    # Plot GBRT individual results (thin lines)
-    #kw = {'alpha': .2, 'lw': .5, 'color': 'k'}
-    #for idx_ctr in range(ncenters):
-        #ax_rmse.plot(roi_densities, errors['gbrt']['rmse'][idx_ctr], **kw)
-        #ax_r2.plot(roi_densities, errors['gbrt']['r2'][idx_ctr], **kw)
-
     # Plot Linear Regression results
     kw = {'alpha': .7, 'lw': 1, 'marker': 'o', 'markersize': 4, 'markeredgecolor': 'r', 'color': 'r'}
     mean_rmse = errors['linear']['rmse'].mean(axis=0)
@@ -554,161 +548,6 @@ def plot_space_leakage(data, num_samples, normalize=False, features=None, dumpfi
 
     fig.tight_layout()
 
-# For each given value of n_estimators, peforms ncenters rounds of cross
-# validation with given radius and ROI density. Plots the average bias and
-# variance in predictions for _any prediction point_ against the increasing
-# number of estimators.
-def plot_bias_variance_analysis(data, roi_density, radius, ncenters, ns_estimators):
-    fig = plt.figure()
-    ax_bias = fig.add_subplot(2, 1, 1)
-    ax_var = fig.add_subplot(2, 1, 2)
-
-    results = {}
-    for n_idx, n in enumerate(ns_estimators):
-        for _ in range(ncenters):
-            sys.stdout.write('--------- center %d / %d, %d estimators' % (_+1, ncenters, n))
-            center = random_prediction_ctr(data, radius)
-            X_train, y_train, X_test, y_test = \
-                split_with_circle(data, center, roi_density=roi_density, radius=radius)
-
-            points = [tuple(i) for i in
-                      X_test[['Latitude_1', 'Longitude_1']].values]
-            X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
-            X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
-            assert not X_test.empty
-
-            gbrt = train_gbrt(X_train, y_train, n_estimators=n)
-            sys.stdout.flush()
-            y_pred = gbrt.predict(X_test)
-            for y_idx, y in enumerate(y_pred):
-                point = points[y_idx]
-                if point not in results:
-                    results[point] = {'value': y_test.iloc[y_idx],
-                                      'preds':[[] for _ in ns_estimators]}
-                results[point]['preds'][n_idx].append(y)
-
-    ns_estimators = np.array(ns_estimators)
-    bias = np.zeros([len(results), len(ns_estimators)])
-    var = np.zeros([len(results), len(ns_estimators)])
-    for idx, point in enumerate(results):
-        for n_idx in range(len(ns_estimators)):
-            #print point
-            #print results[point]
-            if results[point]['preds'][n_idx]:
-                bias[idx][n_idx] = np.mean(results[point]['preds'][n_idx]) \
-                                 - results[point]['value']
-                var[idx][n_idx] = np.var(results[point]['preds'][n_idx])
-            else:
-                bias[idx][n_idx] = np.NaN
-                var[idx][n_idx] = np.NaN
-
-        mask = np.isfinite(bias[idx])
-        ax_bias.plot(ns_estimators[mask], bias[idx][mask], 'k', alpha=.2, lw=1)
-        ax_var.plot(ns_estimators[mask], var[idx][mask], 'k', alpha=.2, lw=1)
-
-    ax_bias.plot(ns_estimators, np.nanmean(bias, axis=0), 'b', alpha=.9, lw=2.5)
-    ax_var.plot(ns_estimators, np.nanmean(var, axis=0), 'b', alpha=.9, lw=2.5)
-
-    ax_bias.grid(True)
-    ax_var.grid(True)
-
-    ax_bias.set_xlabel('Number of trees')
-    ax_var.set_xlabel('Number of trees')
-
-    ax_bias.set_ylabel('Bias')
-    ax_var.set_ylabel('Variance')
-
-    ax_bias.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
-    ax_var.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
-
-    ax_var.set_ylim(-.1 * np.nanmax(var), None)
-
-
-# Plots the average performance of GBRT, as measured by normalized RMSE, over
-# ncenters cross validation sets of given radius and ROI density, as a function
-# of the number of features used for prediction. The features list is assumed
-# to be in decreasing order of importance.
-def plot_feature_selection_analysis(data, t, radius, ncenters, features,
-                                    **gbrt_params):
-    data = data.copy()
-    non_features = ['Latitude_1', 'Longitude_1', 'GHF']
-    noise_cols = [f + '_noise' for f in list(data) if f not in non_features]
-    for f in list(noise_cols):
-        data[f] = np.random.randn(len(data))
-
-    rmses = np.zeros([ncenters, len(features)])
-    junk_rmses = np.zeros([ncenters, len(features)])
-    const_rmses = np.zeros([ncenters, len(features)])
-
-    fig, ax = plt.subplots()
-    # FIXME min_density
-    centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
-    #centers = [0 for _ in range(ncenters)]
-    ns_features = range(1, len(features) + 1)
-    for idx_ctr, center in enumerate(centers):
-        sys.stderr.write('center: %d / %d\n' % (1 + idx_ctr, ncenters))
-        # all three versions use the same split of data; note that X_train and
-        # X_test now have both noise columns and ordinary columns
-        X_train, y_train, X_test, y_test = \
-            split_with_circle(data, center, roi_density=roi_density, radius=radius)
-        assert not X_test.empty
-        for idx_n, n_features in enumerate(ns_features):
-            cols = non_features[:] # copy it; we'll be modifying it
-            cols_noise = non_features[:]
-            for idx_f, feature in enumerate(features):
-                if idx_f == n_features:
-                    break
-                if feature in CATEGORICAL_FEATURES:
-                    for col in list(data):
-                        if col[:len(feature)] == feature:
-                            if col[:-len('_noise')] == '_noise':
-                                cols_noise.append(col)
-                            else:
-                                cols.append(col)
-                else:
-                    cols.append(feature)
-                    cols_noise.append(feature + '_noise')
-
-            X_train_ = X_train.loc[:, cols]
-            X_test_ = X_test.loc[:, cols]
-            gbrt = train_gbrt(X_train_.drop(non_features, axis=1),
-                                  y_train, **gbrt_params)
-            y_pred = gbrt.predict(X_test_.drop(non_features, axis=1))
-            rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
-            #print 'error', rmses[idx_ctr][idx_n]
-
-            # GBRT with junk feature values (signal-to-noise ratio = 0)
-            X_train_ = X_train.loc[:, cols_noise]
-            X_test_ = X_test.loc[:, cols_noise]
-            gbrt = train_gbrt(X_train_.drop(non_features, axis=1),
-                                  y_train, **gbrt_params)
-            y_pred = gbrt.predict(X_test_.drop(non_features, axis=1))
-            junk_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred, y_test)) / y_test.mean()
-            #print 'on noise', junk_rmses[idx_ctr][idx_n]
-
-            # the simplest (constant) predictor: avg(GHF) over training
-            y_pred = y_train.mean() + np.zeros(len(y_test))
-            const_rmses[idx_ctr][idx_n] = sqrt(mean_squared_error(y_pred , y_test)) / y_test.mean()
-            #print 'const. predictor', const_rmses[idx_ctr][idx_n]
-
-        ax.plot(ns_features, rmses[idx_ctr], 'g', alpha=.2, lw=1)
-        #ax.plot(ns_features, junk_rmses[idx_ctr], 'k', alpha=.5, lw=1)
-
-    ax.plot(ns_features, rmses.mean(axis=0), 'g', alpha=.7, lw=3, marker='.', label='GBRT')
-    ax.plot(ns_features, junk_rmses.mean(axis=0), 'k', alpha=.7, lw=3, marker='.', label='GBRT trained on noise')
-    ax.plot(ns_features, const_rmses.mean(axis=0), 'r', alpha=.9, lw=1 , marker='.', label='Constant predictor')
-
-    ax.set_xlabel('number of included features')
-    ax.set_ylabel('normalized RMSE')
-    ax.set_ylim(0, .6)
-    ax.set_xlim(0, len(features) + 1)
-    ax.grid(True)
-    ax.legend(fontsize=10)
-    ax.set_xticks(ns_features)
-    xtick_labels = ['%s - %d' % (feature, idx + 1) for idx, feature in enumerate(features)]
-    ax.set_xticklabels(xtick_labels, rotation=90, fontsize=8)
-
-    fig.subplots_adjust(bottom=0.25)
 
 # Plots one-way or two-way partial dependencies (cf. Friedman 2001 or ESL). If
 # include_features is given, only those features will be considered, otherwise
@@ -812,13 +651,6 @@ def exp_generalization(data):
     plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators, dumpfile=dumpfile, replot=False)
     save_cur_fig('generalization.png', title='GBRT generalization power', set_title_for=None)
 
-def exp_bias_variance(data):
-    radius = GREENLAND_RADIUS
-    ncenters = 200
-    roi_density = 11.3 # Greenland
-    ns_estimators = range(200, 1100, 200)
-    plot_bias_variance_analysis(data, roi_density, radius, ncenters, ns_estimators)
-    save_cur_fig('bias-variance.png', title='GBRT bias/variance for different number of trees')
 
 def exp_feature_importance(data):
     radius = GREENLAND_RADIUS
