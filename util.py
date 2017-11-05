@@ -90,24 +90,13 @@ PROXIMITY_FEATURES = ['G_d_2yng_r', 'd2_transfo', 'd_2hotspot', 'd_2ridge', 'd_2
 IGNORED_COLS = []
 
 GBRT_PARAMS = {
-    'loss': 'ls', # 'ls' refers to sum of squares loss (i.e least squares regression)
-    'learning_rate': 0.05, # ν, shrinkage factor
-    'n_estimators': 1000, # M, no. of total trees
-    'subsample': 1., # less than 1 values would lead to stochastic GBRT
-    'criterion': 'friedman_mse',
-    'min_samples_split': 2, #FIXME this is default
-    'min_samples_leaf': 9, #FIXME why?
-    'min_weight_fraction_leaf': 0.0, # FIXME this is default
-    'max_depth': 4, # J, individual tree depth
-    'min_impurity_split': 1e-07, # FIXME deprecated
-    'init': None, # FIXME this is the default
-    'random_state': 0, # FIXME ???
-    'max_features': 0.3, # proportion of all features used in each tree
-    'alpha': 0.9, # FIXME remove, this is only needed when loss='huber'/'quantile'
-                  # http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
-    'verbose': 0,
-    'warm_start': False,
-    'presort': 'auto',
+    'loss': 'ls',               # 'ls' refers to sum of squares loss (i.e least squares regression)
+    'learning_rate': 0.05,      # ν, shrinkage factor
+    'n_estimators': 1000,       # M, total no. of regression trees
+    'subsample': 1.,            # values less than 1 lead to stochastic GBRT
+    'max_depth': 4,             # J, individual tree depth
+    'max_features': 0.3,        # proportion of all features used in each tree
+    'verbose': 0,               # verbosity of reporting
 }
 FEATURE_NAMES = {
     'age'       : 'age',
