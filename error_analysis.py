@@ -52,8 +52,23 @@ from util import (
     PROXIMITY_FEATURES,
 )
 
-# for a fixed center, t, and radius, returns r2 and normalized rmse
+
 def compare_models(data, roi_density, radius, center, **gbrt_params):
+    """ For a fixed sample density, ROI center, and ROI radius, splits the data
+        set into a training and validation set and returns the measures of
+        error (normalized rmse and r2) of GBRT, linear regression, and constant
+        predictor.
+
+        Args:
+            data (pandas.DataFrame): entire data set to use.
+            roi_density (float): required sample density in ROI.
+            radius (float): ROI radius in km.
+            center (tuple): longitutde-latitude coordinates of ROI center.
+
+        Return:
+            dict: keys are 'gbrt', 'linear', and 'constant', values are r2 and
+                  rmse pairs as produced by `error_summary`.
+        """
     X_train, y_train, X_test, y_test = \
         split_with_circle(data, center, roi_density=roi_density, radius=radius)
     assert not X_test.empty
@@ -74,10 +89,12 @@ def compare_models(data, roi_density, radius, center, **gbrt_params):
             'linear':  error_summary(y_test, y_lin),
             'constant': error_summary(y_test, y_const)}
 
-# ncenters random centers are picked and over all given ROI densities
-# cross-validation error (normalized RMSE and r2) are averaged
 def plot_error_by_density(data, roi_densities, radius, ncenters, region='NA-WE',
                           replot=False, dumpfile=None, **gbrt_params):
+    """ ncenters random centers are picked and over all given ROI densities.
+        Cross-validation errors (normalized RMSE and r2) are averaged over
+        ncenters. One standard deviation mark is shown by a shaded region.
+    """
     sys.stderr.write('=> Experiment: Error by Density (region: %s, no. centers: %d, no. densities: %d)\n' %
                      (region, ncenters, len(roi_densities)))
     fig = plt.figure(figsize=(11,5))
@@ -174,10 +191,12 @@ def plot_error_by_density(data, roi_densities, radius, ncenters, region='NA-WE',
     ax_rmse.legend(prop={'size':15}, numpoints=1)
     fig.tight_layout()
 
-# ncenters random centers are picked and over all given radii
-# cross-validation error (normalized RMSE and r2) are averaged
 def plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE',
                          replot=False, dumpfile=None, **gbrt_params):
+    """ ncenters random centers are picked and over all given radii.
+        Cross-validation errors (normalized RMSE and r2) are averaged over
+        ncenters. One standard deviation mark is shown by a shaded region.
+    """
     fig = plt.figure(figsize=(11,5))
     ax_rmse, ax_r2 = fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)
 
@@ -277,11 +296,18 @@ def plot_error_by_radius(data, roi_density, radii, ncenters, region='NA-WE',
     ax_rmse.legend(prop={'size':15}, numpoints=1)
     fig.tight_layout()
 
-# For each given noise amplitude, performs cross-validation on ncenters with
-# given radius and test ratio and the average normalized rmse is reported as
-# the perturbation in prediction caused by noise.
 def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
                               replot=False, dumpfile=None):
+    """ For each given noise amplitude, performs cross-validation on ncenters
+        with given radius and density, the average over ncenters of
+        normalized rmse between noise-free predictions and predictions based on
+        noisy GHF is calculated. This perturbation in predictions is plotted
+        against the expected absolute value of applied noise (amplitude).
+
+        Both GBRT and linear regression are considered.
+        One standard deviation is indicated by a shaded region.
+        The case of Greenland is considered separately and overlayed.
+    """
     fig = plt.figure(figsize=(10, 5))
     ax_gbrt = fig.add_subplot(1, 2, 1)
     ax_lin = fig.add_subplot(1, 2, 2)
@@ -365,15 +391,18 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
     fig.tight_layout()
 
 
-# For all given values for n_estimators (number of trees) for GBRT, perform
-# cross-validation over ncenters circles with given radius and test ratio. The
-# average training and validation error for each number of trees is plotted.
-# This is the standard plot to detect overfitting defined as the turning point
-# beyond which validation error starts increasing while training error is
-# driven down to zero. As expected, GBRT does not overfit (test error
-# plateaus).
 def plot_generalization_analysis(data, roi_density, radius, ncenters,
                                  ns_estimators, replot=False, dumpfile=None):
+    """ For all given values for n_estimators (number of trees) for GBRT,
+        perform cross-validation over ncenters ROIs with given radius and
+        sample density. The average training and validation error for each
+        number of trees is plotted. This is the standard plot to detect
+        overfitting defined as the turning point beyond which validation error
+        starts increasing while training error is driven down to zero. As
+        expected, GBRT does not overfit (validation error plateaus).
+
+        One standard deviation is indicated by a shaded region.
+    """
     fig, ax = plt.subplots()
 
     if replot:
@@ -427,10 +456,14 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
     ax.legend(prop={'size':12.5})
     fig.tight_layout()
 
-# Plot feature importance results for ncenters rounds of cross validation for
-# given ROI training density and radius.
+# FIXME update names in dumpfile
+
 def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
                                      dumpfile=None, replot=False, **gbrt_params):
+    """ Plots feature importance results (cf. Friedman 2001 or ESL) averaged
+        over ncenters rounds of cross validation for given ROI training density
+        and radius.
+    """
     raw_features = list(data)
     for f in ['Latitude_1', 'Longitude_1', 'GHF']:
         raw_features.pop(raw_features.index(f))
@@ -501,10 +534,15 @@ def plot_feature_importance_analysis(data, roi_density, radius, ncenters,
     ax.set_title('GBRT feature importances')
     fig.subplots_adjust(left=0.3) # for vertical xtick labels
 
-# Scatter plot spatial distance vs euclidean distance in feature space for
-# specified features. If features is None all features excluding
-# latitude/longitude are included.
-def plot_space_leakage(data, num_samples, normalize=False, features=None, dumpfile=None, replot=False):
+
+def plot_space_leakage(data, num_samples, normalize=False, features=None,
+                       dumpfile=None, replot=False):
+    """ Scatter plots spatial distance vs euclidean distance in feature space
+        for specified features. If features is None all features excluding
+        latitude/longitude are included. Since the total number of pairs of
+        points is typically large pairs are picked by sampling the data set
+        randomly.
+    """
     raw_features = list(data)
     if replot:
         res = pickle_load(dumpfile)
@@ -549,10 +587,11 @@ def plot_space_leakage(data, num_samples, normalize=False, features=None, dumpfi
     fig.tight_layout()
 
 
-# Plots one-way or two-way partial dependencies (cf. Friedman 2001 or ESL). If
-# include_features is given, only those features will be considered, otherwise
-# all non-categorical features will be included.
 def plot_partial_dependence(X_train, y_train, include_features=None, n_ways=1):
+    """ Plots one-way or two-way partial dependencies (cf. Friedman 2001 or
+        ESL). If include_features is given, only those features will be
+        considered, otherwise all non-categorical features will be included.
+    """
     raw_features = list(X_train)
     features, feature_names = [], []
     for i in range(len(raw_features)):
@@ -590,6 +629,9 @@ def plot_partial_dependence(X_train, y_train, include_features=None, n_ways=1):
 
 
 def run_reverse_feature_elimination(X_train, y_train, n_features_to_select, step=1):
+    """ Performs reverse feature eleminiation on a single training set. No
+        plots are produced; only the top n_features_to_select features are
+        reported to standard output."""
     sys.stderr.write('Reverse feature elimination down to %d features ...\n' % n_features_to_select)
     gbrt = get_gbrt()
     rfe = RFE(gbrt, n_features_to_select=n_features_to_select, verbose=3, step=step)
@@ -602,13 +644,13 @@ def run_reverse_feature_elimination(X_train, y_train, n_features_to_select, step
     ) + '\n')
     sys.stdout.flush()
 
-# ================================================= #
-# Experiment functions
-# --------------------
-# each "experiment" is self contained (no parameters; only input is the data
-# set), calls a plot_X function and writes a figure to disk.
-# ================================================= #
+
 def exp_error_by_density(data):
+    """ Evaluates prediction error (normalized rmse and r2) for GBRT, linear
+        regression and constant predictor by using increasingly large sample
+        densities in ROIs, constrained to the specified region, with radius
+        equal to that of Greenland. Plot is saved to <OUT_DIR>/error_by_density[<region>].png.
+    """
     densities = np.append(np.array([1]), np.arange(5, 51, 5))
     radius = GREENLAND_RADIUS
     ncenters = 50
@@ -619,7 +661,13 @@ def exp_error_by_density(data):
     plot_error_by_density(data, densities, radius, ncenters, region=region, dumpfile=dumpfile, replot=False)
     save_cur_fig(plotfile)
 
+
 def exp_error_by_radius(data):
+    """ Evaluates prediction error (normalized rmse and r2) for GBRT, linear
+        regression and constant predictor by using increasingly large radii for
+        ROIs, constrained to the specified region, with sample density equal to
+        that of Greenland. Plot is saved to <OUT_DIR>/error_by_radius[<region>].png.
+    """
     radius = GREENLAND_RADIUS
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     ncenters = 50
@@ -632,7 +680,11 @@ def exp_error_by_radius(data):
     plot_error_by_radius(data, roi_density, radii, ncenters, region=region, dumpfile=dumpfile, replot=False)
     save_cur_fig(plotfile)
 
+
 def exp_sensitivity(data):
+    """ Evaluates sensitivity of GBRT and linear regression to perturbations in
+        training GHF. Plot is saved to <OUT_DIR>/sensitivity.png.
+    """
     radius = GREENLAND_RADIUS
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
     noise_amps = np.arange(0.025, .31, .025)
@@ -642,6 +694,11 @@ def exp_sensitivity(data):
     save_cur_fig('sensitivity.png', title='GBRT prediction sensitivity to noise in training GHF', set_title_for=None)
 
 def exp_generalization(data):
+    """ Evaluates the generalization power of GBRT with increasing complexity
+        (number of regression tress). This is used to verify that GBRT is
+        robust against overfitting and to pick an appropriate number of trees
+        for reported results and used in all other experiments (cf. `util.GBRT_params`).
+    """
     radius = GREENLAND_RADIUS
     ncenters = 50
     roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
@@ -653,6 +710,10 @@ def exp_generalization(data):
 
 
 def exp_feature_importance(data):
+    """ Plots feature importances for averaged over 50 ROIs with the same
+        radius and sample density as the GrIS train/validation split. The max
+        depth of trees is increased to 8 to avoid a few influential features
+        taking over all trees."""
     radius = GREENLAND_RADIUS
     ncenters = 50
     roi_density = 11.3 # Greenland
@@ -661,45 +722,11 @@ def exp_feature_importance(data):
     plot_feature_importance_analysis(data, roi_density, radius, ncenters, dumpfile=dumpfile, max_depth=max_depth, replot=False)
     save_cur_fig('feature-importance.png', title='Relative feature importances in GBRT', set_title_for=None)
 
-# plot performance by varying number of features
-# features in decreasing order of importance:
-def exp_feature_selection(data):
-    features = [
-        'd_2trench',
-        'd_2hotspot',
-        'd_2volcano',
-        'd_2ridge',
-        'G_d_2yng_r',
-        'age',
-        'G_heat_pro',
-        'WGM2012_Bo',
-        'd2_transfo',
-        'ETOPO_1deg',
-        'upman_den_',
-        'moho_GReD',
-        'crusthk_cr',
-        'litho_asth',
-        'thk_up_cru',
-        'G_ther_age', # categorical
-        'magnetic_M',
-        'G_u_m_vel_', # categorical
-        'thk_mid_cr',
-        'lthlgy_mod', # categorical
-    ]
-    ncenters = 100
-    roi_density = 11.3 # Greenland
-
-    radius = GREENLAND_RADIUS
-    _gbrt_params = {
-        #'learning_rate': 0.1, # shrinkage
-        'n_estimators': 200, # no of weak learners
-        'subsample': 0.5, # stochastic GBRT
-        'max_depth': 10, # max depth of individual (weak) learners
-    }
-    plot_feature_selection_analysis(data, roi_density, radius, ncenters, features, **_gbrt_params)
-    save_cur_fig('feature-selection.png', 'Stochastic GBRT performance, whole circles as test set')
 
 def exp_tune_params(data):
+    """ Performs a parameter tuning experiment over a range of values of
+        interest for each GBRT parameter (cf. `util.tune_params`).
+    """
     param_grid = {
         'n_estimators': [200],
         'criterion': ['friedman_mse', 'mse'],
@@ -712,13 +739,24 @@ def exp_tune_params(data):
     }
     tune_params(data, param_grid, cv_fold=10)
 
+
 def exp_space_leakage(data):
+    """ Evaluates whether a set of features (default PROXIMITY_FEATURES) "leak"
+        spatial information to GBRT by producing a scatter plot of spatial
+        distance vs Euclidean distance in the subspace of specified features
+        for a collection of random pairs of data points (default n = 20k).
+        Plot is saved to <OUT_DIR>/space-leakage.png.
+    """
     dumpfile = 'space_leakage.txt'
     num_samples = 20000
     plot_space_leakage(data, num_samples, features=PROXIMITY_FEATURES, dumpfile=dumpfile, replot=False)
     save_cur_fig('space-leakage.png', title='Spatial information leakage through proximity features', set_title_for=None)
 
+
 def exp_partial_dependence():
+    """ Produces partial dependence plots for GBRT. The one-way PPD is produced
+        for all non-categorical features. The two-way PPD is produced for all
+        combinations of a fixed set of top 6 features."""
     X_train, y_train, _ = greenland_train_test_sets()
     X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
 

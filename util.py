@@ -170,9 +170,20 @@ def load_gris_data():
     return _load_data_set(GRIS_CSV)
 
 
-# Approximates GHF values at rows with unknown GHF according to a Gaussian
-# decay formula based on known GHF values in GREENLAND.
 def fill_in_greenland_GHF(data):
+    """ Approximates GHF values at rows with unknown GHF according to a
+        Gaussian decay formula based on known GHF values in GREENLAND. For each
+        record, any ice core within MAX_ICE_CORE_DIST gives a GHF estimate
+        through a Gaussian decay centered at the ice core. The final GHF value
+        of each record is the average estimates provided by all nearby ice
+        cores.
+
+        Args:
+            data (pandas.DataFrame):
+                the data set to be updated, typically all GrIS records most of
+                which do not have a GHF value. Existing GHF values are
+                overwritten.
+    """
     dist_cols = []
     ghf_cols = []
     for _, point in GREENLAND.iterrows():
@@ -201,24 +212,33 @@ def fill_in_greenland_GHF(data):
 
     return data[data.GHF.notnull()], data[data.GHF.isnull()].drop('GHF', axis=1)
 
-# Put together X_train, y_train, X_test (y_test is unknown) for Greenland GHF
-# prediction using global dataset.
 def greenland_train_test_sets():
+    """ Put together X_train, y_train, X_test (y_test is unknown) for Greenland
+        GHF prediction using global dataset.
+    """
     data_global, data_gris = load_global_data(), load_gris_data()
     gris_known, X_test = fill_in_greenland_GHF(data_gris)
     gris_known = pd.concat([data_global, gris_known])
     return gris_known.drop(['GHF'], axis=1), gris_known['GHF'], X_test
 
 
-# Returns a random longitude-latitude pair that serves as the center of
-# validation circle. The region argument specifies a spatial constraint on
-# the latitude and longitude of the center:
-#   1. None: no constraint
-#   2. 'NA' (North America): 45 < lat, -100 < lon < -45
-#   3. 'WE' (Western Europe): 45 < lat, -45 < lon < 50
-#   4. 'NA-WE' (both of the above): 45 < lat, -100 < lon < 50
-# FIXME document units of density (samples per million km^2), distance (km)
 def random_prediction_ctr(data, radius, min_density=0, region='NA-WE'):
+    """ Returns a random longitude-latitude pair that serves as the center of
+        validation circle.
+
+        Args:
+            data (pandas.DataFrame):
+                the entire data set used to pick random centers that satisfy
+                the required ROI density minimum. Only relevant columns are lat
+                and lon.
+            region (string):
+                specifies a spatial constraint on the latitude and longitude of
+                the center. None is no constraint, 'NA' is North America, 'WE'
+                is Western Europe, and 'NA-WE' is both the latter two.
+            min_density (float):
+                the minimum required ROI density; otherwise a randomly chosen
+                ROI is dismissed.
+    """
     if region is None:
         cands = data
     elif region == 'NA':
@@ -240,9 +260,19 @@ def random_prediction_ctr(data, radius, min_density=0, region='NA-WE'):
             return round(center[0], 2), round(center[1], 2)
 
 
-# returns a pair of DataFrames: one containing rows in data that are closer
-# than radius to center, and those that are not.
 def split_by_distance(data, center, radius):
+    """ Returns a pair of data frames, one containing rows in data that are
+        closer than radius to center, and the other containing those that are
+        not.
+
+        Args:
+            data (pandas.DataFrame): the entire data set.
+
+        Return:
+            (within, beyond):
+                two data frames resulting from partitioning the data set to
+                within ROI and beyond ROI.
+    """
     # store distances in a temporary column '_distance'
     data['_distance'] = haversine_distances(data, center)
     within = data[data._distance < radius].drop('_distance', axis=1)
@@ -252,10 +282,11 @@ def split_by_distance(data, center, radius):
     return within, beyond
 
 
-# calculates the haversine distance (in km) between two longitutde-latitude
-# pairs. Each argument is an iterable with two entries: the longitude and the
-# latitude of the corresponding point
 def haversine_distance(p1, p2):
+    """ Calculates the haversine distance (in km) between two
+        longitutde-latitude pairs. Each argument is an iterable with two
+        entries: the longitude and the latitude of the corresponding point
+    """
     lon1, lat1 = p1
     lon2, lat2 = p2
     lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
@@ -266,18 +297,21 @@ def haversine_distance(p1, p2):
     km = 6367 * c
     return km
 
-
-# returns a column containing distances of each row of data from center
 def haversine_distances(data, center):
+    """ Returns a column containing distances of each row of data from center.
+    """
     def _haversine(row):
         p = row[['Longitude_1', 'Latitude_1']].as_matrix()
         return haversine_distance(p, center)
 
     return data.apply(_haversine, axis=1)
 
-
-# density in sample per 1e6 km^2, radius in km
 def roi_density_to_test_size(density, radius, num_samples):
+    """ Translates ROI density (sample per 1e6 km^2) for a given radius (km) to
+        a test_size parameter (between 0 and 1) acceptable by `train_test_split`
+        to partition within-ROI samples to a validation set and a supplementary
+        within-ROI training data.
+    """
     area = np.pi * (radius / 1000.) ** 2
     test_size = 1 - (area * density) / num_samples
     max_density = num_samples / area
@@ -286,12 +320,24 @@ def roi_density_to_test_size(density, radius, num_samples):
     return test_size
 
 
-# splits rows in data into a training and test set according to the following
-# rule: consider a circle C with given center and radius. The training set is
-# those rows outside C and a randomly chosen subset of those rows within C
-# (proportion of points in C kept for test is given by test_size; float between
-# 0 and 1).
 def split_with_circle(data, center, roi_density=None, radius=3500):
+    """ Splits rows in data into a training and test set according to the
+        following rule: consider an ROI with given center and radius. The
+        training set is those rows outside ROI and a randomly chosen subset of
+        those rows within ROI (proportion of points in ROI kept for test is
+        calculated based on demanded ensity).
+
+        Args:
+            data (pandas.DataFrame): the entire data set.
+            center (tuple): lon-lat coordinates of ROI center.
+            roi_density (float): required density, cf. roi_density_to_test_size
+
+        Return:
+            (X_train, y_train, X_test, y_test):
+            A tuple of 4 data frames of dimensions nxp, nx1, (N-n)xp, (N-n)x1
+            where N is the total number of records, n is the number of training
+            records and p is the number of features.
+    """
     data_test, data_train = split_by_distance(data, center, radius)
     test_size = roi_density_to_test_size(roi_density, radius, len(data_test))
     assert test_size > 0
@@ -309,6 +355,18 @@ def split_with_circle(data, center, roi_density=None, radius=3500):
 
 
 def tune_params(data, param_grid, cv_fold=10):
+    """ Wraps `sklearn.model_selection.GridSearchCV` to use normalized rmse as
+        a measure of performance. We cannot control the cross-validation scheme
+        and must rely on the random selection done by sklearn.
+
+        Args:
+            data (pandas.DataFrame): entire data set.
+            param_grid (dict): a dictionary from parameter names to lists of
+            values to be considered for each parameter.
+
+        Return:
+            GridSearchCV.best_params_
+    """
     def _score(reg, X_test, y_test):
         y_pred = reg.predict(X_test)
         return sqrt(mean_squared_error(y_test, y_pred)) / np.mean(y_test)
@@ -318,12 +376,19 @@ def tune_params(data, param_grid, cv_fold=10):
     search.fit(data.drop(['Latitude_1', 'Longitude_1', 'GHF'], axis=1), data['GHF'])
     print search.best_params_
 
-
-# plots a series of values at given latitude and longitude positions
 def plot_values_on_map(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, scatter_args={}, cbar_label='mW m$^{-2}$'):
+    """ Plots a series of values at given latitude and longitude positions on a
+        given basemap object as points.
+
+        Args:
+            m (basemap.Basemap): map object to draw data on.
+            lons: one-dimensional list (native, numpy, or pandas) of longitudes.
+            lons: similar, latitudes.
+            ghfs: similar, GHF values.
+    """
     m.drawparallels(
         np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
     )
@@ -345,12 +410,19 @@ def plot_values_on_map(m, lons, lats, values,
     plt.clim(*clim)
 
 
-# plots a series of GHF values at given latitude and longitude positions in
-# ascii format
 def plot_values_on_map_pcolormesh(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, pcolor_args={}, cbar_label='mW m$^{-2}$'):
+    """ Plots a series of values at given latitude and longitude positions as a
+        pseudocolor map.
+
+        Args:
+            m (basemap.Basemap): map object to draw data on.
+            lons: one-dimensional list (native, numpy, or pandas) of longitudes.
+            lons: similar, latitudes.
+            ghfs: similar, GHF values.
+    """
     m.drawparallels(
         np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
     )
@@ -390,12 +462,19 @@ def plot_values_on_map_pcolormesh(m, lons, lats, values,
     plt.clim(*clim)
 
 
-# plots a series of GHF values at given latitude and longitude positions in
-# ascii format interpolated using basemap transform_scalar functions
 def plot_values_on_map_pcolormesh_interp(m, lons, lats, values,
                     parallel_step=20., meridian_step=60.,
                     clim=(20., 150.), clim_step=10,
                     colorbar_args={}, pcolor_args={}, cbar_label='mW m$^{-2}$'):
+    """ Plots a series of values at given latitude and longitude positions as a
+        pseudocolor map interpolated using basemap.Basemap.transform_scalar.
+
+        Args:
+            m (basemap.Basemap): map object to draw data on.
+            lons: one-dimensional list (native, numpy, or pandas) of longitudes.
+            lons: similar, latitudes.
+            ghfs: similar, GHF values.
+    """
     m.drawparallels(
         np.arange(-80., 81., parallel_step), labels=[1, 0, 0, 0], fontsize=10
     )
@@ -439,9 +518,9 @@ def plot_values_on_map_pcolormesh_interp(m, lons, lats, values,
     cbar.set_ticklabels(labels)
     plt.clim(*clim)
 
-
-# Plots scatter plots between GHF and all features in data set
 def plot_GHF_feature_projections(data):
+    """ Plots scatter plots between GHF and all features in data set.
+    """
     fig = plt.figure(figsize=(16, 20))
     center = (28.67, 45.5)
     data_roi, data_nonroi = split_by_distance(data, center, GREENLAND_RADIUS)
@@ -456,9 +535,17 @@ def plot_GHF_feature_projections(data):
         ax.grid(True)
         ax.legend(fontsize=12)
 
-
-# saves current matplotlib plot to given filename in OUT_DIR
 def save_cur_fig(filename, title=None, set_title_for='ax'):
+    """ Saves current matplotlib plot to given filename in OUT_DIR.
+
+        Args:
+            filename (string): path relative to OUT_DIR.
+            title (string): title used in logging and (maybe) in plot.
+            set_title_for (string):
+                if 'ax' only sets the given title for the first axis object in
+                figure, if 'fig' sets the given title for the whole figure,
+                otherwise title is only used for logging.
+    """
     if title:
         fig = plt.gcf()
         if set_title_for == 'fig':
@@ -471,31 +558,41 @@ def save_cur_fig(filename, title=None, set_title_for='ax'):
 
 
 def pickle_dump(path, obj, comment=None):
+    """ Dumps an object to a pickle file in OUT_DIR.
+    """
     with open(os.path.join(OUT_DIR, path), 'w') as f:
         pickle.dump(obj, f)
     sys.stderr.write('dumped %s to %s.\n' % (comment if comment else 'object', path))
 
 
 def pickle_load(path):
+    """ Loads an object from a pickle file in OUT_DIR.
+    """
     with open(os.path.join(OUT_DIR, path), 'rb') as f:
         return pickle.load(f)
 
 
 def train_linear(X_train, y_train):
+    """ Trains a linear regression model using the given training features and
+        GHFs.
+    """
     reg = LinearRegression()
     reg.fit(X_train, y_train)
     return reg
 
 
 def get_gbrt(**gbrt_params):
+    """ Builds a GBRT object (not trained) with the specified parameters. The
+        default values of all unspecified parameters are as in `GBRT_PARAMS`.
+    """
     _gbrt_params = GBRT_PARAMS.copy()
     _gbrt_params.update(gbrt_params)
     return GradientBoostingRegressor(**_gbrt_params)
 
 
-# Trains and returns a GradientBoostingRegressor over the given training
-# feature and value vectors.
 def train_gbrt(X_train, y_train, **gbrt_params):
+    """ Trains a GBRT model using the given training features and GHFs.
+    """
     sys.stderr.write('-> Training ...')
     start = time()
     # allow keyword arguments to override default GDR parameters
@@ -506,22 +603,32 @@ def train_gbrt(X_train, y_train, **gbrt_params):
     return reg
 
 
-# Returns r^2 of y, y^ linear regression and RMSE of y, y^ normalized to the
-# average of y; the latter is a unitless and *scale-invariant* measure of
-# performance.
-# - cf. http://stats.stackexchange.com/a/190948
-#   RMSE normalized to mean of y is scale-invariant.
-# - cf. http://www.stat.columbia.edu/~gelman/research/published/standardizing7.pdf
-#   r^2 is not scale-invariant.
 def error_summary(y_test, y_pred):
+    """ Returns r^2 of linear correlation between y, y^ (predictions) and the
+        RMSE between y, y^ normalized to the
+        average of y; the latter is a unitless and *scale-invariant* measure of
+        performance.
+        - cf. http://stats.stackexchange.com/a/190948
+          RMSE normalized to mean of y is scale-invariant.
+        - cf. http://www.stat.columbia.edu/~gelman/research/published/standardizing7.pdf
+          r^2 is not scale-invariant.
+
+        Args:
+            y_test: list or vector of known values for validation set.
+            y_pred: list or vector of predicted values for validation set.
+
+        Return:
+            (r2, rmse)
+  """
     _, _, r_value, _, _= scipy.stats.linregress(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred)) / np.mean(y_test)
     return r_value ** 2, rmse
 
 
-# plots the linear regression of two GHF value series (known test values and
-# predicted values) and saves the plot to OUT_DIR/filename.
 def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
+    """ Plots the linear correlation of two GHF value series (known test values
+        and predicted values) and saves the plot to OUT_DIR/filename.
+    """
     # first x=y line, then dumb predictor (average), then the
     # correlation between y_test and y_pred
     fig = plt.figure()
@@ -546,8 +653,10 @@ def plot_test_pred_linregress(y_test, y_pred, label=None, color='blue'):
     ax.set_title('$r^2=%.2f, RMSE=%.2f$' % (r2, rmse))
     ax.legend(loc=2)
 
-# plots the histogram of given GHF values
 def plot_values_histogram(values):
+    """ Plots the histogram of given GHF values over 60 bins of GHF from 0 to
+        `MAX_GHF`.
+    """
     hist, _, _ = plt.hist(values, np.linspace(0, MAX_GHF, 61), normed=True,
                           lw=1, alpha=.7, color='k', edgecolor='k')
     plt.xlabel('GHF (mW m$^{-2}$)')
