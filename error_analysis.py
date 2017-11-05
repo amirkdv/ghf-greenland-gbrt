@@ -425,13 +425,16 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
         assert len(train_rmses) == len(test_rmses), \
                'array length (# of centers) should be the same for training and test'
     else:
-        # FIXME min_density
-        centers = [random_prediction_ctr(data, radius) for _ in range(ncenters)]
+        sys.stderr.write('=> Experiment: Generalization ' + \
+                         '(roi_density: %.2f, radius: %.2f,' % (roi_density, radius) +
+                         ' no. centers: %d, no. of n_estimators: %d)\n' % (ncenters, len(ns_estimators)))
+        centers = [random_prediction_ctr(data, radius, min_density=roi_density)
+                   for _ in range(ncenters)]
 
         train_rmses = np.zeros([ncenters, len(ns_estimators)])
         test_rmses = np.zeros([ncenters, len(ns_estimators)])
         for center_idx, center in enumerate(centers):
-            sys.stderr.write('%d / %d\n' % (center_idx + 1, ncenters))
+            sys.stderr.write('# center %d/%d\n' % (center_idx + 1, ncenters))
             X_train, y_train, X_test, y_test = \
                 split_with_circle(data, center, roi_density=roi_density, radius=radius)
             X_train = X_train.drop(['Latitude_1', 'Longitude_1'], axis=1)
@@ -439,7 +442,7 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
             assert not X_test.empty
 
             for n_idx, n in enumerate(ns_estimators):
-                sys.stderr.write('# estimators: %d ' % n)
+                sys.stderr.write('  # n_estimators: %d ' % n)
                 gbrt = train_gbrt(X_train, y_train, n_estimators=n)
                 _, train_rmse = error_summary(y_train, gbrt.predict(X_train))
                 _, test_rmse  = error_summary(y_test, gbrt.predict(X_test))
@@ -454,12 +457,22 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
                    'test_rmses': test_rmses}
             pickle_dump(dumpfile, res, comment='generalization errors')
 
-    for center_idx in range(len(train_rmses)):
-        ax.plot(ns_estimators, train_rmses[center_idx], 'g', alpha=.2, lw=1)
-        ax.plot(ns_estimators, test_rmses[center_idx], 'r', alpha=.2, lw=1)
+    num_sigma = 1
 
-    ax.plot(ns_estimators, train_rmses.mean(axis=0), 'g', marker='o', alpha=.9, lw=1.5, label='training')
-    ax.plot(ns_estimators, test_rmses.mean(axis=0), 'r', marker='o', alpha=.9, lw=1.5, label='validation')
+    mean_rmse = test_rmses.mean(axis=0)
+    sd_rmse = np.sqrt(test_rmses.var(axis=0))
+    lower_rmse = mean_rmse - num_sigma * sd_rmse
+    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    ax.plot(ns_estimators, mean_rmse, 'r', marker='o', markersize=3, alpha=.9, label='validation')
+    ax.fill_between(ns_estimators, lower_rmse, higher_rmse, facecolor='r', edgecolor='r', alpha=.3)
+
+    mean_rmse = train_rmses.mean(axis=0)
+    sd_rmse = np.sqrt(train_rmses.var(axis=0))
+    lower_rmse = mean_rmse - num_sigma * sd_rmse
+    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    ax.plot(ns_estimators, mean_rmse, 'g', marker='o', markersize=3, alpha=.9, label='training')
+    ax.fill_between(ns_estimators, lower_rmse, higher_rmse, facecolor='g', edgecolor='g', alpha=.3)
+
     ax.grid(True)
     ax.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
     ax.set_ylim(0, .3)
@@ -716,12 +729,12 @@ def exp_generalization(data):
     """
     radius = GREENLAND_RADIUS
     ncenters = 50
-    roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
+    roi_density = 11.3 # Greenland
     ns_estimators = range(50, 750, 100) + range(750, 3001, 750)
     dumpfile = 'generalization.txt'
-    # FIXME does not respect densities
+    plotfile = 'generalization.png'
     plot_generalization_analysis(data, roi_density, radius, ncenters, ns_estimators, dumpfile=dumpfile, replot=False)
-    save_cur_fig('generalization.png', title='GBRT generalization power', set_title_for=None)
+    save_cur_fig(plotfile, title='GBRT generalization power', set_title_for=None)
 
 
 def exp_feature_importance(data):
