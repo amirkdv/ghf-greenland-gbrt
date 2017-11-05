@@ -52,19 +52,39 @@ def _mark_ice_core_gaussians(m, cores):
              lw=2, linestyle='-', color='black', alpha=.3)
 
 
-def plot_training_GHF_mark_greenland(train_lons, train_lats, train_ghfs):
+def plot_training_GHF(lons, lats, ghfs):
+    """ Plots all global training data on a map centered at Greenland
+        and restricted to NA-WE and marks the circles used to prescribe GHF
+        around GrIS ice cores. Ice core coordinates and radii are read from
+        `util.GREENLAND`.
+
+        Args:
+            lons: one-dimensional list (native, numpy, or pandas) of longitudes.
+            lons: similar, latitudes.
+            ghfs: similar, GHF values.
+    """
     m = Basemap(width=6500000, height=6500000, projection='aeqd', lon_0=-37.64, lat_0=72.58)
     _mark_ice_core_gaussians(m, GREENLAND)
 
     # plot all known GHF values
     colorbar_args = {'location': 'bottom', 'pad': '10%'}
     scatter_args = {'marker': 'o', 's': 15, 'lw': 0, 'cmap': SPECTRAL_CMAP}
-    plot_values_on_map(m, train_lons, train_lats, train_ghfs,
+    plot_values_on_map(m, lons, lats, ghfs,
                        parallel_step=5., meridian_step=15.,
                        colorbar_args=colorbar_args, scatter_args=scatter_args)
 
 
-def plot_greenland_gaussian_prescribed_GHF(lons, lats, ghfs):
+def plot_gaussian_prescribed_GHF(lons, lats, ghfs):
+    """ Plots prescribed GHF values around GrIS ice cores and marks each
+        individual ice core. All given (lon, lat, ghf) values are plotted but
+        the map is restricted to Greenland alone. Ice core coordinates and
+        radii are read from `util.GREENLAND`.
+
+        Args:
+            lons: one-dimensional list (native, numpy, or pandas) of longitudes.
+            lons: similar, latitudes.
+            ghfs: similar, GHF values.
+    """
     args = GREENLAND_BASEMAP_ARGS.copy()
     args['height'] = 2800000
     args['lat_0'] = 71.5
@@ -82,7 +102,14 @@ def plot_greenland_gaussian_prescribed_GHF(lons, lats, ghfs):
                        colorbar_args=colorbar_args, scatter_args=scatter_args)
 
 
-def plot_greenland_prediction_points(lons, lats, ghfs):
+def plot_prediction_points(lons, lats, ghfs):
+    """ Plots predicted GHF values as colored points on a map of Greenland.
+
+        Args:
+            lons: one-dimensional list (native, numpy, or pandas) of longitudes.
+            lons: similar, latitudes.
+            ghfs: similar, GHF values.
+    """
     m = Basemap(**GREENLAND_BASEMAP_ARGS)
     seismic_cmap = plt.get_cmap('seismic', 20)
     scatter_args = {'marker': 'o', 's': 20, 'lw': 0, 'cmap': SPECTRAL_CMAP}
@@ -91,7 +118,14 @@ def plot_greenland_prediction_points(lons, lats, ghfs):
                        colorbar_args=colorbar_args, scatter_args=scatter_args)
 
 
-def plot_greenland_prediction(lons, lats, ghfs):
+def plot_prediction(lons, lats, ghfs):
+    """ Plots predicted GHF values as a pseudocolor plot for Greenland.
+
+        Args:
+            lons: one-dimensional list (native, numpy, or pandas) of longitudes.
+            lons: similar, latitudes.
+            ghfs: similar, GHF values.
+    """
     m = Basemap(**GREENLAND_BASEMAP_ARGS)
     pcolor_args = {'cmap': SPECTRAL_CMAP}
     colorbar_args = {'location': 'right', 'pad': '5%'}
@@ -101,7 +135,15 @@ def plot_greenland_prediction(lons, lats, ghfs):
                                   pcolor_args=pcolor_args)
 
 
-def plot_greenland_prediction_interpolated(lons, lats, ghfs):
+def plot_prediction_interpolated(lons, lats, ghfs):
+    """ Plots predicted GHF values as an interpolated pseudocolor plot for
+        Greenland.
+
+        Args:
+            lons: one-dimensional list (native, numpy, or pandas) of longitudes.
+            lons: similar, latitudes.
+            ghfs: similar, GHF values.
+    """
     m = Basemap(**GREENLAND_BASEMAP_ARGS)
     _mark_ice_cores(m, GREENLAND.lon.as_matrix(), GREENLAND.lat.as_matrix(),
                     GREENLAND.ghf.as_matrix())
@@ -132,10 +174,10 @@ if __name__ == '__main__':
     X_test = X_test.drop(['Latitude_1', 'Longitude_1'], axis=1)
 
     # -------------------- Plot training data  -------------------------
-    plot_training_GHF_mark_greenland(train_lons, train_lats, y_train)
+    plot_training_GHF(train_lons, train_lats, y_train)
     save_cur_fig('greenland_training_GHF.png', title='GHF at training set')
 
-    plot_greenland_gaussian_prescribed_GHF(train_lons, train_lats, y_train)
+    plot_gaussian_prescribed_GHF(train_lons, train_lats, y_train)
     save_cur_fig('greenland_prescribed_GHF.png',
                  title='Points with prescribed GHF \n around GHF measurements (mW m$^{-2}$)')
 
@@ -143,18 +185,18 @@ if __name__ == '__main__':
     reg = train_gbrt(X_train, y_train)
     y_pred = reg.predict(X_test)
 
-    plot_greenland_prediction_points(test_lons, test_lats, y_pred)
+    plot_prediction_points(test_lons, test_lats, y_pred)
     save_cur_fig('greenland_prediction_points.png',
                  title='GHF predicted for Greenland (mW m$^{-2}$)')
 
-    plot_greenland_prediction(test_lons, test_lats, y_pred)
+    plot_prediction(test_lons, test_lats, y_pred)
     save_cur_fig('greenland_prediction.png',
                  title='GHF predicted for Greenland (mW m$^{-2}$)')
 
     lons = np.hstack([train_lons, test_lons])
     lats = np.hstack([train_lats, test_lats])
     ghfs = np.hstack([y_train, y_pred])
-    plot_greenland_prediction_interpolated(lons, lats, ghfs)
+    plot_prediction_interpolated(lons, lats, ghfs)
     save_cur_fig('greenland_prediction_interpolated.png',
                  title='GHF predicted for Greenland (mW m$^{-2}$)')
 
