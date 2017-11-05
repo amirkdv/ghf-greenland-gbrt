@@ -7,8 +7,20 @@ that then delegates everything to a configurable `plot_X` method. All plot and
 dump files are handled via `util.save_cur_fig`, `util.pickle_dump`,
 `util.pickle_load`.
 
-If run as main runs all experiments that were presented in the accompanying
-paper. Other experiments can be run by uncommenting their invocation.
+All `plot_X` methods accept two convenience keyword arguments:
+
+- `dumpfile`: the path of data dump file for this experiment. This file is
+  written to if `replot` (below) is falsey and is read from if `replot` is
+  truthy. The default is None which means the results of the experiment are not
+  stored on disk (None is unacceptable for `replot=True`).
+- `replot`: whether or not to replot from an existing data `dumpfile` (must be
+  provided if truthy) or to re-run the experiment.
+
+Note that `dumpfile=foo, replot=False` overwrites any existing data in `foo`.
+
+If this module is run as main all experiments that were presented in the
+accompanying paper are run from scratch. Other experiments can be run by
+uncommenting their invocation.
 """
 
 import sys

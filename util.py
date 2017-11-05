@@ -6,16 +6,16 @@ dump files.
 
 # Data Files
 
-Two data sets must be provided: a global data set (cf ``GLOBAL_CSV`` below)
+Two data sets must be provided: a global data set (cf `GLOBAL_CSV` below)
 containing all features of interest and GHF measurements, and a data set
 corresponding to a region of interest with scarce data (Greenland, cf.
-``GREENLAND_CSV``) containing only feature measurements and no GHF values.
+`GREENLAND_CSV`) containing only feature measurements and no GHF values.
 
 ## Accessing data
 
-Global and GrIS data should be loaded using ``load_global_data`` and
-``load_gris_data``. GrIS ice core data is automatically loaded into global
-variable ``GREENLAND``.
+Global and GrIS data should be loaded using `load_global_data` and
+`load_gris_data`. GrIS ice core data is automatically loaded into global
+variable `GREENLAND`.
 
 ## Producing data
 
@@ -31,10 +31,10 @@ All paths below can be either relative (taken with respect to repo root) or
 absolute and can be overriden by an environment variable with the same
 name.
 
-- GLOBAL_CSV: global data set csv, default: ``global.csv``.
-- GRIS_CSV: Greenland data set csv, default: ``gris_features.csv``.
-- GRIS_ICE_CORE_CSV: Greenland ice core data set cv, default: ``gris_ice_cores.csv``.
-- OUT_DIR: directory in which plots and dump files are saved, default: ``plots/``.
+- GLOBAL_CSV: global data set csv, default: `global.csv`.
+- GRIS_CSV: Greenland data set csv, default: `gris_features.csv`.
+- GRIS_ICE_CORE_CSV: Greenland ice core data set cv, default: `gris_ice_cores.csv`.
+- OUT_DIR: directory in which plots and dump files are saved, default: `plots/`.
 
 # Features
 
@@ -42,9 +42,18 @@ Each feature has a human readable name and a column name used in csv data
 files (i.e GLOBAL_CSV and GRIS_CSV).
 
 - FEATURE_NAMES: a dict mapping column names to human readable names.
-- CATEGORICAL_FEATURES: columns that correspond to categorical features.
+- CATEGORICAL_FEATURES: a dict column names that correspond to categorical
+                        features to their list of allowed values.
 - PROXIMITY_FEATURES: columns that correspond to proximity features
 
+# Constants
+
+The following numbers are used as constants in this module:
+
+- MAX_GHF: maximum limit of GHF for plotting purposes only (150)
+- GREENLAND_RADIUS: radius (km) of an ROI that contains all of GrIS (1300)
+- MAX_ICE_CORE_DIST: the farthest reach (km) of any ice core to affect GHF
+    estimates to pad GrIS training data (150)
 """
 import os
 import sys
