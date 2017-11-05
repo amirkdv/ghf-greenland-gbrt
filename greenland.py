@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""This module produces GHF prediction and associated maps for Greenland. Main
+functions are:
+- plot_training_GHF_mark_greenland(train_lons, train_lats, train_ghfs),
+- plot_greenland_gaussian_prescribed_GHF(lons, lats, ghfs),
+- plot_greenland_prediction_points(lons, lats, ghfs),
+- plot_greenland_prediction(lons, lats, ghfs),
+- plot_greenland_prediction_interpolated(lons, lats, ghfs)
+
+If run as main, runs all above using data provided in global and gris data sets
+(cf. util.greenland_train_test_sets).
+"""
 from mpl_toolkits.basemap import Basemap
 from circles import equi
 from util import (

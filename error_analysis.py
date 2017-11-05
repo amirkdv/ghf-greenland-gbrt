@@ -1,5 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+""" This module provides all experiments involving the analysis and
+interpretation of GBRT. Each experiment is implemented as a self contained
+`exp_X` method (only input argument is the entire global and gris data set)
+that then delegates everything to a configurable `plot_X` method. All plot and
+dump files are handled via `util.save_cur_fig`, `util.pickle_dump`,
+`util.pickle_load`.
+
+If run as main runs all experiments that were presented in the accompanying
+paper. Other experiments can be run by uncommenting their invocation.
+"""
 
 import sys
 from random import randint

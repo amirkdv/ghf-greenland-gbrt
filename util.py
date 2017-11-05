@@ -4,31 +4,46 @@
 responsibilities are loading and filtering data sets and handling plots and
 dump files.
 
-    Two data sets must be provided: a global data set (cf GLOBAL_CSV below)
-    containing all features of interest and GHF measurements, and a data set
-    corresponding to a region of interest with scarce data (Greenland, cf.
-    GREENLAND_CSV) containing only feature measurements and no GHF values.
+# Data Files
 
-    * CONSTANTS -- paths
+Two data sets must be provided: a global data set (cf ``GLOBAL_CSV`` below)
+containing all features of interest and GHF measurements, and a data set
+corresponding to a region of interest with scarce data (Greenland, cf.
+``GREENLAND_CSV``) containing only feature measurements and no GHF values.
 
-    All paths below can be either relative (taken with respect to repo root)
-    or absolute and can be overriden by an environment variable with the same name.
+## Accessing data
 
-    FIXME
-    ** GLOBAL_CSV: path to global data set csv, default: `global_1deg.csv`.
-    ** GREENLAND_FEATURES: path to Greenland data set csv, default: `greenland_1deg.csv`
-    ** OUT_DIR: path to directory in which plots and dump files are saved,
-        default: `plots/`.
+Global and GrIS data should be loaded using ``load_global_data`` and
+``load_gris_data``. GrIS ice core data is automatically loaded into global
+variable ``GREENLAND``.
 
-    * CONSTANTS -- features
+## Producing data
 
-    Each feature has a human readable name and a column name used in csv data
-    files (i.e GLOBAL_CSV and GREENLAND_FEATURES).
+Methods whose names start with `plot_` are plotting methods that do _not_ use
+the object oriented matplotlib API. After calling any such method the resulting
+figure can be saved via `save_cur_fig`.
 
-    ** FEATURE_NAMES: a dict mapping column names in data files to human
-        readable names.
-    ** CATEGORICAL_FEATURES: columns that correspond to categorical features.
-    ** PROXIMITY_FEATURES: columns that correspond to proximity features
+For writing and reading data dumps `pickle_load, pickle_load` are provided.
+
+## Data paths
+
+All paths below can be either relative (taken with respect to repo root) or
+absolute and can be overriden by an environment variable with the same
+name.
+
+- GLOBAL_CSV: global data set csv, default: ``global.csv``.
+- GRIS_CSV: Greenland data set csv, default: ``gris_features.csv``.
+- GRIS_ICE_CORE_CSV: Greenland ice core data set cv, default: ``gris_ice_cores.csv``.
+- OUT_DIR: directory in which plots and dump files are saved, default: ``plots/``.
+
+# Features
+
+Each feature has a human readable name and a column name used in csv data
+files (i.e GLOBAL_CSV and GRIS_CSV).
+
+- FEATURE_NAMES: a dict mapping column names to human readable names.
+- CATEGORICAL_FEATURES: columns that correspond to categorical features.
+- PROXIMITY_FEATURES: columns that correspond to proximity features
 
 """
 import os
