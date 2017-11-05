@@ -371,9 +371,22 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
             ax_lin.plot(noise_amps, np.append([0], rmses_lin[idx]), **kw)
             ax_gbrt.plot(noise_amps, np.append([0], rmses_gbrt[idx]), **kw)
 
-    kw = dict(alpha=.9, lw=2.5, marker='o', color='k', label='global average')
-    ax_lin.plot(noise_amps, np.append([0], rmses_lin[1:].mean(axis=0)), **kw)
-    ax_gbrt.plot(noise_amps, np.append([0], rmses_gbrt[1:].mean(axis=0)), **kw)
+    kw = dict(alpha=.9, lw=1.5, marker='o', color='k', label='global average')
+
+    num_sigma = 1
+    mean_rmse = np.append([0], rmses_lin[1:].mean(axis=0))
+    sd_rmse = np.sqrt(np.append([0], rmses_lin[1:]).var(axis=0))
+    lower_rmse = mean_rmse - num_sigma * sd_rmse
+    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    ax_lin.plot(noise_amps, mean_rmse, **kw)
+    ax_lin.fill_between(noise_amps, lower_rmse, higher_rmse, facecolor='k', edgecolor='k', alpha=.2)
+
+    mean_rmse = np.append([0], rmses_gbrt[1:].mean(axis=0))
+    sd_rmse = np.sqrt(np.append([0], rmses_gbrt[1:]).var(axis=0))
+    lower_rmse = mean_rmse - num_sigma * sd_rmse
+    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    ax_gbrt.plot(noise_amps, mean_rmse, **kw)
+    ax_gbrt.fill_between(noise_amps, lower_rmse, higher_rmse, facecolor='k', edgecolor='k', alpha=.2)
 
     for ax in [ax_gbrt, ax_lin]:
         ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=12)
@@ -686,12 +699,14 @@ def exp_sensitivity(data):
         training GHF. Plot is saved to <OUT_DIR>/sensitivity.png.
     """
     radius = GREENLAND_RADIUS
-    roi_density = 60. / (np.pi * (radius / 1000.) ** 2)
+    roi_density = 11.3 # Greenland
     noise_amps = np.arange(0.025, .31, .025)
     ncenters = 50
     dumpfile = 'sensitivity.txt'
+    plotfile = 'sensitivity.png'
     plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters, dumpfile=dumpfile, replot=False)
-    save_cur_fig('sensitivity.png', title='GBRT prediction sensitivity to noise in training GHF', set_title_for=None)
+    save_cur_fig(plotfile, title='GBRT prediction sensitivity to noise in training GHF', set_title_for=None)
+
 
 def exp_generalization(data):
     """ Evaluates the generalization power of GBRT with increasing complexity
