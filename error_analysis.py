@@ -357,35 +357,31 @@ def plot_sensitivity_analysis(data, roi_density, radius, noise_amps, ncenters,
             res = {'rmses_lin': rmses_lin, 'rmses_gbrt': rmses_gbrt, 'noise_amps': noise_amps}
             pickle_dump(dumpfile, res, 'sensitivity analysis')
 
+    kw = dict(alpha=.6, lw=2, marker='o', color='k', label='global average')
     noise_amps = np.append([0], noise_amps)
-    for idx in range(ncenters+1):
-        if idx == 0:
-            # Greenland case
-            kw = dict(color='g', alpha=.5, lw=2.5, marker='o',
-                      markeredgewidth=0.0, label='Greenland')
-            ax_lin.plot(noise_amps, np.append([0], rmses_lin[0]), **kw)
-            ax_gbrt.plot(noise_amps, np.append([0], rmses_gbrt[0]), **kw)
-        else:
-            kw = dict(color='k', alpha=.2, lw=1)
-            ax_lin.plot(noise_amps, np.append([0], rmses_lin[idx]), **kw)
-            ax_gbrt.plot(noise_amps, np.append([0], rmses_gbrt[idx]), **kw)
-
-    kw = dict(alpha=.9, lw=1.5, marker='o', color='k', label='global average')
 
     num_sigma = 1
-    mean_rmse = np.append([0], rmses_lin[1:].mean(axis=0))
-    sd_rmse = np.sqrt(np.append([0], rmses_lin[1:]).var(axis=0))
-    lower_rmse = mean_rmse - num_sigma * sd_rmse
-    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    mean_rmse = rmses_lin[1:].mean(axis=0)
+    sd_rmse = np.sqrt(rmses_lin[1:].var(axis=0))
+    lower_rmse = np.append([0], mean_rmse - num_sigma * sd_rmse)
+    higher_rmse = np.append([0], mean_rmse + num_sigma * sd_rmse)
+    mean_rmse = np.append([0], mean_rmse)
     ax_lin.plot(noise_amps, mean_rmse, **kw)
     ax_lin.fill_between(noise_amps, lower_rmse, higher_rmse, facecolor='k', edgecolor='k', alpha=.2)
 
-    mean_rmse = np.append([0], rmses_gbrt[1:].mean(axis=0))
-    sd_rmse = np.sqrt(np.append([0], rmses_gbrt[1:]).var(axis=0))
-    lower_rmse = mean_rmse - num_sigma * sd_rmse
-    higher_rmse = mean_rmse + num_sigma * sd_rmse
+    mean_rmse = rmses_gbrt[1:].mean(axis=0)
+    sd_rmse = np.sqrt(rmses_gbrt[1:].var(axis=0))
+    lower_rmse = np.append([0], mean_rmse - num_sigma * sd_rmse)
+    higher_rmse = np.append([0], mean_rmse + num_sigma * sd_rmse)
+    mean_rmse = np.append([0], mean_rmse)
     ax_gbrt.plot(noise_amps, mean_rmse, **kw)
     ax_gbrt.fill_between(noise_amps, lower_rmse, higher_rmse, facecolor='k', edgecolor='k', alpha=.2)
+
+    # Greenland case
+    kw = dict(color='g', alpha=.5, lw=2.5, marker='o',
+              markeredgewidth=0.0, label='Greenland')
+    ax_lin.plot(noise_amps, np.append([0], rmses_lin[0]), **kw)
+    ax_gbrt.plot(noise_amps, np.append([0], rmses_gbrt[0]), **kw)
 
     for ax in [ax_gbrt, ax_lin]:
         ax.set_xlabel('Relative magnitude of noise in training GHF', fontsize=12)
