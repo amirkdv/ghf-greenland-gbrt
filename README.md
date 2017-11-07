@@ -9,7 +9,7 @@ The following are requirements to reproduce the results:
   automated procedures for Linux see [`Makefile`](Makefile) which automatically
   detects the virtual environment from the `VIRTUAL_ENV` environment variable.
 
-On Debian/Linux the following installs all requirements:
+On Debian/Ubuntu the following installs all requirements:
 ```
 $ apt-get install python-dev build-essential tk tk-dev python-pip virtualenv
 $ ... # git clone this repo; cd to repo
@@ -26,17 +26,17 @@ its lib directory must be added to the `LD_LIBRARY_PATH` environment variable.
 To produce all figures in the paper:
 ```
 (env) $ export LD_LIBRARY_PATH=env/lib:$LD_LIBRARY_PATH
-(env) $ python density_plots # Figures 1 and 2
-(env) $ python greenland.py # Figures 4, S5, S6
-(env) $ python error_analysis # Figures 3, 5, S2, S3, S4
+(env) $ python density_plots.py   # Figures 1 and 2
+(env) $ python greenland.py       # Figures 4, S5, S6
+(env) $ python error_analysis.py  # Figures 3, 5, S2, S3, S4
 ```
 
 Features
 --------
 Each data set below contains the following continuous features:
 
-* `age`                     (age),
-* `bougeur_gravity_anomaly` (Bougeur gravity anomaly),
+* `age`,
+* `bougeur_gravity_anomaly`,
 * `depth_to_moho`           (depth to Mohorovičić discontinuity),
 * `d_2_hotspot`             (distance to hotspots),
 * `d_2_ridge`               (distance to ridge),
@@ -46,18 +46,18 @@ Each data set below contains the following continuous features:
 * `d_2_young_rift`          (distance to young rift),
 * `heat_prod_provinces`     (heat production provinces),
 * `lithos_asthenos_bdry`    (lithosphere-asthenosphere boundary),
-* `magnetic_anomaly`        (magnetic anomaly),
-* `thickness_crust`         (crustal thickness),
-* `thickness_middle_crust`  (thickness of middle crust),
-* `thickness_upper_crust`   (thickness of upper crust),
-* `topography`              (topography),
-* `upper_mantle_density_anomaly` (upper mantle density anom.),
+* `magnetic_anomaly`,
+* `thickness_crust`,
+* `thickness_middle_crust`,
+* `thickness_upper_crust`,
+* `topography`,
+* `upper_mantle_density_anomaly`.
 
 and three categorical features:
 
 * `thermo_tecto_age` (age of last thermo-tectonic event): allowed values are 1-12.
 * `upper_mantle_vel_structure` (upper mantle velocity structure): allowed values are 1-6.
-* `rock_type` (rock type): allowed values are (as per *Hartmann and Moosdorf (2012)*):
+* `rock_type` (rock type): as per *Hartmann and Moosdorf (2012)*, allowed values are:
   **1** (volcanic), **2** (metamorphic), **3** (sedimentary).
 
 Date Files
@@ -86,7 +86,7 @@ Date Files
         - `_airy_gravity_anomaly`,
         - `_continent`,
     * The global data sets excludes two original global records with unknown rock
-      type (`lthlgy_mod == -9999`).
+      type (`rock_type == -9999`).
     * Rock types (`rock_type` column) in original GrIS data set take values
       between 1-10, as per *Dawes (2009)*, which are mapped in GrIS data set to
       the three values described above, as per *Hartmann and Moosdorf (2012)*.
