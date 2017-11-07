@@ -1,6 +1,3 @@
-Geothermal Heat Flux Prediction in Greenland with Gradient Boosted Regression Trees
-===================================================================================
-
 Requirements
 ------------
 The following are requirements to reproduce the results:
