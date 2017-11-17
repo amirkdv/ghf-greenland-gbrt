@@ -472,8 +472,8 @@ def plot_generalization_analysis(data, roi_density, radius, ncenters,
     ax.set_xlim(ns_estimators[0] - 100, ns_estimators[-1] + 100)
     ax.set_ylim(0, .3)
     ax.set_yticks(np.arange(0, .31, .05))
-    ax.set_xlabel('Number of trees', fontsize=16)
-    ax.set_ylabel('Normalized RMSE', fontsize=16)
+    ax.set_xlabel('Number of trees')
+    ax.set_ylabel('Normalized RMSE')
     ax.legend(prop={'size':12.5})
     fig.tight_layout()
 
