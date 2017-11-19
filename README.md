@@ -1,3 +1,9 @@
+This repo contains the data and code to reproduce the results published in:
+
+_Rezvanbehbahani S., L.A Stearns, A. Kadivar, J.D. Walker, and C.J. vanderVeen (2017), Predicting the geothermal heat flux in Greenland: a Machine Learning approach, Geophys. Res. Lett., 44, doi:[10.1002/2017GL075661](http://dx.doi.org/10.1002/2017GL075661)._
+
+To cite either of the [data sets](#data-sets) or the code, use the above citation.
+
 Requirements
 ------------
 The following are requirements to reproduce the results:
@@ -33,7 +39,7 @@ To produce all figures in the paper:
 
 Features
 --------
-Each data set below contains the following continuous features:
+Each [data set](#data-sets) below contains the following continuous features:
 
 * `age`,
 * `bougeur_gravity_anomaly`,
@@ -60,8 +66,8 @@ and three categorical features:
 * `rock_type` (rock type): as per *Hartmann and Moosdorf (2012)*, allowed values are:
   **1** (volcanic), **2** (metamorphic), **3** (sedimentary).
 
-Date Files
-----------
+Date Sets
+---------
 
 - *Global data (features and GHF)*: The global data set can be found at
   [`global.csv`](global.csv) which contains feature values and GHF measurements
