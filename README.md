@@ -66,7 +66,7 @@ and three categorical features:
 * `rock_type` (rock type): as per *Hartmann and Moosdorf (2012)*, allowed values are:
   **1** (volcanic), **2** (metamorphic), **3** (sedimentary).
 
-Date Sets
+Data Sets
 ---------
 
 - *Global data (features and GHF)*: The global data set can be found at
