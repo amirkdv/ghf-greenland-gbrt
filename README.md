@@ -1,6 +1,6 @@
 This repo contains the data and code to reproduce the results published in:
 
-_Rezvanbehbahani S., L.A Stearns, A. Kadivar, J.D. Walker, and C.J. vanderVeen (2017), Predicting the geothermal heat flux in Greenland: a Machine Learning approach, Geophys. Res. Lett., 44, doi:[10.1002/2017GL075661](http://dx.doi.org/10.1002/2017GL075661)._
+_Rezvanbehbahani S., L.A. Stearns, A. Kadivar, J.D. Walker, and C.J. vanderVeen (2017), Predicting the Geothermal Heat Flux in Greenland: A Machine Learning Approach, Geophys. Res. Lett., 44, doi:[10.1002/2017GL075661](http://dx.doi.org/10.1002/2017GL075661)._
 
 To cite either of the [data sets](#data-sets) or the code, use the above citation.
 
