@@ -23,7 +23,7 @@ Methods whose names start with `plot_` are plotting methods that do _not_ use
 the object oriented matplotlib API. After calling any such method the resulting
 figure can be saved via `save_cur_fig`.
 
-For writing and reading data dumps `pickle_load, pickle_load` are provided.
+For writing and reading data dumps `pickle_dump, pickle_load` are provided.
 
 ## Data paths
 

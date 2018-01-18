@@ -26,6 +26,8 @@ from util import (
     plot_values_histogram,
     MAX_ICE_CORE_DIST,
     greenland_train_test_sets,
+    fill_in_greenland_GHF,
+    load_gris_data,
     GREENLAND,
     SPECTRAL_CMAP,
 )
@@ -196,10 +198,10 @@ if __name__ == '__main__':
     lons = np.hstack([train_lons, test_lons])
     lats = np.hstack([train_lats, test_lats])
     ghfs = np.hstack([y_train, y_pred])
+
     plot_prediction_interpolated(lons, lats, ghfs)
     save_cur_fig('greenland_prediction_interpolated.png',
                  title='GHF predicted for Greenland (mW m$^{-2}$)')
-
 
     # --------------------- Plot GHF histograms --------------------------
     plot_values_histogram(y_pred)
@@ -207,3 +209,18 @@ if __name__ == '__main__':
 
     plot_values_histogram(y_train)
     save_cur_fig('hist_global.png', title='GHF global measurement')
+
+    # ---------------- Save GHF of Greenland to XYZ format---------------
+    data_gris = load_gris_data()
+    gris_known, _   = fill_in_greenland_GHF(data_gris)
+    gris_known_lats = gris_known.lat.as_matrix()
+    gris_known_lons = gris_known.lon.as_matrix()
+    gris_known_ghfs = gris_known.GHF.as_matrix()
+
+    xyz_known = np.asarray([gris_known_lats, gris_known_lons, gris_known_ghfs])
+    xyz_pred  = np.asarray([test_lats, test_lons, y_pred])
+
+    xyz = np.hstack([xyz_pred, xyz_known])
+    header = 'lat, lon, ghf'
+    np.savetxt('./greenland_predictions/gris-ghf-xyz-NGRIP-135.csv',
+                   xyz.T, delimiter=',', header=header, fmt='%10.5f')
